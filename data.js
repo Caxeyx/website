@@ -7,7 +7,7 @@ const PORTFOLIO_DATA = {
     title: "Art Director & Graphic Designer",
     subtitle: "Art Direction · Visual Identity · Stage & Motion · Merch",
     email: "contact@casey.design",
-    instagram: "https://instagram.com/",
+    instagram: "https://www.instagram.com/caseyxlive/",
     location: "Global / Remote",
     bio: "Art Director, Graphic Designer, Photographer, and Stylist. Specializing in high-impact album artwork, key visuals for music tours and global brands, stage graphics, custom typography, and physical merchandise design.",
     heroImage: "assets/images/wallpaper.png"
