@@ -20,6 +20,7 @@
   padding: 0;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html, body {
@@ -643,36 +644,183 @@ html, body {
   background: #dc2626;
 }
 
-/* Responsive Mobile Layout adjustments */
+/* Window Maximized State */
+.mac-window.maximized {
+  top: 34px !important;
+  left: 10px !important;
+  width: calc(100vw - 20px) !important;
+  max-width: calc(100vw - 20px) !important;
+  height: calc(100vh - 100px) !important;
+  height: calc(100dvh - 100px) !important;
+  border-radius: 12px !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Responsive Mobile Layout & Touch Adjustments */
 @media (max-width: 768px) {
+  #desktop-canvas {
+    height: 100dvh;
+  }
+
+  /* Top Navigation Bar on Mobile */
+  .mac-menu-bar {
+    padding: 0 10px;
+    font-size: 11px;
+  }
+
+  .menu-left {
+    gap: 10px;
+  }
+
+  .menu-right {
+    gap: 8px;
+    font-size: 10px;
+  }
+
+  .status-badge {
+    display: none; /* Hide long badge on small screens to avoid overflow */
+  }
+
+  /* Desktop Grid Layout on Mobile */
   .desktop-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    padding: 20px;
-    inset: 40px 0 100px 0;
+    grid-template-columns: repeat(auto-fill, minmax(82px, 1fr));
+    gap: 14px;
+    padding: 16px 12px;
+    inset: 34px 0 85px 0;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .desktop-item {
     position: relative !important;
     left: auto !important;
     top: auto !important;
-    width: 100%;
+    width: 100% !important;
+    margin: 0 auto;
   }
 
-  .project-modal-grid {
-    grid-template-columns: 1fr;
+  .desktop-icon-wrapper {
+    width: 56px;
+    height: 56px;
   }
 
+  .desktop-label {
+    font-size: 9.5px;
+    max-width: 82px;
+  }
+
+  /* Bottom Dock on Mobile */
   .dock-container {
     bottom: 8px;
-    padding: 6px 10px;
-    gap: 4px;
+    padding: 6px 8px;
+    gap: 5px;
+    max-width: 96vw;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    touch-action: pan-x;
+  }
+
+  .dock-container::-webkit-scrollbar {
+    display: none;
   }
 
   .dock-item {
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    border-radius: 8px;
+  }
+
+  .dock-divider {
+    height: 30px;
+    flex-shrink: 0;
+  }
+
+  /* Mobile Window Centering & Sizing */
+  .mac-window {
+    position: fixed !important;
+    left: 4vw !important;
+    top: 42px !important;
+    width: 92vw !important;
+    max-width: 92vw !important;
+    max-height: calc(100vh - 105px) !important;
+    max-height: calc(100dvh - 105px) !important;
+    border-radius: 12px;
+  }
+
+  .mac-window.maximized {
+    left: 2vw !important;
+    top: 34px !important;
+    width: 96vw !important;
+    max-width: 96vw !important;
+    height: calc(100vh - 85px) !important;
+    height: calc(100dvh - 85px) !important;
+  }
+
+  .window-body {
+    padding: 14px;
+    max-height: calc(100vh - 150px);
+    max-height: calc(100dvh - 150px);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Window Content Adjustments */
+  .project-modal-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .project-cover-large {
+    max-height: 220px;
+  }
+
+  .project-title-large {
+    font-size: 20px;
+  }
+
+  .notebook-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+    flex-wrap: nowrap;
+    padding-bottom: 8px;
+    gap: 6px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .notebook-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab-btn {
+    padding: 6px 12px;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+
+  .bio-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .bio-avatar {
+    width: 76px;
+    height: 76px;
+  }
+
+  .gallery-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
   }
 }
+
+@media (hover: none) {
+  .dock-tooltip {
+    display: none !important;
+  }
+}
+

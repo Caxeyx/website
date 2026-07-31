@@ -387,3 +387,6 @@ const PORTFOLIO_DATA = {
     }
   }
 };
+
+window.PORTFOLIO_DATA = PORTFOLIO_DATA;
+

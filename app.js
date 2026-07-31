@@ -22,25 +22,28 @@ document.addEventListener("DOMContentLoaded", () => {
   updateMenuClock();
   setInterval(updateMenuClock, 10000);
 
-  // 2. Render Scattered Desktop Icons (Ultra-Smooth Apple Dragging)
+  // 2. Render Scattered Desktop Icons (Ultra-Smooth Apple Dragging & Mobile Support)
   function renderDesktopIcons() {
-    if (!desktopGrid || !PORTFOLIO_DATA || !PORTFOLIO_DATA.projects) return;
+    const data = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : null);
+    if (!desktopGrid || !data || !data.projects) return;
     desktopGrid.innerHTML = "";
 
     const gridWidth = desktopGrid.clientWidth || window.innerWidth;
     const gridHeight = desktopGrid.clientHeight || window.innerHeight;
+    const isMobile = window.innerWidth <= 768;
 
-    PORTFOLIO_DATA.projects.forEach((proj) => {
+    data.projects.forEach((proj) => {
       const item = document.createElement("div");
       item.className = "desktop-item";
       item.dataset.id = proj.id;
       
-      // Calculate initial pixel coordinates from percentages
       const posX = (proj.pos.x / 100) * gridWidth;
       const posY = (proj.pos.y / 100) * gridHeight;
 
-      item.style.left = `${posX}px`;
-      item.style.top = `${posY}px`;
+      if (!isMobile) {
+        item.style.left = `${posX}px`;
+        item.style.top = `${posY}px`;
+      }
 
       item.innerHTML = `
         <div class="desktop-icon-wrapper">
@@ -49,10 +52,10 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="desktop-label">${proj.title}</div>
       `;
 
-      // Apple-like Silky Smooth Dragging
+      // Apple-like Silky Smooth Dragging with Mobile Touch Support
       let isDragging = false;
       let startX = 0, startY = 0;
-      let itemX = posX, itemY = posY;
+      let itemX = 0, itemY = 0;
       let hasMoved = false;
       let animationFrameId = null;
       let currentClientX = 0, currentClientY = 0;
@@ -62,8 +65,8 @@ document.addEventListener("DOMContentLoaded", () => {
         hasMoved = false;
         startX = clientX;
         startY = clientY;
-        itemX = parseFloat(item.style.left) || 0;
-        itemY = parseFloat(item.style.top) || 0;
+        itemX = item.offsetLeft || 0;
+        itemY = item.offsetTop || 0;
 
         item.classList.add("is-dragging");
         item.style.zIndex = 300;
@@ -74,15 +77,16 @@ document.addEventListener("DOMContentLoaded", () => {
         const dx = currentClientX - startX;
         const dy = currentClientY - startY;
 
-        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+        // On mobile/touch require higher move threshold before setting hasMoved
+        const moveThreshold = isMobile ? 10 : 4;
+        if (Math.abs(dx) > moveThreshold || Math.abs(dy) > moveThreshold) {
           hasMoved = true;
         }
 
-        if (hasMoved) {
+        if (hasMoved && !isMobile) {
           let newLeft = itemX + dx;
           let newTop = itemY + dy;
 
-          // Clamp smoothly inside workspace bounds
           newLeft = Math.max(10, Math.min(window.innerWidth - 90, newLeft));
           newTop = Math.max(35, Math.min(window.innerHeight - 100, newTop));
 
@@ -166,7 +170,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Handle Resize for desktop grid layout
   window.addEventListener("resize", renderDesktopIcons);
 
-  // 3. macOS Window Creator Core
+  // 3. macOS Window Creator Core (Mobile Centered + Touch Support)
   function createWindow({ id, title, width = "620px", contentHTML, top = "15%", left = "25%" }) {
     if (activeWindows[id]) {
       focusWindow(activeWindows[id]);
@@ -177,10 +181,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const win = document.createElement("div");
     win.className = "mac-window focused";
     win.id = `win-${id}`;
-    win.style.width = width;
+    
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      win.style.width = "92vw";
+      win.style.top = "42px";
+      win.style.left = "4vw";
+    } else {
+      win.style.width = width;
+      win.style.top = top;
+      win.style.left = left;
+    }
+    
     win.style.zIndex = highestZIndex;
-    win.style.top = top;
-    win.style.left = left;
 
     win.innerHTML = `
       <div class="window-header">
@@ -204,8 +217,21 @@ document.addEventListener("DOMContentLoaded", () => {
       closeWindow(id);
     });
 
-    // Make window focusable
+    const minimizeBtn = win.querySelector(".traffic-btn.minimize");
+    minimizeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeWindow(id);
+    });
+
+    const maximizeBtn = win.querySelector(".traffic-btn.maximize");
+    maximizeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      win.classList.toggle("maximized");
+    });
+
+    // Make window focusable (Mouse & Touch)
     win.addEventListener("mousedown", () => focusWindow(win));
+    win.addEventListener("touchstart", () => focusWindow(win), { passive: true });
 
     // Make window draggable
     makeWindowDraggable(win);
@@ -235,33 +261,65 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 250);
   }
 
+  // Unified Mouse + Touch Window Dragging Core
   function makeWindowDraggable(win) {
     const header = win.querySelector(".window-header");
     let isDragging = false;
     let offsetX = 0;
     let offsetY = 0;
 
+    const startDrag = (clientX, clientY) => {
+      if (win.classList.contains("maximized")) return;
+      isDragging = true;
+      offsetX = clientX - win.offsetLeft;
+      offsetY = clientY - win.offsetTop;
+      focusWindow(win);
+    };
+
+    const moveDrag = (clientX, clientY) => {
+      if (!isDragging) return;
+      let newX = clientX - offsetX;
+      let newY = clientY - offsetY;
+      
+      const winWidth = win.offsetWidth || 320;
+      newX = Math.max(5, Math.min(window.innerWidth - winWidth - 5, newX));
+      newY = Math.max(30, Math.min(window.innerHeight - 60, newY));
+
+      win.style.left = `${newX}px`;
+      win.style.top = `${newY}px`;
+    };
+
+    const endDrag = () => {
+      isDragging = false;
+    };
+
+    // Mouse Event Listeners
     header.addEventListener("mousedown", (e) => {
       if (e.target.classList.contains("traffic-btn")) return;
-      isDragging = true;
-      offsetX = e.clientX - win.offsetLeft;
-      offsetY = e.clientY - win.offsetTop;
-      focusWindow(win);
+      startDrag(e.clientX, e.clientY);
     });
 
     document.addEventListener("mousemove", (e) => {
-      if (!isDragging) return;
-      let newX = e.clientX - offsetX;
-      let newY = e.clientY - offsetY;
-      // Clamp to viewport
-      newY = Math.max(30, Math.min(window.innerHeight - 80, newY));
-      win.style.left = `${newX}px`;
-      win.style.top = `${newY}px`;
+      if (isDragging) moveDrag(e.clientX, e.clientY);
     });
 
-    document.addEventListener("mouseup", () => {
-      isDragging = false;
-    });
+    document.addEventListener("mouseup", endDrag);
+
+    // Touch Event Listeners for Mobile Phones
+    header.addEventListener("touchstart", (e) => {
+      if (e.target.classList.contains("traffic-btn")) return;
+      const touch = e.touches[0];
+      startDrag(touch.clientX, touch.clientY);
+    }, { passive: true });
+
+    document.addEventListener("touchmove", (e) => {
+      if (!isDragging) return;
+      const touch = e.touches[0];
+      moveDrag(touch.clientX, touch.clientY);
+    }, { passive: true });
+
+    document.addEventListener("touchend", endDrag);
+    document.addEventListener("touchcancel", endDrag);
   }
 
   // 4. Open Project Detail Window Modal
@@ -300,25 +358,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 5. Open Kajecik / Notes Window (About / CV / Interests)
   window.openNotebookWindow = function() {
+    const data = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : {});
     const content = `
       <div class="notebook-tabs">
-        <button class="tab-btn active" onclick="switchNotebookTab('tab-about')">About Casey</button>
-        <button class="tab-btn" onclick="switchNotebookTab('tab-cv')">CV & Experience</button>
-        <button class="tab-btn" onclick="switchNotebookTab('tab-interests')">Creative Interests</button>
+        <button class="tab-btn active" onclick="switchNotebookTab('tab-about', this)">About Casey</button>
+        <button class="tab-btn" onclick="switchNotebookTab('tab-cv', this)">CV & Experience</button>
+        <button class="tab-btn" onclick="switchNotebookTab('tab-interests', this)">Creative Interests</button>
       </div>
 
       <div id="tab-about" class="tab-content active">
         <div class="bio-card">
-          <img class="bio-avatar" src="${PORTFOLIO_DATA.personal.heroImage}" alt="${PORTFOLIO_DATA.personal.name}" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80'">
+          <img class="bio-avatar" src="${data.personal.heroImage}" alt="${data.personal.name}" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80'">
           <div>
-            <h2 style="font-size: 22px; font-weight: 900;">${PORTFOLIO_DATA.personal.name}</h2>
-            <div style="color: var(--accent-color); font-weight: 700; font-size: 13px; margin-bottom: 8px;">${PORTFOLIO_DATA.personal.title}</div>
-            <p style="font-size: 13px; line-height: 1.5; color: var(--text-muted);">${PORTFOLIO_DATA.personal.bio}</p>
+            <h2 style="font-size: 22px; font-weight: 900;">${data.personal.name}</h2>
+            <div style="color: var(--accent-color); font-weight: 700; font-size: 13px; margin-bottom: 8px;">${data.personal.title}</div>
+            <p style="font-size: 13px; line-height: 1.5; color: var(--text-muted);">${data.personal.bio}</p>
           </div>
         </div>
         <h3 style="font-size: 14px; font-weight: 800; margin-bottom: 10px;">Capabilities & Services</h3>
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-          ${PORTFOLIO_DATA.services.map(s => `
+          ${data.services.map(s => `
             <div style="background: rgba(255,255,255,0.04); padding: 10px; border-radius: 8px; font-size: 12px; font-weight: 600; border: 1px solid rgba(255,255,255,0.08);">
               ✨ ${s}
             </div>
@@ -329,7 +388,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <div id="tab-cv" class="tab-content">
         <h3 style="font-size: 15px; font-weight: 800; margin-bottom: 14px;">Work Experience</h3>
         <div class="experience-timeline">
-          ${PORTFOLIO_DATA.experience.map(exp => `
+          ${data.experience.map(exp => `
             <div class="timeline-item">
               <div class="timeline-role">${exp.role}</div>
               <div class="timeline-company">${exp.company} · ${exp.period}</div>
@@ -339,7 +398,7 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
         <h3 style="font-size: 15px; font-weight: 800; margin: 20px 0 10px 0;">Clients & Collaborators</h3>
         <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-          ${PORTFOLIO_DATA.clients.map(c => `
+          ${data.clients.map(c => `
             <span style="background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.4); color: #60a5fa; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 12px;">${c}</span>
           `).join("")}
         </div>
@@ -348,7 +407,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <div id="tab-interests" class="tab-content">
         <h3 style="font-size: 15px; font-weight: 800; margin-bottom: 12px;">Design Philosophy & Inspirations</h3>
         <div style="display: flex; flex-direction: column; gap: 10px;">
-          ${PORTFOLIO_DATA.interests.map(i => `
+          ${data.interests.map(i => `
             <div style="background: rgba(255,255,255,0.04); border-left: 3px solid #10b981; padding: 10px 14px; border-radius: 0 8px 8px 0; font-size: 13px; font-weight: 600;">
               💡 ${i}
             </div>
@@ -367,21 +426,23 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  // Tab switcher helper
-  window.switchNotebookTab = function(tabId) {
+  // Tab switcher helper with robust touch target passing
+  window.switchNotebookTab = function(tabId, btnEl) {
     document.querySelectorAll(".notebook-tabs .tab-btn").forEach(btn => btn.classList.remove("active"));
     document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
     
-    event.target.classList.add("active");
+    const activeBtn = btnEl || (window.event ? window.event.target : null);
+    if (activeBtn) activeBtn.classList.add("active");
     const targetContent = document.getElementById(tabId);
     if (targetContent) targetContent.classList.add("active");
   };
 
   // 6. Open Gallery Window
   window.openGalleryWindow = function() {
+    const data = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : {});
     const content = `
       <div class="gallery-grid">
-        ${PORTFOLIO_DATA.gallery.map(item => `
+        ${(data.gallery || []).map(item => `
           <div class="gallery-card">
             <img src="${item.image}" alt="${item.title}" onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80'">
             <div class="gallery-caption">${item.title} (${item.category})</div>
@@ -402,12 +463,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 7. Open Bin of Ideas / Trash Window
   window.openBinWindow = function() {
+    const data = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : {});
     const content = `
       <div style="padding: 10px;">
         <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 12px;">🗑️ Bin of Unreleased Ideas</h3>
         <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Early drafts, poster experiments, and creative concepts waiting for their turn.</p>
         <div style="display: flex; flex-direction: column; gap: 12px;">
-          ${PORTFOLIO_DATA.binOfIdeas.map(item => `
+          ${(data.binOfIdeas || []).map(item => `
             <div style="background: rgba(255,255,255,0.04); border: 1px dashed rgba(255,255,255,0.2); padding: 12px; border-radius: 8px;">
               <div style="font-weight: 800; font-size: 13px; margin-bottom: 4px; color: #f59e0b;">${item.title}</div>
               <div style="font-size: 12px; color: var(--text-muted);">${item.note}</div>
@@ -429,7 +491,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 10. Open Spotify Window (Recommendation Playlist: 4eBpz8sWLVz9EfuPOY2NpW)
   window.openSpotifyWindow = function() {
-    const data = PORTFOLIO_DATA.spotify;
+    const data = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : {});
+    const spotifyData = data.spotify || {};
     
     const content = `
       <div style="background: #121212; padding: 12px; border-radius: 8px; color: #fff;">
@@ -474,13 +537,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 11. Open Contact Window
   window.openContactWindow = function() {
+    const data = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : {});
+    const email = (data.personal && data.personal.email) ? data.personal.email : "contact@casey.design";
     const content = `
       <div style="text-align: center; padding: 10px;">
         <div style="font-size: 40px; margin-bottom: 10px;">✉️</div>
         <h2 style="font-size: 22px; font-weight: 900; margin-bottom: 6px;">Let's Work Together</h2>
         <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Open for Art Direction, Key Visuals, Album Packaging & Collaborations.</p>
-        <a href="mailto:${PORTFOLIO_DATA.personal.email}" style="display: inline-block; padding: 10px 24px; background: #3b82f6; color: #fff; text-decoration: none; font-weight: 800; font-size: 13px; border-radius: 8px; transition: background 0.2s;">
-          Send Email to ${PORTFOLIO_DATA.personal.email}
+        <a href="mailto:${email}" style="display: inline-block; padding: 10px 24px; background: #3b82f6; color: #fff; text-decoration: none; font-weight: 800; font-size: 13px; border-radius: 8px; transition: background 0.2s;">
+          Send Email to ${email}
         </a>
       </div>
     `;
@@ -497,7 +562,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 9. Open Adobe Crash Easter Egg Dialog
   window.openAdobeDialog = function(type) {
-    const dialogData = PORTFOLIO_DATA.adobeDialogs[type] || PORTFOLIO_DATA.adobeDialogs.warn;
+    const data = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : {});
+    const adobeDialogs = data.adobeDialogs || {};
+    const dialogData = adobeDialogs[type] || adobeDialogs.warn || { title: "Warning", message: "System warning", button: "Close" };
     const content = `
       <div class="adobe-dialog-box">
         <div class="adobe-icon-warning">⚠️</div>
@@ -519,31 +586,34 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  // 10. Dock Icon Hover Magnification Animation Effect
+  // 10. Dock Icon Hover Magnification Animation Effect (Desktop Only)
   if (dock) {
     const dockItems = dock.querySelectorAll(".dock-item");
+    const isTouchDevice = window.matchMedia("(hover: none)").matches;
     
-    dock.addEventListener("mousemove", (e) => {
-      const mouseX = e.clientX;
-      
-      dockItems.forEach(item => {
-        const rect = item.getBoundingClientRect();
-        const itemCenterX = rect.left + rect.width / 2;
-        const distance = Math.abs(mouseX - itemCenterX);
+    if (!isTouchDevice) {
+      dock.addEventListener("mousemove", (e) => {
+        const mouseX = e.clientX;
         
-        let scale = 1;
-        if (distance < 140) {
-          scale = 1 + (1 - distance / 140) * 0.45; // Max 1.45x scale
-        }
-        item.style.transform = `scale(${scale})`;
+        dockItems.forEach(item => {
+          const rect = item.getBoundingClientRect();
+          const itemCenterX = rect.left + rect.width / 2;
+          const distance = Math.abs(mouseX - itemCenterX);
+          
+          let scale = 1;
+          if (distance < 140) {
+            scale = 1 + (1 - distance / 140) * 0.45; // Max 1.45x scale
+          }
+          item.style.transform = `scale(${scale})`;
+        });
       });
-    });
 
-    dock.addEventListener("mouseleave", () => {
-      dockItems.forEach(item => {
-        item.style.transform = "scale(1)";
+      dock.addEventListener("mouseleave", () => {
+        dockItems.forEach(item => {
+          item.style.transform = "scale(1)";
+        });
       });
-    });
+    }
   }
 
   // Keyboard shortcut: ESC to close top window
