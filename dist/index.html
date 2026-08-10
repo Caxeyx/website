@@ -8,10 +8,83 @@
   <meta name="theme-color" content="#0b0c10">
   <title>CASEY — Art Director & Graphic Designer</title>
   <meta name="description" content="Portfolio of Casey — Art Director, Graphic Designer, Photographer, and Stylist. Specializing in album artwork, key visuals, stage motion, and merch.">
-  <script type="module" crossorigin src="/assets/index-BtftdMdh.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-QZu3trnV.css">
+  <script type="module" crossorigin src="/assets/index-Bm8Rr8S2.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-CeYC_1Ad.css">
 </head>
 <body>
+
+  <!-- macOS Apple Login / Boot Screen Overlay -->
+  <div id="mac-login-screen" class="mac-login-screen">
+    <div class="login-backdrop-blur"></div>
+    
+    <!-- Top Login Header Bar -->
+    <div class="login-top-bar">
+      <div class="login-top-left">
+        <span> macOS Sonoma</span>
+      </div>
+      <div class="login-top-right">
+        <span class="login-wifi-icon" title="Wi-Fi Connected">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12 3C7.03 3 2.53 4.98 0 8.18l12 14.82L24 8.18C21.47 4.98 16.97 3 12 3z"/></svg>
+        </span>
+        <span class="login-battery-icon" title="Battery 100%">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M17 4h-3V2h-4v2H7c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2z"/></svg>
+        </span>
+        <span id="login-clock" class="login-clock"></span>
+      </div>
+    </div>
+
+    <!-- Center Login Box -->
+    <div class="login-card">
+      <div class="login-avatar-wrapper">
+        <img class="login-avatar" src="/assets/casey_portrait-DkUbf4Cx.png" alt="Casey Avatar" onerror="this.src='https://framerusercontent.com/images/es0axIAu0guUZSRBu6xvsteey8w.png'">
+        <div class="login-avatar-ring"></div>
+      </div>
+      
+      <h1 class="login-username">CASEY</h1>
+      <p class="login-user-role">Art Director & Graphic Designer</p>
+
+      <!-- Password Form / Action Container -->
+      <form id="login-form" class="login-form" onsubmit="event.preventDefault(); window.startMacBootSequence && window.startMacBootSequence();">
+        <div id="login-input-box" class="login-input-wrapper">
+          <input 
+            type="password" 
+            id="login-password-input" 
+            class="login-password-input" 
+            placeholder="Enter Password" 
+            autocomplete="off">
+          <button type="submit" class="login-submit-btn" aria-label="Unlock macOS">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </button>
+        </div>
+        
+        <!-- Apple Boot Progress Bar (Shown during login transition) -->
+        <div id="boot-progress-container" class="boot-progress-container">
+          <div class="boot-progress-bar">
+            <div id="boot-progress-fill" class="boot-progress-fill"></div>
+          </div>
+          <div id="boot-status-text" class="boot-status-text">Logging in...</div>
+        </div>
+
+        <div id="login-hints-box" class="login-hints">
+          <button type="button" class="login-guest-btn" onclick="window.startMacBootSequence && window.startMacBootSequence();">
+            <span class="touch-id-icon">🔏</span> Touch ID or Press Enter to Unlock
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Bottom Power Buttons -->
+    <div class="login-bottom-controls">
+      <button class="login-power-btn" onclick="location.reload()" title="Restart System">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+        <span>Restart</span>
+      </button>
+      <button class="login-power-btn" onclick="window.lockMacScreen && window.lockMacScreen()" title="Lock Screen">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10"/></svg>
+        <span>Lock</span>
+      </button>
+    </div>
+  </div>
 
   <!-- macOS Spatial Desktop Canvas -->
   <div id="desktop-canvas">
@@ -36,6 +109,7 @@
         <span class="menu-item" onclick="openNotebookWindow()">About</span>
         <span class="menu-item" onclick="openGalleryWindow()">Gallery</span>
         <span class="menu-item" onclick="openContactWindow()">Contact</span>
+        <span class="menu-item" onclick="lockMacScreen()" style="color: rgba(255,255,255,0.7); gap: 4px; display: inline-flex; align-items: center;">🔒 Lock</span>
       </div>
       <div class="menu-right">
         <span class="status-badge">
