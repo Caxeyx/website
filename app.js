@@ -41,6 +41,109 @@ document.addEventListener("DOMContentLoaded", () => {
     widgetsLayer.classList.toggle("is-hidden");
   };
 
+  // 1d. Live Interactive Spotify Widget Player Simulation
+  const spotifyTracks = [
+    {
+      title: "HOTEL MAFIJA VINYL",
+      artist: "Casey & SBM Label",
+      cover: "https://framerusercontent.com/images/vs3eHHOnNIgYRpCxqrlx6kGu7ZE.png?scale-down-to=2048",
+      duration: 225
+    },
+    {
+      title: "TRASA PO KOŃCU ŚWIATA",
+      artist: "Kacperczyk & Casey",
+      cover: "https://framerusercontent.com/images/Lx5tLMHaVdhs7fD27bCK8cvb2v4.jpg?scale-down-to=2048",
+      duration: 198
+    },
+    {
+      title: "RYK X SEXED",
+      artist: "Casey Art Direction",
+      cover: "https://framerusercontent.com/images/jWCd6yieKKyRymQkEZLe6vjBEI.jpg?scale-down-to=2048",
+      duration: 212
+    },
+    {
+      title: "PIERWSZY SWAG W POLSCE",
+      artist: "Casey Studio Rollout",
+      cover: "https://framerusercontent.com/images/zaWs4d37fEOTdAisIq7UlAJyIU.png?scale-down-to=2048",
+      duration: 185
+    }
+  ];
+
+  let currentTrackIdx = 0;
+  let currentTrackTime = 102;
+  let isSpotifyPlaying = true;
+  let spotifyInterval = null;
+
+  const widgetMusicCard = document.getElementById("widget-music");
+  const widgetSongCover = document.getElementById("widget-song-cover");
+  const widgetSongTitle = document.getElementById("widget-song-title");
+  const widgetSongArtist = document.getElementById("widget-song-artist");
+  const widgetProgressFill = document.getElementById("widget-song-progress-fill");
+  const widgetCurrentTime = document.getElementById("widget-song-current-time");
+  const widgetDurationTime = document.getElementById("widget-song-duration");
+  const widgetPlayBtn = document.getElementById("widget-play-btn");
+
+  function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  }
+
+  function updateSpotifyWidgetDisplay() {
+    const track = spotifyTracks[currentTrackIdx];
+    if (widgetSongCover) widgetSongCover.src = track.cover;
+    if (widgetSongTitle) widgetSongTitle.textContent = track.title;
+    if (widgetSongArtist) widgetSongArtist.textContent = track.artist;
+    if (widgetDurationTime) widgetDurationTime.textContent = formatTime(track.duration);
+    
+    const pct = Math.min(100, (currentTrackTime / track.duration) * 100);
+    if (widgetProgressFill) widgetProgressFill.style.width = `${pct}%`;
+    if (widgetCurrentTime) widgetCurrentTime.textContent = formatTime(currentTrackTime);
+  }
+
+  function startSpotifyTimer() {
+    if (spotifyInterval) clearInterval(spotifyInterval);
+    spotifyInterval = setInterval(() => {
+      if (!isSpotifyPlaying) return;
+      const track = spotifyTracks[currentTrackIdx];
+      currentTrackTime += 1;
+      if (currentTrackTime >= track.duration) {
+        currentTrackTime = 0;
+        currentTrackIdx = (currentTrackIdx + 1) % spotifyTracks.length;
+      }
+      updateSpotifyWidgetDisplay();
+    }, 1000);
+  }
+
+  window.spotifyTogglePlay = function() {
+    isSpotifyPlaying = !isSpotifyPlaying;
+    if (widgetMusicCard) {
+      if (isSpotifyPlaying) {
+        widgetMusicCard.classList.remove("is-paused");
+      } else {
+        widgetMusicCard.classList.add("is-paused");
+      }
+    }
+    if (widgetPlayBtn) {
+      widgetPlayBtn.textContent = isSpotifyPlaying ? "⏸" : "▶";
+    }
+  };
+
+  window.spotifyNextTrack = function() {
+    currentTrackIdx = (currentTrackIdx + 1) % spotifyTracks.length;
+    currentTrackTime = 0;
+    updateSpotifyWidgetDisplay();
+  };
+
+  window.spotifyPrevTrack = function() {
+    currentTrackIdx = (currentTrackIdx - 1 + spotifyTracks.length) % spotifyTracks.length;
+    currentTrackTime = 0;
+    updateSpotifyWidgetDisplay();
+  };
+
+  updateSpotifyWidgetDisplay();
+  startSpotifyTimer();
+
   // Make individual macOS desktop widgets draggable
   document.querySelectorAll(".mac-widget").forEach((widget) => {
     let isDragging = false;
