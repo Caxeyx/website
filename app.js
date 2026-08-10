@@ -751,38 +751,35 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  // 10. Open Official Spotify Window Player
+  // 10. Open Spotify Window (Recommendation Playlist: 4eBpz8sWLVz9EfuPOY2NpW)
   window.openSpotifyWindow = function() {
     const data = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : {});
+    const spotifyData = data.spotify || {};
     
-    // Pause ambient background audio when opening Spotify
-    if (typeof pauseCurrentAudio === "function") {
-      pauseCurrentAudio();
-    }
-
     const content = `
-      <div style="background: #121212; padding: 12px; border-radius: 12px; color: #fff;">
-        <div style="display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #1db954 0%, #0a2912 100%); padding: 14px 18px; border-radius: 10px; margin-bottom: 14px; box-shadow: 0 4px 14px rgba(29,185,84,0.3);">
+      <div style="background: #121212; padding: 12px; border-radius: 8px; color: #fff;">
+        <div style="display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #1db954 0%, #0a2912 100%); padding: 14px 18px; border-radius: 10px; margin-bottom: 14px;">
           <div>
             <div style="display: flex; align-items: center; gap: 8px;">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M12 0C5.376 0 0 5.376 0 12s5.376 12 12 12 12-5.376 12-12S18.624 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.48-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141 4.38-1.38 9.841-.72 13.561 1.56.36.18.54.78.18 1.26zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.18-1.2-.18-1.38-.72-.18-.6.18-1.2.72-1.38 4.26-1.26 11.28-1.02 15.721 1.62.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
-              <h3 style="font-size: 16px; font-weight: 900; margin: 0; color: #fff; letter-spacing: 0.3px;">OFFICIAL SPOTIFY PLAYER</h3>
+              <h3 style="font-size: 16px; font-weight: 900; margin: 0; color: #fff;">SPOTIFY PLAYER</h3>
             </div>
-            <div style="font-size: 11px; color: rgba(255,255,255,0.85); margin-top: 4px;">CASEY — TOP TRACKS PLAYLIST</div>
+            <div style="font-size: 11px; color: rgba(255,255,255,0.85); margin-top: 4px;">Top Recommendation Playlist</div>
           </div>
-          <a href="https://open.spotify.com/playlist/4eBpz8sWLVz9EfuPOY2NpW" target="_blank" rel="noopener noreferrer" style="font-size: 11px; font-weight: 700; background: #ffffff; color: #000000; padding: 6px 14px; border-radius: 20px; text-decoration: none; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-            Open in Spotify App ↗
-          </a>
+          <div style="font-size: 10px; font-weight: 700; background: rgba(0,0,0,0.35); padding: 4px 10px; border-radius: 12px; border: 1px solid rgba(30,215,96,0.3); color: #fff; display: flex; align-items: center; gap: 6px;">
+            <span style="width: 6px; height: 6px; background-color: #1db954; border-radius: 50%; box-shadow: 0 0 6px #1db954;"></span> Connected
+          </div>
         </div>
 
-        <!-- Official Spotify Embedded Player -->
-        <div style="border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.7); background: #000; margin-bottom: 6px;">
+        <!-- Live Spotify Web Player Embed Playlist 4eBpz8sWLVz9EfuPOY2NpW -->
+        <div style="border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.7); background: #000; margin-bottom: 10px;">
           <iframe
-            title="Spotify Official Web Player"
-            src="https://open.spotify.com/embed/playlist/4eBpz8sWLVz9EfuPOY2NpW?utm_source=generator&theme=0&autoplay=1"
+            title="Spotify Embed: Recommendation Playlist"
+            src="https://open.spotify.com/embed/playlist/4eBpz8sWLVz9EfuPOY2NpW?utm_source=generator&theme=0"
             width="100%"
-            height="390"
-            style="min-height: 380px; border: none;"
+            height="380"
+            style="min-height: 360px;"
+            frameBorder="0"
             allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
             loading="lazy">
           </iframe>
@@ -792,50 +789,65 @@ document.addEventListener("DOMContentLoaded", () => {
 
     createWindow({
       id: "spotify",
-      title: "Spotify Player — CASEY TOP TRACKS",
+      title: "Spotify Player — Top Tracks Playlist",
       width: "560px",
-      top: "14%",
-      left: "28%",
+      top: "10%",
+      left: "26%",
       contentHTML: content
     });
   };
 
-  // 11. Open Contact Window with Interactive Clickable Email Button
+  // 11. Open Contact Window with Interactive Working Email Links & Copy Action
   window.openContactWindow = function() {
     const data = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : {});
     const email = (data.personal && data.personal.email) ? data.personal.email : "khushalworkmail08@gmail.com";
     const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${encodeURIComponent("Project Inquiry — Casey Portfolio")}`;
-    const mailtoUrl = `mailto:${email}`;
+    const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent("Project Inquiry — Casey Portfolio")}`;
 
     const content = `
-      <div style="text-align: center; padding: 20px 16px;">
-        <div style="font-size: 44px; margin-bottom: 12px;">✉️</div>
-        <h2 style="font-size: 22px; font-weight: 800; margin-bottom: 8px;">Let's Work Together</h2>
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5; max-width: 360px; margin-left: auto; margin-right: auto;">
-          Click below to compose an email to <strong>${email}</strong>
-        </p>
-        
-        <div style="display: flex; flex-direction: column; gap: 12px; align-items: center;">
-          <!-- Primary Clickable Blue Button -->
-          <button 
-            type="button" 
-            onclick="window.open('${gmailUrl}', '_blank');" 
-            style="width: 100%; max-width: 360px; padding: 14px 24px; background: #2563eb; color: #ffffff; border: none; font-weight: 700; font-size: 13px; border-radius: 24px; cursor: pointer; pointer-events: auto; box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45); transition: transform 0.2s, background 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;"
-            onmouseover="this.style.background='#1d4ed8'; this.style.transform='scale(1.02)';" 
-            onmouseout="this.style.background='#2563eb'; this.style.transform='scale(1)';">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
-            Send Email to ${email}
-          </button>
+      <div style="text-align: center; padding: 22px 18px;">
+        <!-- Mail Icon Badge -->
+        <div style="width: 56px; height: 56px; margin: 0 auto 14px auto; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.35); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px; box-shadow: 0 8px 24px rgba(59, 130, 246, 0.25);">
+          ✉️
+        </div>
 
-          <!-- Alternative Mail App Option -->
+        <h2 style="font-size: 22px; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.3px;">Let's Work Together</h2>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5; max-width: 380px; margin-left: auto; margin-right: auto;">
+          Art Direction · Visual Identity · Album Packaging · Stage Motion
+        </p>
+
+        <!-- Email Address Box with One-Click Copy -->
+        <div style="display: flex; align-items: center; justify-content: center; gap: 10px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.18); padding: 8px 16px; border-radius: 20px; width: fit-content; margin: 0 auto 22px auto;">
+          <span style="font-size: 13px; font-weight: 700; color: #ffffff; letter-spacing: 0.2px;">${email}</span>
           <button 
             type="button" 
-            onclick="window.location.href='${mailtoUrl}';" 
-            style="background: transparent; color: rgba(255, 255, 255, 0.7); border: none; font-size: 12px; font-weight: 500; cursor: pointer; text-decoration: underline; padding: 4px;"
-            onmouseover="this.style.color='#ffffff';"
-            onmouseout="this.style.color='rgba(255, 255, 255, 0.7)';">
-            Or open in Default Mail App
+            onclick="navigator.clipboard.writeText('${email}'); this.textContent='✓ Copied!'; setTimeout(() => this.textContent='📋 Copy', 2000);" 
+            style="background: rgba(255, 255, 255, 0.18); border: none; color: #fff; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 12px; cursor: pointer; transition: all 0.2s ease;">
+            📋 Copy
           </button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 380px; margin: 0 auto;">
+          <!-- Direct Gmail Web Compose Button (100% Native Trusted Link) -->
+          <a 
+            href="${gmailUrl}" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            style="display: flex; align-items: center; justify-content: center; gap: 10px; padding: 14px 24px; background: #ea4335; color: #ffffff; text-decoration: none; font-weight: 700; font-size: 13px; border-radius: 24px; box-shadow: 0 6px 20px rgba(234, 67, 53, 0.45); transition: transform 0.2s, background 0.2s;"
+            onmouseover="this.style.transform='scale(1.02)'; this.style.background='#dc2626';" 
+            onmouseout="this.style.transform='scale(1)'; this.style.background='#ea4335';">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+            Compose in Gmail Web
+          </a>
+
+          <!-- Native Mail App Option -->
+          <a 
+            href="${mailtoUrl}" 
+            style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 24px; background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.2); color: #ffffff; text-decoration: none; font-weight: 600; font-size: 13px; border-radius: 24px; transition: transform 0.2s, background 0.2s;"
+            onmouseover="this.style.transform='scale(1.02)'; this.style.background='rgba(255, 255, 255, 0.22)';" 
+            onmouseout="this.style.transform='scale(1)'; this.style.background='rgba(255, 255, 255, 0.12)';">
+            📫 Open in Default Mail App
+          </a>
         </div>
       </div>
     `;
