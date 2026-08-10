@@ -8,8 +8,8 @@
   <meta name="theme-color" content="#0b0c10">
   <title>CASEY — Art Director & Graphic Designer</title>
   <meta name="description" content="Portfolio of Casey — Art Director, Graphic Designer, Photographer, and Stylist. Specializing in album artwork, key visuals, stage motion, and merch.">
-  <script type="module" crossorigin src="/assets/index-DpKWhzuu.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-CqbxQNX-.css">
+  <script type="module" crossorigin src="/assets/index-CWfJvBLX.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-BljsRNoL.css">
 </head>
 <body>
 
@@ -135,6 +135,9 @@
         <span class="menu-item" onclick="openNotebookWindow()">About</span>
         <span class="menu-item" onclick="openGalleryWindow()">Gallery</span>
         <span class="menu-item" onclick="openContactWindow()">Contact</span>
+        <span class="menu-item" onclick="window.toggleMacWidgets && window.toggleMacWidgets()" title="Toggle macOS Desktop Widgets" style="gap: 5px; display: inline-flex; align-items: center;">
+          🧩 Widgets
+        </span>
         <span class="menu-item" onclick="lockMacScreen()" style="color: rgba(255,255,255,0.85); gap: 5px; display: inline-flex; align-items: center;" title="Lock Screen (Touch ID)">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38-.42 5.08-.88 6.88"/><path d="M17.29 21.02c.12-.6.43-2.3.43-4.02 0-3.32-2.69-6-6-6s-6 2.68-6 6c0 .76.11 1.7.31 2.47"/><path d="M7.74 20.35a12.8 12.8 0 0 1-.74-3.35c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.25-.42 2.76-.92 3.96"/><path d="M12 2a10 10 0 0 0-10 10c0 2.48.57 4.9 1.48 7.02"/><path d="M20.52 19.02A9.95 9.95 0 0 0 22 12c0-5.52-4.48-10-10-10"/></svg>
           Lock
@@ -147,6 +150,65 @@
         <span id="menu-clock">Thu Jul 30 17:34</span>
       </div>
     </header>
+
+    <!-- macOS Sonoma Desktop Widgets Layer -->
+    <div id="desktop-widgets-layer" class="desktop-widgets-layer">
+      
+      <!-- Widget 1: Live Apple Clock & Calendar -->
+      <div class="mac-widget mac-widget-clock" id="widget-clock" style="top: 48px; right: 28px;">
+        <div class="widget-header">
+          <span class="widget-label">WORLD CLOCK</span>
+          <span class="widget-icon">🕒</span>
+        </div>
+        <div class="widget-clock-body">
+          <div id="widget-digital-time" class="widget-time-display">10:42 PM</div>
+          <div id="widget-date-display" class="widget-date-display">Mon, Aug 10</div>
+          <div class="widget-location-tag">Global Studio · PST</div>
+        </div>
+      </div>
+
+      <!-- Widget 2: Apple Weather Widget -->
+      <div class="mac-widget mac-widget-weather" id="widget-weather" style="top: 198px; right: 28px;">
+        <div class="widget-weather-header">
+          <span class="widget-city">STUDIO WEATHER</span>
+          <span class="widget-weather-icon">🌤️</span>
+        </div>
+        <div class="widget-temp">72°</div>
+        <div class="widget-condition">Mostly Sunny</div>
+        <div class="widget-temp-range">H: 78°  L: 62°</div>
+      </div>
+
+      <!-- Widget 3: Apple System & Battery Status -->
+      <div class="mac-widget mac-widget-battery" id="widget-battery" style="top: 348px; right: 28px;">
+        <div class="widget-header">
+          <span class="widget-label">BATTERY & STATUS</span>
+          <span class="widget-icon">⚡</span>
+        </div>
+        <div class="widget-battery-body">
+          <div class="battery-level-ring">
+            <span class="battery-percent">100%</span>
+          </div>
+          <div class="widget-status-text">Available for Projects</div>
+        </div>
+      </div>
+
+      <!-- Widget 4: Spotify Now Playing -->
+      <div class="mac-widget mac-widget-music" id="widget-music" style="top: 498px; right: 28px;">
+        <div class="widget-music-cover">
+          <img src="https://framerusercontent.com/images/jWCd6yieKKyRymQkEZLe6vjBEI.jpg?scale-down-to=2048" alt="Now Playing Artwork">
+        </div>
+        <div class="widget-music-info">
+          <div class="music-title">CASEY — TOP TRACKS</div>
+          <div class="music-artist">Art Direction Playlist</div>
+        </div>
+        <div class="widget-music-controls">
+          <button class="music-btn" onclick="openSpotifyWindow()" title="Previous Track">⏮</button>
+          <button class="music-btn play" onclick="openSpotifyWindow()" title="Play / Pause">⏯</button>
+          <button class="music-btn" onclick="openSpotifyWindow()" title="Next Track">⏭</button>
+        </div>
+      </div>
+
+    </div>
 
     <!-- Scattered Desktop Project Items -->
     <main id="desktop-grid" class="desktop-grid"></main>

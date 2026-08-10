@@ -22,6 +22,58 @@ document.addEventListener("DOMContentLoaded", () => {
   updateMenuClock();
   setInterval(updateMenuClock, 10000);
 
+  // 1c. macOS Sonoma Desktop Widgets Manager
+  const widgetsLayer = document.getElementById("desktop-widgets-layer");
+  const widgetTimeEl = document.getElementById("widget-digital-time");
+  const widgetDateEl = document.getElementById("widget-date-display");
+
+  function updateWidgetClock() {
+    if (!widgetTimeEl || !widgetDateEl) return;
+    const now = new Date();
+    widgetTimeEl.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    widgetDateEl.textContent = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+  updateWidgetClock();
+  setInterval(updateWidgetClock, 1000);
+
+  window.toggleMacWidgets = function() {
+    if (!widgetsLayer) return;
+    widgetsLayer.classList.toggle("is-hidden");
+  };
+
+  // Make individual macOS desktop widgets draggable
+  document.querySelectorAll(".mac-widget").forEach((widget) => {
+    let isDragging = false;
+    let startX = 0, startY = 0;
+    let widgetX = 0, widgetY = 0;
+
+    widget.addEventListener("mousedown", (e) => {
+      if (e.target.closest("button") || e.target.closest("a")) return;
+      isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      widgetX = widget.offsetLeft;
+      widgetY = widget.offsetTop;
+      widget.style.zIndex = 10;
+    });
+
+    document.addEventListener("mousemove", (e) => {
+      if (!isDragging) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      widget.style.left = `${widgetX + dx}px`;
+      widget.style.top = `${widgetY + dy}px`;
+      widget.style.right = "auto";
+    });
+
+    document.addEventListener("mouseup", () => {
+      if (isDragging) {
+        isDragging = false;
+        widget.style.zIndex = "";
+      }
+    });
+  });
+
   // 1b. macOS Apple Login & Boot Progress Sequence
   const loginScreen = document.getElementById("mac-login-screen");
   const loginInputBox = document.getElementById("login-input-box");
