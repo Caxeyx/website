@@ -22,15 +22,13 @@ document.addEventListener("DOMContentLoaded", () => {
   updateMenuClock();
   setInterval(updateMenuClock, 10000);
 
-  // 1b. macOS Apple Login & Boot Progress Sequence
+  // 1b. macOS Apple Touch ID & Boot Progress Sequence
   const loginScreen = document.getElementById("mac-login-screen");
-  const loginInputBox = document.getElementById("login-input-box");
-  const loginHintsBox = document.getElementById("login-hints-box");
+  const touchIdBtn = document.getElementById("touch-id-btn");
   const bootProgressContainer = document.getElementById("boot-progress-container");
   const bootProgressFill = document.getElementById("boot-progress-fill");
   const bootStatusText = document.getElementById("boot-status-text");
   const loginClock = document.getElementById("login-clock");
-  const passwordInput = document.getElementById("login-password-input");
 
   let isLoggingIn = false;
 
@@ -47,40 +45,44 @@ document.addEventListener("DOMContentLoaded", () => {
     isLoggingIn = true;
 
     loginScreen.classList.add("is-authenticating");
+    if (touchIdBtn) touchIdBtn.classList.add("is-scanning");
 
-    if (loginInputBox) loginInputBox.style.display = "none";
-    if (loginHintsBox) loginHintsBox.style.display = "none";
-    if (bootProgressContainer) bootProgressContainer.style.display = "flex";
-
+    // Touch ID Scan animation feedback (green glow scan line)
     setTimeout(() => {
-      if (bootProgressFill) bootProgressFill.style.width = "40%";
-      if (bootStatusText) bootStatusText.textContent = "Loading macOS Sonoma...";
-    }, 150);
-
-    setTimeout(() => {
-      if (bootProgressFill) bootProgressFill.style.width = "85%";
-      if (bootStatusText) bootStatusText.textContent = "Setting up Casey's Studio Workspace...";
-    }, 600);
-
-    setTimeout(() => {
-      if (bootProgressFill) bootProgressFill.style.width = "100%";
-      if (bootStatusText) bootStatusText.textContent = "Welcome back, Casey!";
-    }, 1000);
-
-    setTimeout(() => {
-      loginScreen.classList.add("is-unlocked");
+      if (touchIdBtn) touchIdBtn.style.display = "none";
+      if (bootProgressContainer) bootProgressContainer.style.display = "flex";
 
       setTimeout(() => {
-        loginScreen.style.display = "none";
-        loginScreen.classList.remove("is-authenticating", "is-unlocked");
-        if (bootProgressContainer) bootProgressContainer.style.display = "none";
-        if (bootProgressFill) bootProgressFill.style.width = "0%";
-        if (loginInputBox) loginInputBox.style.display = "block";
-        if (loginHintsBox) loginHintsBox.style.display = "block";
-        if (passwordInput) passwordInput.value = "";
-        isLoggingIn = false;
-      }, 650);
-    }, 1300);
+        if (bootProgressFill) bootProgressFill.style.width = "40%";
+        if (bootStatusText) bootStatusText.textContent = "Loading macOS Sonoma...";
+      }, 100);
+
+      setTimeout(() => {
+        if (bootProgressFill) bootProgressFill.style.width = "85%";
+        if (bootStatusText) bootStatusText.textContent = "Setting up Casey's Studio Workspace...";
+      }, 500);
+
+      setTimeout(() => {
+        if (bootProgressFill) bootProgressFill.style.width = "100%";
+        if (bootStatusText) bootStatusText.textContent = "Welcome back, Casey!";
+      }, 950);
+
+      setTimeout(() => {
+        loginScreen.classList.add("is-unlocked");
+
+        setTimeout(() => {
+          loginScreen.style.display = "none";
+          loginScreen.classList.remove("is-authenticating", "is-unlocked");
+          if (touchIdBtn) {
+            touchIdBtn.classList.remove("is-scanning");
+            touchIdBtn.style.display = "flex";
+          }
+          if (bootProgressContainer) bootProgressContainer.style.display = "none";
+          if (bootProgressFill) bootProgressFill.style.width = "0%";
+          isLoggingIn = false;
+        }, 650);
+      }, 1250);
+    }, 450);
   };
 
   window.lockMacScreen = function() {
@@ -88,14 +90,12 @@ document.addEventListener("DOMContentLoaded", () => {
     loginScreen.style.display = "flex";
     void loginScreen.offsetWidth;
     loginScreen.classList.remove("is-unlocked", "is-authenticating");
-    if (loginInputBox) loginInputBox.style.display = "block";
-    if (loginHintsBox) loginHintsBox.style.display = "block";
+    if (touchIdBtn) {
+      touchIdBtn.classList.remove("is-scanning");
+      touchIdBtn.style.display = "flex";
+    }
     if (bootProgressContainer) bootProgressContainer.style.display = "none";
     if (bootProgressFill) bootProgressFill.style.width = "0%";
-    if (passwordInput) {
-      passwordInput.value = "";
-      passwordInput.focus();
-    }
   };
 
   // 2. Render Scattered Desktop Icons (Ultra-Smooth Apple Dragging & Mobile Support)

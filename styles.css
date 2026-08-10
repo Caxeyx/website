@@ -972,72 +972,99 @@ html, body {
   letter-spacing: 0.3px;
 }
 
-.login-form {
+.login-action-container {
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.login-input-wrapper {
-  position: relative;
-  width: 100%;
-  max-width: 260px;
-  margin-bottom: 12px;
-}
-
-.login-password-input {
-  width: 100%;
-  height: 38px;
-  padding: 0 42px 0 16px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.18);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: #ffffff;
-  font-size: 13px;
-  outline: none;
-  transition: all 0.25s ease;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.login-password-input::placeholder {
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 12px;
-}
-
-.login-password-input:focus {
-  background: rgba(255, 255, 255, 0.26);
-  border-color: rgba(255, 255, 255, 0.6);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2), 0 0 0 3px rgba(255, 255, 255, 0.25);
-}
-
-.login-submit-btn {
-  position: absolute;
-  right: 4px;
-  top: 4px;
-  bottom: 4px;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
+/* Touch ID Sensor Button */
+.touch-id-button {
+  background: transparent;
   border: none;
-  background: rgba(255, 255, 255, 0.3);
-  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 8px;
+}
+
+.touch-id-button:hover {
+  transform: scale(1.06);
+}
+
+.touch-id-button:active {
+  transform: scale(0.96);
+}
+
+.touch-id-ring {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  color: rgba(255, 255, 255, 0.9);
+  transition: all 0.3s ease;
+  overflow: hidden;
 }
 
-.login-submit-btn:hover {
-  background: rgba(255, 255, 255, 0.5);
-  transform: scale(1.05);
+.touch-id-button:hover .touch-id-ring {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.6);
+  color: #ffffff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 18px rgba(255, 255, 255, 0.3);
 }
 
-.login-submit-btn:active {
-  transform: scale(0.95);
+.touch-id-scan-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #10b981, #60a5fa, transparent);
+  top: -100%;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.touch-id-button.is-scanning .touch-id-scan-line {
+  opacity: 1;
+  animation: scanMove 0.8s infinite ease-in-out;
+}
+
+.touch-id-button.is-scanning .touch-id-ring {
+  border-color: #10b981;
+  color: #10b981;
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.6);
+}
+
+@keyframes scanMove {
+  0% { top: 0%; }
+  50% { top: 90%; }
+  100% { top: 0%; }
+}
+
+.touch-id-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.3px;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  transition: color 0.2s ease;
+}
+
+.touch-id-button:hover .touch-id-label {
+  color: #ffffff;
 }
 
 /* Apple Boot Progress Bar */
