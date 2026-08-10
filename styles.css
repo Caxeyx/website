@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* ==========================================================================
    bychudy.com Inspired macOS Desktop Portfolio System for Casey
    ========================================================================== */
@@ -7,9 +11,9 @@
   --bg-color: #0b0c10;
   --text-main: #ffffff;
   --text-muted: rgba(255, 255, 255, 0.65);
-  --glass-bg: rgba(20, 22, 28, 0.72);
-  --glass-border: rgba(255, 255, 255, 0.15);
-  --glass-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+  --glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.04) 100%), rgba(16, 20, 30, 0.48);
+  --glass-border: rgba(255, 255, 255, 0.28);
+  --glass-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.6), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.45), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.3);
   --accent-color: #3b82f6;
   --window-header-height: 38px;
 }
@@ -82,17 +86,18 @@ html, body {
   z-index: 1;
 }
 
-/* Top Navigation Status Bar */
+/* Top Navigation Status Bar (Apple Liquid Glass) */
 .mac-menu-bar {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 30px;
-  background: rgba(10, 12, 16, 0.45);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.03) 100%), rgba(12, 16, 24, 0.45);
+  backdrop-filter: blur(40px) saturate(210%) contrast(108%);
+  -webkit-backdrop-filter: blur(40px) saturate(210%) contrast(108%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -222,37 +227,36 @@ html, body {
   letter-spacing: 0.5px;
   text-align: center;
   color: #ffffff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 4px rgba(0, 0, 0, 0.9);
+  background: rgba(18, 22, 30, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   line-height: 1.15;
-  padding: 1px 4px;
-  border-radius: 2px;
+  padding: 2px 6px;
+  border-radius: 6px;
   max-width: 95px;
   word-break: break-word;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
 }
 
 .desktop-item:hover .desktop-label {
-  background: rgba(255, 255, 255, 0.95);
-  color: #000000;
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #ffffff;
   text-shadow: none;
 }
 
-/* macOS Solid App Dock */
-.dock-container {
-  position: absolute;
+/* macOS React App Dock Mount Point */
+.mac-dock-mount-container {
+  position: fixed;
   bottom: 12px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  padding: 6px 12px;
-  background: rgba(20, 20, 24, 0.75);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 18px;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+  pointer-events: auto;
+  overflow: visible !important;
 }
 
 .dock-item {
@@ -344,8 +348,8 @@ html, body {
   min-width: 320px;
   max-width: 90vw;
   background: var(--glass-bg);
-  backdrop-filter: blur(32px) saturate(160%);
-  -webkit-backdrop-filter: blur(32px) saturate(160%);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
   border: 1px solid var(--glass-border);
   border-radius: 14px;
   box-shadow: var(--glass-shadow);
@@ -364,15 +368,17 @@ html, body {
 }
 
 .mac-window.focused {
-  border-color: rgba(255, 255, 255, 0.35);
+  border-color: rgba(255, 255, 255, 0.38);
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65), 0 0 1px rgba(255, 255, 255, 0.4);
 }
 
 /* Window Header Bar */
 .window-header {
   height: var(--window-header-height);
-  background: rgba(255, 255, 255, 0.05);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -727,19 +733,10 @@ html, body {
   }
 
   /* Bottom Dock on Mobile */
-  .dock-container {
+  .mac-dock-mount-container {
     bottom: 8px;
-    padding: 6px 8px;
-    gap: 5px;
-    max-width: 96vw;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    touch-action: pan-x;
-  }
-
-  .dock-container::-webkit-scrollbar {
-    display: none;
+    max-width: 98vw;
+    overflow: visible !important;
   }
 
   .dock-item {
@@ -1160,10 +1157,10 @@ html, body {
   position: absolute;
   width: 170px;
   padding: 14px;
-  background: rgba(18, 22, 30, 0.58);
-  backdrop-filter: blur(28px) saturate(1.3);
-  -webkit-backdrop-filter: blur(28px) saturate(1.3);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(18, 22, 30, 0.5);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 22px;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
   pointer-events: auto;

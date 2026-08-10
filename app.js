@@ -75,7 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let currentTrackIdx = 0;
   let currentTrackTime = 30;
-  let isSpotifyPlaying = true;
+  let isSpotifyPlaying = false;
   let spotifyInterval = null;
 
   // Real HTML5 Audio Instance
@@ -84,6 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
   realAudio.volume = 0.45;
 
   const widgetMusicCard = document.getElementById("widget-music");
+  if (widgetMusicCard) widgetMusicCard.classList.add("is-paused");
   const widgetSongCover = document.getElementById("widget-song-cover");
   const widgetSongTitle = document.getElementById("widget-song-title");
   const widgetSongArtist = document.getElementById("widget-song-artist");
@@ -91,6 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const widgetCurrentTime = document.getElementById("widget-song-current-time");
   const widgetDurationTime = document.getElementById("widget-song-duration");
   const widgetPlayBtn = document.getElementById("widget-play-btn");
+  if (widgetPlayBtn) widgetPlayBtn.textContent = "▶";
 
   function formatTime(seconds) {
     const mins = Math.floor(seconds / 60);
@@ -251,8 +253,8 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => {
       loginScreen.classList.add("is-unlocked");
 
-      // Trigger real music audio playback on unlock
-      if (typeof playCurrentAudio === "function") {
+      // Trigger real music audio playback on unlock if user enabled it
+      if (isSpotifyPlaying && typeof playCurrentAudio === "function") {
         playCurrentAudio();
       }
 
