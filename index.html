@@ -8,8 +8,8 @@
   <meta name="theme-color" content="#0b0c10">
   <title>CASEY — Art Director & Graphic Designer</title>
   <meta name="description" content="Portfolio of Casey — Art Director, Graphic Designer, Photographer, and Stylist. Specializing in album artwork, key visuals, stage motion, and merch.">
-  <script type="module" crossorigin src="./assets/index-Cz6g5-Ug.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-K5NDmPPA.css">
+  <script type="module" crossorigin src="./assets/index-CR1s4_B6.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-K0aPclCV.css">
 </head>
 <body>
 
@@ -52,7 +52,7 @@
             type="text" 
             id="login-password-input" 
             class="login-password-input" 
-            placeholder="Click to Unlock" 
+            placeholder="Tap to Unlock" 
             readonly
             style="cursor: pointer;">
           <button type="submit" class="login-submit-btn" aria-label="Unlock macOS">
@@ -71,6 +71,16 @@
           <div id="boot-status-text" class="boot-status-text">Logging in...</div>
         </div>
 
+        <!-- iOS 16 Figma UI Kit Lock Screen Actions -->
+        <div class="ios-lock-actions">
+          <button type="button" class="ios-action-btn" onclick="window.startMacBootSequence && window.startMacBootSequence();" title="Flashlight">
+            🔦
+          </button>
+          <button type="button" class="ios-action-btn" onclick="window.openGalleryWindow && window.openGalleryWindow();" title="Camera">
+            📷
+          </button>
+        </div>
+
         <!-- Subtle macOS Touch ID Hint below input -->
         <div id="login-hints-box" class="login-hints">
           <button type="button" class="login-touchid-hint-btn" onclick="window.startMacBootSequence && window.startMacBootSequence();">
@@ -82,7 +92,7 @@
               <path d="M12 2a10 10 0 0 0-10 10c0 2.48.57 4.9 1.48 7.02"/>
               <path d="M20.52 19.02A9.95 9.95 0 0 0 22 12c0-5.52-4.48-10-10-10"/>
             </svg>
-            <span>Touch ID or Press Any Key to Unlock</span>
+            <span>Touch ID or Swipe Up to Unlock</span>
           </button>
         </div>
 
