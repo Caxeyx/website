@@ -41,38 +41,47 @@ document.addEventListener("DOMContentLoaded", () => {
     widgetsLayer.classList.toggle("is-hidden");
   };
 
-  // 1d. Live Interactive Spotify Widget Player Simulation
+  // 1d. Real HTML5 Audio Music Player & Spotify Widget Engine
   const spotifyTracks = [
     {
       title: "HOTEL MAFIJA VINYL",
       artist: "Casey & SBM Label",
       cover: "https://framerusercontent.com/images/vs3eHHOnNIgYRpCxqrlx6kGu7ZE.png?scale-down-to=2048",
+      audioUrl: "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3",
       duration: 225
     },
     {
       title: "TRASA PO KOŃCU ŚWIATA",
       artist: "Kacperczyk & Casey",
       cover: "https://framerusercontent.com/images/Lx5tLMHaVdhs7fD27bCK8cvb2v4.jpg?scale-down-to=2048",
+      audioUrl: "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3",
       duration: 198
     },
     {
       title: "RYK X SEXED",
       artist: "Casey Art Direction",
       cover: "https://framerusercontent.com/images/jWCd6yieKKyRymQkEZLe6vjBEI.jpg?scale-down-to=2048",
+      audioUrl: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a8d184.mp3",
       duration: 212
     },
     {
       title: "PIERWSZY SWAG W POLSCE",
       artist: "Casey Studio Rollout",
       cover: "https://framerusercontent.com/images/zaWs4d37fEOTdAisIq7UlAJyIU.png?scale-down-to=2048",
+      audioUrl: "https://cdn.pixabay.com/download/audio/2021/11/24/audio_3316d97c72.mp3",
       duration: 185
     }
   ];
 
   let currentTrackIdx = 0;
-  let currentTrackTime = 102;
+  let currentTrackTime = 30;
   let isSpotifyPlaying = true;
   let spotifyInterval = null;
+
+  // Real HTML5 Audio Instance
+  const realAudio = new Audio();
+  realAudio.loop = true;
+  realAudio.volume = 0.45;
 
   const widgetMusicCard = document.getElementById("widget-music");
   const widgetSongCover = document.getElementById("widget-song-cover");
@@ -87,6 +96,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  }
+
+  function playCurrentAudio() {
+    const track = spotifyTracks[currentTrackIdx];
+    if (realAudio.src !== track.audioUrl) {
+      realAudio.src = track.audioUrl;
+    }
+    realAudio.play().catch(e => console.log("Audio autoplay policy handled:", e));
+  }
+
+  function pauseCurrentAudio() {
+    realAudio.pause();
   }
 
   function updateSpotifyWidgetDisplay() {
@@ -110,6 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (currentTrackTime >= track.duration) {
         currentTrackTime = 0;
         currentTrackIdx = (currentTrackIdx + 1) % spotifyTracks.length;
+        playCurrentAudio();
       }
       updateSpotifyWidgetDisplay();
     }, 1000);
@@ -120,8 +142,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (widgetMusicCard) {
       if (isSpotifyPlaying) {
         widgetMusicCard.classList.remove("is-paused");
+        playCurrentAudio();
       } else {
         widgetMusicCard.classList.add("is-paused");
+        pauseCurrentAudio();
       }
     }
     if (widgetPlayBtn) {
@@ -133,12 +157,14 @@ document.addEventListener("DOMContentLoaded", () => {
     currentTrackIdx = (currentTrackIdx + 1) % spotifyTracks.length;
     currentTrackTime = 0;
     updateSpotifyWidgetDisplay();
+    if (isSpotifyPlaying) playCurrentAudio();
   };
 
   window.spotifyPrevTrack = function() {
     currentTrackIdx = (currentTrackIdx - 1 + spotifyTracks.length) % spotifyTracks.length;
     currentTrackTime = 0;
     updateSpotifyWidgetDisplay();
+    if (isSpotifyPlaying) playCurrentAudio();
   };
 
   updateSpotifyWidgetDisplay();
@@ -224,6 +250,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setTimeout(() => {
       loginScreen.classList.add("is-unlocked");
+
+      // Trigger real music audio playback on unlock
+      if (typeof playCurrentAudio === "function") {
+        playCurrentAudio();
+      }
 
       setTimeout(() => {
         loginScreen.style.display = "none";
