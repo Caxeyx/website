@@ -611,17 +611,21 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  // 11. Open Contact Window
+  // 11. Open Contact Window & Redirect to Email
   window.openContactWindow = function() {
     const data = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : {});
-    const email = (data.personal && data.personal.email) ? data.personal.email : "contact@casey.design";
+    const email = (data.personal && data.personal.email) ? data.personal.email : "khushalworkmail08@gmail.com";
+    
+    // Automatically trigger mailto redirect
+    window.location.href = `mailto:${email}`;
+
     const content = `
-      <div style="text-align: center; padding: 10px;">
-        <div style="font-size: 40px; margin-bottom: 10px;">✉️</div>
-        <h2 style="font-size: 22px; font-weight: 900; margin-bottom: 6px;">Let's Work Together</h2>
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Open for Art Direction, Key Visuals, Album Packaging & Collaborations.</p>
-        <a href="mailto:${email}" style="display: inline-block; padding: 10px 24px; background: #3b82f6; color: #fff; text-decoration: none; font-weight: 800; font-size: 13px; border-radius: 8px; transition: background 0.2s;">
-          Send Email to ${email}
+      <div style="text-align: center; padding: 16px;">
+        <div style="font-size: 42px; margin-bottom: 12px;">✉️</div>
+        <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 8px;">Let's Work Together</h2>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5;">Opening email client to contact <strong>${email}</strong>...</p>
+        <a href="mailto:${email}" style="display: inline-block; padding: 12px 26px; background: #3b82f6; color: #fff; text-decoration: none; font-weight: 700; font-size: 13px; border-radius: 20px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); transition: transform 0.2s;">
+          ✉️ Send Email to ${email}
         </a>
       </div>
     `;
@@ -629,7 +633,7 @@ document.addEventListener("DOMContentLoaded", () => {
     createWindow({
       id: "contact",
       title: "Contact Casey",
-      width: "450px",
+      width: "460px",
       top: "22%",
       left: "32%",
       contentHTML: content
