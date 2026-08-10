@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0b0c10">
+  <title>CASEY — Art Director & Graphic Designer</title>
+  <meta name="description" content="Portfolio of Casey — Art Director, Graphic Designer, Photographer, and Stylist. Specializing in album artwork, key visuals, stage motion, and merch.">
+  <script type="module" crossorigin src="./assets/index-Ccl96L5D.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-DGhREQV7.css">
+</head>
+<body>
+
+  <!-- macOS Apple Login / Boot Screen Overlay -->
+  <div id="mac-login-screen" class="mac-login-screen">
+    <div class="login-backdrop-blur"></div>
+    
+    <!-- Top Login Header Bar -->
+    <div class="login-top-bar">
+      <div class="login-top-left">
+        <span> macOS Sonoma</span>
+      </div>
+      <div class="login-top-right">
+        <span class="login-wifi-icon" title="Wi-Fi Connected">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12 3C7.03 3 2.53 4.98 0 8.18l12 14.82L24 8.18C21.47 4.98 16.97 3 12 3z"/></svg>
+        </span>
+        <span class="login-battery-icon" title="Battery 100%">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M17 4h-3V2h-4v2H7c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2z"/></svg>
+        </span>
+        <span id="login-clock" class="login-clock"></span>
+      </div>
+    </div>
+
+    <!-- Center Login Box -->
+    <div class="login-card">
+      <div class="login-avatar-wrapper">
+        <img class="login-avatar" src="./assets/casey_portrait-DkUbf4Cx.png" alt="Casey Avatar" onerror="this.src='https://framerusercontent.com/images/es0axIAu0guUZSRBu6xvsteey8w.png'">
+        <div class="login-avatar-ring"></div>
+      </div>
+      
+      <h1 class="login-username">CASEY</h1>
+      <p class="login-user-role">Art Director & Graphic Designer</p>
+
+      <!-- Apple macOS Password Form Container -->
+      <form id="login-form" class="login-form" onsubmit="event.preventDefault(); window.startMacBootSequence && window.startMacBootSequence();">
+        
+        <!-- Apple Translucent Action Capsule -->
+        <div id="login-input-box" class="login-input-wrapper" onclick="window.startMacBootSequence && window.startMacBootSequence();" style="cursor: pointer;">
+          <input 
+            type="text" 
+            id="login-password-input" 
+            class="login-password-input" 
+            placeholder="Click to Unlock" 
+            readonly
+            style="cursor: pointer;">
+          <button type="submit" class="login-submit-btn" aria-label="Unlock macOS">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Apple Boot Progress Bar (Shown during login loading sequence) -->
+        <div id="boot-progress-container" class="boot-progress-container">
+          <div class="boot-progress-bar">
+            <div id="boot-progress-fill" class="boot-progress-fill"></div>
+          </div>
+          <div id="boot-status-text" class="boot-status-text">Logging in...</div>
+        </div>
+
+        <!-- Subtle macOS Touch ID Hint below input -->
+        <div id="login-hints-box" class="login-hints">
+          <button type="button" class="login-touchid-hint-btn" onclick="window.startMacBootSequence && window.startMacBootSequence();">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/>
+              <path d="M14 13.12c0 2.38-.42 5.08-.88 6.88"/>
+              <path d="M17.29 21.02c.12-.6.43-2.3.43-4.02 0-3.32-2.69-6-6-6s-6 2.68-6 6c0 .76.11 1.7.31 2.47"/>
+              <path d="M7.74 20.35a12.8 12.8 0 0 1-.74-3.35c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.25-.42 2.76-.92 3.96"/>
+              <path d="M12 2a10 10 0 0 0-10 10c0 2.48.57 4.9 1.48 7.02"/>
+              <path d="M20.52 19.02A9.95 9.95 0 0 0 22 12c0-5.52-4.48-10-10-10"/>
+            </svg>
+            <span>Touch ID or Press Any Key to Unlock</span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- Bottom macOS Power Buttons -->
+    <div class="login-bottom-controls">
+      <button class="login-power-btn" onclick="window.startMacBootSequence && window.startMacBootSequence();" title="Sleep">
+        <div class="power-icon-circle">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </div>
+        <span>Sleep</span>
+      </button>
+      <button class="login-power-btn" onclick="location.reload()" title="Restart System">
+        <div class="power-icon-circle">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+        </div>
+        <span>Restart</span>
+      </button>
+      <button class="login-power-btn" onclick="window.lockMacScreen && window.lockMacScreen()" title="Shut Down">
+        <div class="power-icon-circle">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10"/></svg>
+        </div>
+        <span>Shut Down</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- macOS Spatial Desktop Canvas -->
+  <div id="desktop-canvas">
+    
+    <!-- Ambient Background Looping Live Video Wallpaper -->
+    <div class="wallpaper-video-wrapper">
+      <video 
+        class="wallpaper-video" 
+        src="./assets/purple-eyes-live-wallpaper-BHdRkC4Z.mp4" 
+        autoplay 
+        loop 
+        muted 
+        playsinline>
+      </video>
+    </div>
+    <div class="ambient-overlay"></div>
+
+    <!-- Top macOS Menu Status Bar -->
+    <header class="mac-menu-bar">
+      <div class="menu-left">
+        <span class="menu-logo" onclick="openNotebookWindow()"> CASEY</span>
+        <span class="menu-item" onclick="openNotebookWindow()">About</span>
+        <span class="menu-item" onclick="openGalleryWindow()">Gallery</span>
+        <span class="menu-item" onclick="openContactWindow()">Contact</span>
+        <span class="menu-item" onclick="window.toggleMacWidgets && window.toggleMacWidgets()" title="Toggle macOS Desktop Widgets" style="gap: 5px; display: inline-flex; align-items: center;">
+          🧩 Widgets
+        </span>
+        <span class="menu-item" onclick="window.toggleCursorCustomizer && window.toggleCursorCustomizer()" title="Customize Your Live Cursor" style="gap: 5px; display: inline-flex; align-items: center; color: #ec4899;">
+          🎨 Cursor
+        </span>
+        <span class="menu-item" onclick="lockMacScreen()" style="color: rgba(255,255,255,0.85); gap: 5px; display: inline-flex; align-items: center;" title="Lock Screen (Touch ID)">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38-.42 5.08-.88 6.88"/><path d="M17.29 21.02c.12-.6.43-2.3.43-4.02 0-3.32-2.69-6-6-6s-6 2.68-6 6c0 .76.11 1.7.31 2.47"/><path d="M7.74 20.35a12.8 12.8 0 0 1-.74-3.35c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.25-.42 2.76-.92 3.96"/><path d="M12 2a10 10 0 0 0-10 10c0 2.48.57 4.9 1.48 7.02"/><path d="M20.52 19.02A9.95 9.95 0 0 0 22 12c0-5.52-4.48-10-10-10"/></svg>
+          Lock
+        </span>
+      </div>
+      <div class="menu-right">
+        <span class="status-badge">
+          <span class="status-dot"></span> Available for Projects
+        </span>
+        <span id="menu-clock">Thu Jul 30 17:34</span>
+      </div>
+    </header>
+
+    <!-- macOS Sonoma Desktop Widgets Layer -->
+    <div id="desktop-widgets-layer" class="desktop-widgets-layer">
+      
+      <!-- Widget 1: Live Apple Clock & Calendar -->
+      <div class="mac-widget mac-widget-clock" id="widget-clock" style="top: 48px; right: 28px;">
+        <div class="widget-header">
+          <span class="widget-label">WORLD CLOCK</span>
+          <span class="widget-icon">🕒</span>
+        </div>
+        <div class="widget-clock-body">
+          <div id="widget-digital-time" class="widget-time-display">10:42 PM</div>
+          <div id="widget-date-display" class="widget-date-display">Mon, Aug 10</div>
+          <div class="widget-location-tag">Global Studio · PST</div>
+        </div>
+      </div>
+
+      <!-- Widget 2: Apple Weather Widget -->
+      <div class="mac-widget mac-widget-weather" id="widget-weather" style="top: 198px; right: 28px;">
+        <div class="widget-weather-header">
+          <span class="widget-city">STUDIO WEATHER</span>
+          <span class="widget-weather-icon">🌤️</span>
+        </div>
+        <div class="widget-temp">72°</div>
+        <div class="widget-condition">Mostly Sunny</div>
+        <div class="widget-temp-range">H: 78°  L: 62°</div>
+      </div>
+
+      <!-- Widget 3: Apple System & Battery Status -->
+      <div class="mac-widget mac-widget-battery" id="widget-battery" style="top: 348px; right: 28px;">
+        <div class="widget-header">
+          <span class="widget-label">BATTERY & STATUS</span>
+          <span class="widget-icon">⚡</span>
+        </div>
+        <div class="widget-battery-body">
+          <div class="battery-level-ring">
+            <span class="battery-percent">100%</span>
+          </div>
+          <div class="widget-status-text">Available for Projects</div>
+        </div>
+      </div>
+
+      <!-- Widget 4: Spotify Live Playing Widget -->
+      <div class="mac-widget mac-widget-music" id="widget-music" style="top: 498px; right: 28px;">
+        <div class="widget-header">
+          <span class="widget-label" style="color: #1db954; display: flex; align-items: center; gap: 4px;">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="#1db954"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.516 17.316c-.218.358-.686.474-1.044.256-2.864-1.75-6.467-2.146-10.71-1.176-.407.094-.816-.16-.91-.567-.093-.408.16-.817.568-.91 4.646-1.062 8.632-.612 11.84 1.35.358.218.474.686.256 1.047zm1.47-3.27c-.274.446-.86.588-1.306.314-3.278-2.014-8.277-2.598-12.155-1.42-.505.153-1.04-.135-1.194-.64-.153-.505.135-1.04.64-1.194 4.43-1.344 9.943-.695 13.7 1.614.446.274.588.86.314 1.306zm.127-3.41c-3.931-2.334-10.42-2.55-14.186-1.407-.604.183-1.242-.162-1.425-.766-.183-.604.162-1.242.766-1.425 4.316-1.31 11.48-1.053 16.002 1.63.543.322.723 1.028.4 1.57-.322.544-1.027.724-1.57.402z"/></svg>
+            NOW PLAYING
+          </span>
+          <!-- Live Equalizer Waves -->
+          <div class="spotify-eq-bars" id="spotify-eq-bars">
+            <span class="eq-bar"></span>
+            <span class="eq-bar"></span>
+            <span class="eq-bar"></span>
+            <span class="eq-bar"></span>
+          </div>
+        </div>
+
+        <div class="widget-music-cover" onclick="openSpotifyWindow()" style="cursor: pointer;" title="Open Spotify Playlist">
+          <img id="widget-song-cover" src="https://framerusercontent.com/images/vs3eHHOnNIgYRpCxqrlx6kGu7ZE.png?scale-down-to=2048" alt="Now Playing Artwork">
+        </div>
+
+        <div class="widget-music-info">
+          <div id="widget-song-title" class="music-title">HOTEL MAFIJA VINYL</div>
+          <div id="widget-song-artist" class="music-artist">Casey & SBM Label</div>
+        </div>
+
+        <!-- Live Song Progress Bar -->
+        <div class="widget-song-progress-wrapper">
+          <div class="widget-song-progress-bar">
+            <div id="widget-song-progress-fill" class="widget-song-progress-fill" style="width: 45%;"></div>
+          </div>
+          <div class="widget-song-timestamps">
+            <span id="widget-song-current-time">1:42</span>
+            <span id="widget-song-duration">3:45</span>
+          </div>
+        </div>
+
+        <div class="widget-music-controls">
+          <button class="music-btn" onclick="window.spotifyPrevTrack && window.spotifyPrevTrack()" title="Previous Track">⏮</button>
+          <button id="widget-play-btn" class="music-btn play" onclick="window.spotifyTogglePlay && window.spotifyTogglePlay()" title="Pause / Play">⏸</button>
+          <button class="music-btn" onclick="window.spotifyNextTrack && window.spotifyNextTrack()" title="Next Track">⏭</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Scattered Desktop Project Items -->
+    <main id="desktop-grid" class="desktop-grid"></main>
+
+    <!-- Window Manager Layer -->
+    <div id="window-stack" class="window-container"></div>
+
+    <!-- macOS Interactive React Dock Mount Point -->
+    <footer id="mac-dock" class="mac-dock-mount-container"></footer>
+
+  </div>
+
+  <!-- JavaScript Scripts -->
+</body>
+</html>
