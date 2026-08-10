@@ -797,130 +797,70 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  // 11. Open Normal macOS Contact Window Modal
+  // 11. Open Contact Window with Bottom-Right Gmail Compose Popup & Mail Links
   window.openContactWindow = function() {
     const data = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : {});
     const email = (data.personal && data.personal.email) ? data.personal.email : "khushalworkmail08@gmail.com";
+    // Omit fs=1 so Gmail opens the exact bottom-right New Message compose box
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(email)}&su=${encodeURIComponent("Project Inquiry — Casey Portfolio")}`;
+    const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent("Project Inquiry — Casey Portfolio")}`;
 
     const content = `
-      <div class="mac-mail-composer" style="padding: 18px; color: #fff; font-family: var(--font-family);">
-        
-        <!-- Mail Header -->
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.12); padding-bottom: 12px;">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="width: 38px; height: 38px; border-radius: 50%; background: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);">
-              ✉️
-            </div>
-            <div>
-              <h3 style="font-size: 16px; font-weight: 800; margin: 0;">New Message to Casey</h3>
-              <p style="font-size: 12px; color: rgba(255, 255, 255, 0.65); margin: 2px 0 0 0;">${email}</p>
-            </div>
-          </div>
+      <div style="text-align: center; padding: 22px 18px;">
+        <!-- Mail Icon Badge -->
+        <div style="width: 56px; height: 56px; margin: 0 auto 14px auto; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.35); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px; box-shadow: 0 8px 24px rgba(59, 130, 246, 0.25);">
+          ✉️
+        </div>
+
+        <h2 style="font-size: 22px; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.3px;">Let's Work Together</h2>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5; max-width: 380px; margin-left: auto; margin-right: auto;">
+          Art Direction · Visual Identity · Album Packaging · Stage Motion
+        </p>
+
+        <!-- Email Address Box with One-Click Copy -->
+        <div style="display: flex; align-items: center; justify-content: center; gap: 10px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.18); padding: 8px 16px; border-radius: 20px; width: fit-content; margin: 0 auto 22px auto;">
+          <span style="font-size: 13px; font-weight: 700; color: #ffffff; letter-spacing: 0.2px;">${email}</span>
           <button 
             type="button" 
-            onclick="navigator.clipboard.writeText('${email}'); this.textContent='✓ Copied!'; setTimeout(() => this.textContent='📋 Copy Email', 2000);" 
-            style="background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; font-size: 11px; font-weight: 700; padding: 6px 14px; border-radius: 14px; cursor: pointer; transition: all 0.2s ease;"
-            title="Copy email to clipboard">
-            📋 Copy Email
+            onclick="navigator.clipboard.writeText('${email}'); this.textContent='✓ Copied!'; setTimeout(() => this.textContent='📋 Copy', 2000);" 
+            style="background: rgba(255, 255, 255, 0.18); border: none; color: #fff; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 12px; cursor: pointer; transition: all 0.2s ease;">
+            📋 Copy
           </button>
         </div>
 
-        <!-- In-App Contact Form -->
-        <form onsubmit="event.preventDefault(); window.sendMacMailForm && window.sendMacMailForm(this);" style="display: flex; flex-direction: column; gap: 12px;">
-          
-          <div style="display: flex; gap: 12px;">
-            <div style="flex: 1;">
-              <label style="display: block; font-size: 11px; font-weight: 700; color: rgba(255, 255, 255, 0.6); margin-bottom: 4px;">YOUR NAME</label>
-              <input 
-                type="text" 
-                name="senderName" 
-                placeholder="e.g. Alex Rivera" 
-                required 
-                style="width: 100%; height: 36px; padding: 0 12px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.18); color: #fff; font-size: 13px; outline: none;">
-            </div>
-            <div style="flex: 1;">
-              <label style="display: block; font-size: 11px; font-weight: 700; color: rgba(255, 255, 255, 0.6); margin-bottom: 4px;">YOUR EMAIL</label>
-              <input 
-                type="email" 
-                name="senderEmail" 
-                placeholder="your@email.com" 
-                required 
-                style="width: 100%; height: 36px; padding: 0 12px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.18); color: #fff; font-size: 13px; outline: none;">
-            </div>
-          </div>
+        <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 380px; margin: 0 auto;">
+          <!-- Gmail Compose (Bottom-Right Popup in Gmail) -->
+          <a 
+            href="${gmailUrl}" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            style="display: flex; align-items: center; justify-content: center; gap: 10px; padding: 14px 24px; background: #ea4335; color: #ffffff; text-decoration: none; font-weight: 700; font-size: 13px; border-radius: 24px; box-shadow: 0 6px 20px rgba(234, 67, 53, 0.45); transition: transform 0.2s, background 0.2s;"
+            onmouseover="this.style.transform='scale(1.02)'; this.style.background='#dc2626';" 
+            onmouseout="this.style.transform='scale(1)'; this.style.background='#ea4335';">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+            Compose in Gmail Popup
+          </a>
 
-          <div>
-            <label style="display: block; font-size: 11px; font-weight: 700; color: rgba(255, 255, 255, 0.6); margin-bottom: 4px;">SUBJECT</label>
-            <input 
-              type="text" 
-              name="subject" 
-              placeholder="Project Inquiry / Collaboration" 
-              value="Project Inquiry — Casey Portfolio" 
-              required 
-              style="width: 100%; height: 36px; padding: 0 12px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.18); color: #fff; font-size: 13px; outline: none;">
-          </div>
-
-          <div>
-            <label style="display: block; font-size: 11px; font-weight: 700; color: rgba(255, 255, 255, 0.6); margin-bottom: 4px;">MESSAGE</label>
-            <textarea 
-              name="message" 
-              rows="4" 
-              placeholder="Write your message here..." 
-              required 
-              style="width: 100%; padding: 10px 12px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.18); color: #fff; font-size: 13px; outline: none; resize: vertical; min-height: 85px;"></textarea>
-          </div>
-
-          <div id="contact-form-status" style="font-size: 12px; font-weight: 600; text-align: center; color: #10b981; display: none;"></div>
-
-          <!-- Form Actions -->
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px;">
-            <a 
-              href="mailto:${email}" 
-              style="font-size: 12px; color: rgba(255, 255, 255, 0.65); text-decoration: underline;">
-              Open Default Mail App
-            </a>
-            
-            <button 
-              type="submit" 
-              style="padding: 10px 22px; background: #2563eb; color: #fff; border: none; font-weight: 700; font-size: 13px; border-radius: 18px; cursor: pointer; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4); transition: all 0.2s ease;">
-              🚀 Send Message
-            </button>
-          </div>
-        </form>
+          <!-- Native System Mail App Option -->
+          <a 
+            href="${mailtoUrl}" 
+            style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 24px; background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.2); color: #ffffff; text-decoration: none; font-weight: 600; font-size: 13px; border-radius: 24px; transition: transform 0.2s, background 0.2s;"
+            onmouseover="this.style.transform='scale(1.02)'; this.style.background='rgba(255, 255, 255, 0.22)';" 
+            onmouseout="this.style.transform='scale(1)'; this.style.background='rgba(255, 255, 255, 0.12)';">
+            📫 Open in Default Mail App
+          </a>
+        </div>
       </div>
     `;
 
     createWindow({
       id: "contact",
-      title: "Contact Casey — Mail",
-      width: "520px",
-      top: "20%",
-      left: "30%",
+      title: "Contact Casey",
+      width: "480px",
+      top: "22%",
+      left: "32%",
       contentHTML: content
     });
-  };
-
-  // Form submit handler for normal in-app mail sending
-  window.sendMacMailForm = function(formEl) {
-    const name = formEl.senderName.value;
-    const fromEmail = formEl.senderEmail.value;
-    const subject = formEl.subject.value;
-    const message = formEl.message.value;
-    const targetEmail = "khushalworkmail08@gmail.com";
-
-    const statusEl = formEl.querySelector("#contact-form-status");
-    if (statusEl) {
-      statusEl.style.display = "block";
-      statusEl.textContent = `✓ Message sent! Opening mail client for ${targetEmail}...`;
-    }
-
-    // Trigger standard mailto link with filled parameters
-    const bodyText = `From: ${name} (${fromEmail})\n\nMessage:\n${message}`;
-    const mailtoUri = `mailto:${targetEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
-    
-    setTimeout(() => {
-      window.location.href = mailtoUri;
-    }, 600);
   };
 
   // 9. Open Adobe Crash Easter Egg Dialog
