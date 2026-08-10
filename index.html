@@ -42,32 +42,50 @@
       <h1 class="login-username">CASEY</h1>
       <p class="login-user-role">Art Director & Graphic Designer</p>
 
-      <!-- Touch ID Action Container -->
-      <div id="login-action-container" class="login-action-container">
+      <!-- Apple macOS Password Form Container -->
+      <form id="login-form" class="login-form" onsubmit="event.preventDefault(); window.startMacBootSequence && window.startMacBootSequence();">
         
-        <!-- Apple Touch ID Sensor Button -->
-        <button 
-          type="button" 
-          id="touch-id-btn" 
-          class="touch-id-button" 
-          onclick="window.startMacBootSequence && window.startMacBootSequence();" 
-          title="Click or Touch ID to Unlock">
-          <div class="touch-id-ring">
-            <img src="assets/images/touch-id/Asset 1debatev2 .webp" alt="Touch ID Fingerprint" class="touch-id-img">
-            <div class="touch-id-scan-line"></div>
-          </div>
-          <span class="touch-id-label">Touch ID or Click to Unlock</span>
-        </button>
+        <!-- Apple Translucent Password Input Capsule -->
+        <div id="login-input-box" class="login-input-wrapper">
+          <input 
+            type="password" 
+            id="login-password-input" 
+            class="login-password-input" 
+            placeholder="Enter Password" 
+            autocomplete="off"
+            autofocus>
+          <button type="submit" class="login-submit-btn" aria-label="Unlock macOS">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </button>
+        </div>
 
-        <!-- Apple Boot Progress Bar (Shown during Touch ID scan transition) -->
+        <!-- Apple Boot Progress Bar (Shown during login loading sequence) -->
         <div id="boot-progress-container" class="boot-progress-container">
           <div class="boot-progress-bar">
             <div id="boot-progress-fill" class="boot-progress-fill"></div>
           </div>
-          <div id="boot-status-text" class="boot-status-text">Touch ID Verified</div>
+          <div id="boot-status-text" class="boot-status-text">Logging in...</div>
         </div>
 
-      </div>
+        <!-- Subtle macOS Touch ID Hint below input -->
+        <div id="login-hints-box" class="login-hints">
+          <button type="button" class="login-touchid-hint-btn" onclick="window.startMacBootSequence && window.startMacBootSequence();">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/>
+              <path d="M14 13.12c0 2.38-.42 5.08-.88 6.88"/>
+              <path d="M17.29 21.02c.12-.6.43-2.3.43-4.02 0-3.32-2.69-6-6-6s-6 2.68-6 6c0 .76.11 1.7.31 2.47"/>
+              <path d="M7.74 20.35a12.8 12.8 0 0 1-.74-3.35c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.25-.42 2.76-.92 3.96"/>
+              <path d="M12 2a10 10 0 0 0-10 10c0 2.48.57 4.9 1.48 7.02"/>
+              <path d="M20.52 19.02A9.95 9.95 0 0 0 22 12c0-5.52-4.48-10-10-10"/>
+            </svg>
+            <span>Touch ID or Press Enter to Unlock</span>
+          </button>
+        </div>
+
+      </form>
     </div>
 
     <!-- Bottom Power Buttons -->
