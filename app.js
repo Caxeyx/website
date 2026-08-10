@@ -751,35 +751,38 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  // 10. Open Spotify Window (Recommendation Playlist: 4eBpz8sWLVz9EfuPOY2NpW)
+  // 10. Open Official Spotify Window Player
   window.openSpotifyWindow = function() {
     const data = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : {});
-    const spotifyData = data.spotify || {};
     
+    // Pause ambient background audio when opening Spotify
+    if (typeof pauseCurrentAudio === "function") {
+      pauseCurrentAudio();
+    }
+
     const content = `
-      <div style="background: #121212; padding: 12px; border-radius: 8px; color: #fff;">
-        <div style="display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #1db954 0%, #0a2912 100%); padding: 14px 18px; border-radius: 10px; margin-bottom: 14px;">
+      <div style="background: #121212; padding: 12px; border-radius: 12px; color: #fff;">
+        <div style="display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #1db954 0%, #0a2912 100%); padding: 14px 18px; border-radius: 10px; margin-bottom: 14px; box-shadow: 0 4px 14px rgba(29,185,84,0.3);">
           <div>
             <div style="display: flex; align-items: center; gap: 8px;">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M12 0C5.376 0 0 5.376 0 12s5.376 12 12 12 12-5.376 12-12S18.624 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.48-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141 4.38-1.38 9.841-.72 13.561 1.56.36.18.54.78.18 1.26zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.18-1.2-.18-1.38-.72-.18-.6.18-1.2.72-1.38 4.26-1.26 11.28-1.02 15.721 1.62.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
-              <h3 style="font-size: 16px; font-weight: 900; margin: 0; color: #fff;">SPOTIFY PLAYER</h3>
+              <h3 style="font-size: 16px; font-weight: 900; margin: 0; color: #fff; letter-spacing: 0.3px;">OFFICIAL SPOTIFY PLAYER</h3>
             </div>
-            <div style="font-size: 11px; color: rgba(255,255,255,0.85); margin-top: 4px;">Top Recommendation Playlist</div>
+            <div style="font-size: 11px; color: rgba(255,255,255,0.85); margin-top: 4px;">CASEY — TOP TRACKS PLAYLIST</div>
           </div>
-          <div style="font-size: 10px; font-weight: 700; background: rgba(0,0,0,0.35); padding: 4px 10px; border-radius: 12px; border: 1px solid rgba(30,215,96,0.3); color: #fff; display: flex; align-items: center; gap: 6px;">
-            <span style="width: 6px; height: 6px; background-color: #1db954; border-radius: 50%; box-shadow: 0 0 6px #1db954;"></span> Connected
-          </div>
+          <a href="https://open.spotify.com/playlist/4eBpz8sWLVz9EfuPOY2NpW" target="_blank" rel="noopener noreferrer" style="font-size: 11px; font-weight: 700; background: #ffffff; color: #000000; padding: 6px 14px; border-radius: 20px; text-decoration: none; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+            Open in Spotify App ↗
+          </a>
         </div>
 
-        <!-- Live Spotify Web Player Embed Playlist 4eBpz8sWLVz9EfuPOY2NpW -->
-        <div style="border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.7); background: #000; margin-bottom: 10px;">
+        <!-- Official Spotify Embedded Player -->
+        <div style="border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.7); background: #000; margin-bottom: 6px;">
           <iframe
-            title="Spotify Embed: Recommendation Playlist"
-            src="https://open.spotify.com/embed/playlist/4eBpz8sWLVz9EfuPOY2NpW?utm_source=generator&theme=0"
+            title="Spotify Official Web Player"
+            src="https://open.spotify.com/embed/playlist/4eBpz8sWLVz9EfuPOY2NpW?utm_source=generator&theme=0&autoplay=1"
             width="100%"
-            height="380"
-            style="min-height: 360px;"
-            frameBorder="0"
+            height="390"
+            style="min-height: 380px; border: none;"
             allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
             loading="lazy">
           </iframe>
@@ -789,10 +792,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     createWindow({
       id: "spotify",
-      title: "Spotify Player — Top Tracks Playlist",
+      title: "Spotify Player — CASEY TOP TRACKS",
       width: "560px",
-      top: "10%",
-      left: "26%",
+      top: "14%",
+      left: "28%",
       contentHTML: content
     });
   };
