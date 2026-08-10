@@ -50,7 +50,24 @@ html, body {
   pointer-events: none;
 }
 
-/* Custom Wallpaper Artwork */
+/* Looping Video Wallpaper Layer */
+.wallpaper-video-wrapper {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.wallpaper-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
 .portrait-backdrop {
   position: absolute;
   top: 50%;
