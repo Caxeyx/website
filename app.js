@@ -611,30 +611,50 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  // 11. Open Contact Window & Redirect directly to Gmail web compose
+  // 11. Open Contact Window with Interactive Clickable Email Button
   window.openContactWindow = function() {
     const data = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : {});
     const email = (data.personal && data.personal.email) ? data.personal.email : "khushalworkmail08@gmail.com";
     const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${encodeURIComponent("Project Inquiry — Casey Portfolio")}`;
-    
-    // Open Gmail Compose directly in new tab
-    window.open(gmailUrl, "_blank");
+    const mailtoUrl = `mailto:${email}`;
 
     const content = `
-      <div style="text-align: center; padding: 16px;">
-        <div style="font-size: 42px; margin-bottom: 12px;">✉️</div>
-        <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 8px;">Let's Work Together</h2>
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5;">Opening Gmail web compose for <strong>${email}</strong>...</p>
-        <a href="${gmailUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 12px 26px; background: #ea4335; color: #fff; text-decoration: none; font-weight: 700; font-size: 13px; border-radius: 20px; box-shadow: 0 4px 12px rgba(234, 67, 53, 0.4); transition: transform 0.2s;">
-          ✉️ Open in Gmail (${email})
-        </a>
+      <div style="text-align: center; padding: 20px 16px;">
+        <div style="font-size: 44px; margin-bottom: 12px;">✉️</div>
+        <h2 style="font-size: 22px; font-weight: 800; margin-bottom: 8px;">Let's Work Together</h2>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5; max-width: 360px; margin-left: auto; margin-right: auto;">
+          Click below to compose an email to <strong>${email}</strong>
+        </p>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px; align-items: center;">
+          <!-- Primary Clickable Blue Button -->
+          <button 
+            type="button" 
+            onclick="window.open('${gmailUrl}', '_blank');" 
+            style="width: 100%; max-width: 360px; padding: 14px 24px; background: #2563eb; color: #ffffff; border: none; font-weight: 700; font-size: 13px; border-radius: 24px; cursor: pointer; pointer-events: auto; box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45); transition: transform 0.2s, background 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;"
+            onmouseover="this.style.background='#1d4ed8'; this.style.transform='scale(1.02)';" 
+            onmouseout="this.style.background='#2563eb'; this.style.transform='scale(1)';">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+            Send Email to ${email}
+          </button>
+
+          <!-- Alternative Mail App Option -->
+          <button 
+            type="button" 
+            onclick="window.location.href='${mailtoUrl}';" 
+            style="background: transparent; color: rgba(255, 255, 255, 0.7); border: none; font-size: 12px; font-weight: 500; cursor: pointer; text-decoration: underline; padding: 4px;"
+            onmouseover="this.style.color='#ffffff';"
+            onmouseout="this.style.color='rgba(255, 255, 255, 0.7)';">
+            Or open in Default Mail App
+          </button>
+        </div>
       </div>
     `;
 
     createWindow({
       id: "contact",
-      title: "Contact Casey — Gmail",
-      width: "460px",
+      title: "Contact Casey",
+      width: "480px",
       top: "22%",
       left: "32%",
       contentHTML: content
@@ -697,16 +717,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Keyboard shortcut: ESC to close top window, or ANY key to unlock lock screen
+  // Keyboard shortcut: ESC to close top window
   document.addEventListener("keydown", (e) => {
-    if (loginScreen && loginScreen.style.display !== "none" && !loginScreen.classList.contains("is-unlocked")) {
-      if (e.key !== "Escape") {
-        e.preventDefault();
-        window.startMacBootSequence();
-        return;
-      }
-    }
-
     if (e.key === "Escape") {
       const openWins = Object.values(activeWindows);
       if (openWins.length > 0) {
