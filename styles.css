@@ -161,7 +161,6 @@ html, body {
 
 .desktop-item img {
   -webkit-user-drag: none;
-  user-drag: none;
   pointer-events: none;
 }
 
