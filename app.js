@@ -696,8 +696,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Keyboard shortcut: ESC to close top window
+  // Keyboard shortcut: ESC to close top window, or ANY key to unlock lock screen
   document.addEventListener("keydown", (e) => {
+    if (loginScreen && loginScreen.style.display !== "none" && !loginScreen.classList.contains("is-unlocked")) {
+      if (e.key !== "Escape") {
+        e.preventDefault();
+        window.startMacBootSequence();
+        return;
+      }
+    }
+
     if (e.key === "Escape") {
       const openWins = Object.values(activeWindows);
       if (openWins.length > 0) {

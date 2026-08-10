@@ -45,15 +45,15 @@
       <!-- Apple macOS Password Form Container -->
       <form id="login-form" class="login-form" onsubmit="event.preventDefault(); window.startMacBootSequence && window.startMacBootSequence();">
         
-        <!-- Apple Translucent Password Input Capsule -->
-        <div id="login-input-box" class="login-input-wrapper">
+        <!-- Apple Translucent Action Capsule -->
+        <div id="login-input-box" class="login-input-wrapper" onclick="window.startMacBootSequence && window.startMacBootSequence();" style="cursor: pointer;">
           <input 
-            type="password" 
+            type="text" 
             id="login-password-input" 
             class="login-password-input" 
-            placeholder="Enter Password" 
-            autocomplete="off"
-            autofocus>
+            placeholder="Click to Unlock" 
+            readonly
+            style="cursor: pointer;">
           <button type="submit" class="login-submit-btn" aria-label="Unlock macOS">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -81,7 +81,7 @@
               <path d="M12 2a10 10 0 0 0-10 10c0 2.48.57 4.9 1.48 7.02"/>
               <path d="M20.52 19.02A9.95 9.95 0 0 0 22 12c0-5.52-4.48-10-10-10"/>
             </svg>
-            <span>Touch ID or Press Enter to Unlock</span>
+            <span>Touch ID or Press Any Key to Unlock</span>
           </button>
         </div>
 
