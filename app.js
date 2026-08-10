@@ -611,28 +611,29 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  // 11. Open Contact Window & Redirect to Email
+  // 11. Open Contact Window & Redirect directly to Gmail web compose
   window.openContactWindow = function() {
     const data = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : {});
     const email = (data.personal && data.personal.email) ? data.personal.email : "khushalworkmail08@gmail.com";
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${encodeURIComponent("Project Inquiry — Casey Portfolio")}`;
     
-    // Automatically trigger mailto redirect
-    window.location.href = `mailto:${email}`;
+    // Open Gmail Compose directly in new tab
+    window.open(gmailUrl, "_blank");
 
     const content = `
       <div style="text-align: center; padding: 16px;">
         <div style="font-size: 42px; margin-bottom: 12px;">✉️</div>
         <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 8px;">Let's Work Together</h2>
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5;">Opening email client to contact <strong>${email}</strong>...</p>
-        <a href="mailto:${email}" style="display: inline-block; padding: 12px 26px; background: #3b82f6; color: #fff; text-decoration: none; font-weight: 700; font-size: 13px; border-radius: 20px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); transition: transform 0.2s;">
-          ✉️ Send Email to ${email}
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5;">Opening Gmail web compose for <strong>${email}</strong>...</p>
+        <a href="${gmailUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 12px 26px; background: #ea4335; color: #fff; text-decoration: none; font-weight: 700; font-size: 13px; border-radius: 20px; box-shadow: 0 4px 12px rgba(234, 67, 53, 0.4); transition: transform 0.2s;">
+          ✉️ Open in Gmail (${email})
         </a>
       </div>
     `;
 
     createWindow({
       id: "contact",
-      title: "Contact Casey",
+      title: "Contact Casey — Gmail",
       width: "460px",
       top: "22%",
       left: "32%",
