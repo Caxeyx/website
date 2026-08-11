@@ -11,10 +11,19 @@
   --bg-color: #0b0c10;
   --text-main: #ffffff;
   --text-muted: rgba(255, 255, 255, 0.65);
-  --glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.04) 100%), rgba(16, 20, 30, 0.48);
-  --glass-border: rgba(255, 255, 255, 0.28);
-  --glass-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.6), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.45), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.3);
-  --accent-color: #3b82f6;
+  
+  /* Official Apple Design JSON Token Variables */
+  --liquid-glass-clear-fill: rgba(248, 248, 248, 0.12);
+  --liquid-glass-dark-dock-fill: rgba(51, 51, 51, 0.33);
+  --liquid-glass-app-library-fill: rgba(248, 248, 248, 0.05);
+  --liquid-glass-specular-border: #D9D9D9;
+  --ios-track-active-blue: #0091FF;
+  --ios-track-active-clicked: #0088FF;
+  
+  --glass-bg: linear-gradient(135deg, rgba(248, 248, 248, 0.12) 0%, rgba(51, 51, 51, 0.33) 100%);
+  --glass-border: rgba(217, 217, 217, 0.35);
+  --glass-shadow: 0 15px 35px rgba(0, 0, 0, 0.4), inset 0 0 0 0.5px rgba(217, 217, 217, 0.6), inset 0 -1px 0 #111111, inset 0 1px 0 #111111;
+  --accent-color: var(--ios-track-active-blue);
   --window-header-height: 38px;
 }
 
@@ -1429,6 +1438,353 @@ html, body {
 @media (max-width: 992px) {
   .desktop-widgets-layer {
     display: none !important;
+  }
+}
+
+/* ==========================================================================
+   iPhone Mobile UI System (@media max-width: 768px)
+   ========================================================================== */
+
+.ios-status-bar {
+  display: none;
+}
+
+.ios-home-indicator {
+  display: none;
+}
+
+.ios-search-pill {
+  display: none;
+}
+
+.ios-lock-clock-wrapper {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* Hide macOS desktop elements & dock on iPhone mobile viewports */
+  .mac-menu-bar,
+  #mac-dock,
+  .mac-dock-mount-container,
+  .login-top-bar,
+  .login-bottom-controls {
+    display: none !important;
+  }
+
+  /* iOS 16/17 Big Lock Clock & Date Header */
+  .ios-lock-clock-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 18px;
+  }
+
+  .ios-lock-date {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  }
+
+  .ios-lock-clock {
+    font-size: 76px;
+    font-weight: 700;
+    letter-spacing: -2.5px;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.96);
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  }
+
+  /* iOS 16 Lock Screen Action Buttons */
+  .ios-lock-actions {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 280px;
+    margin-top: 24px;
+  }
+
+  .ios-action-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(18, 22, 30, 0.55);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+
+  .ios-action-btn:active {
+    transform: scale(0.92);
+    background: rgba(255, 255, 255, 0.35);
+  }
+
+  /* iOS iPhone Top Status Bar & Dynamic Island */
+  .ios-status-bar {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    padding: 0 20px;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 100005;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff;
+    pointer-events: auto;
+  }
+
+  .ios-time {
+    font-weight: 700;
+    letter-spacing: -0.2px;
+    font-size: 15px;
+  }
+
+  .ios-dynamic-island {
+    position: absolute;
+    top: 7px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 124px;
+    height: 34px;
+    background: #000000;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), 0 0 1px rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .ios-dynamic-island:active {
+    transform: translateX(-50%) scale(1.08);
+    width: 180px;
+  }
+
+  .island-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 6px #10b981;
+  }
+
+  .island-icon {
+    font-size: 12px;
+  }
+
+  .island-text {
+    font-size: 11px;
+    font-weight: 600;
+    color: #ffffff;
+    max-width: 70px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .island-eq {
+    display: flex;
+    gap: 2px;
+    align-items: flex-end;
+    height: 10px;
+  }
+
+  .island-eq span {
+    width: 2px;
+    height: 8px;
+    background: #1db954;
+    border-radius: 1px;
+    animation: islandEq 0.7s infinite alternate ease-in-out;
+  }
+
+  .island-eq span:nth-child(2) { animation-delay: 0.2s; }
+  .island-eq span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes islandEq {
+    0% { height: 2px; }
+    100% { height: 10px; }
+  }
+
+  .ios-icons {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+  }
+
+  .ios-5g {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+  }
+
+  /* Floating Search 🔍 Pill Widget */
+  .ios-search-pill {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 22px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 5px 14px !important;
+    border-radius: 18px !important;
+    background: rgba(255, 255, 255, 0.2) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.32) !important;
+    color: #ffffff !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45) !important;
+    z-index: 900 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    transition: transform 0.15s ease, background 0.15s ease !important;
+  }
+
+  .ios-search-pill:active {
+    transform: translateX(-50%) scale(0.94) !important;
+    background: rgba(255, 255, 255, 0.35) !important;
+  }
+
+  /* iOS iPhone Bottom Home Indicator Bar */
+  .ios-home-indicator {
+    display: block;
+    position: fixed;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 134px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 3px;
+    z-index: 10000;
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Responsive 4-Column iOS SpringBoard App Grid */
+  .desktop-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 20px 12px !important;
+    padding: 76px 16px 110px 16px !important;
+    max-width: 100vw !important;
+    height: 100vh !important;
+    overflow-y: auto !important;
+    box-sizing: border-box !important;
+  }
+
+  .desktop-item {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+  }
+
+  .desktop-icon-wrapper {
+    width: 62px !important;
+    height: 62px !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45) !important;
+    transition: transform 0.15s ease !important;
+  }
+
+  .desktop-item:active .desktop-icon-wrapper {
+    transform: scale(0.92) !important;
+  }
+
+  .desktop-icon {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    border-radius: 16px !important;
+  }
+
+  .desktop-label {
+    margin-top: 6px !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    text-transform: none !important;
+    letter-spacing: -0.1px !important;
+    text-align: center !important;
+    color: #ffffff !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85) !important;
+    line-height: 1.2 !important;
+    padding: 0 !important;
+    max-width: 72px !important;
+  }
+
+  /* iOS Mobile Bottom Sheet Windows */
+  .mac-window {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 88vh !important;
+    max-height: 88vh !important;
+    border-radius: 26px 26px 0 0 !important;
+    border-bottom: none !important;
+    box-shadow: 0 -20px 50px rgba(0, 0, 0, 0.7) !important;
+    transform: translateY(100%) !important;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  .mac-window.visible {
+    transform: translateY(0) !important;
+  }
+
+  .window-header {
+    height: 48px !important;
+    border-radius: 26px 26px 0 0 !important;
+    padding: 0 18px !important;
+  }
+
+  .window-header::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 36px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.35);
+    border-radius: 3px;
   }
 }
 
