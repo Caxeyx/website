@@ -136,8 +136,8 @@ const DockItem: React.FC<DockItemProps> = ({
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         onClick={handleClick}
-        animate={isBouncing ? { y: [0, -18, 0, -8, 0] } : { y: 0 }}
-        transition={isBouncing ? { duration: 0.5, ease: 'easeOut' } : { duration: 0.1 }}
+        animate={isBouncing ? { y: [0, -24, 0, -10, 0], scale: [1, 1.2, 0.94, 1.06, 1] } : { y: 0, scale: 1 }}
+        transition={isBouncing ? { duration: 0.6, ease: [0.34, 1.56, 0.64, 1] } : { duration: 0.15 }}
         whileTap={{ scale: 0.88 }}
       >
         <img

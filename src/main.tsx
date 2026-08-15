@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import MacOSDock, { DockApp } from '@/components/ui/mac-os-dock';
 import LiveUserCursors from '@/components/ui/live-user-cursors';
+import spotifyIcon from '../assets/images/spotify_icon.svg';
+import behanceIcon from '../assets/images/behance_icon.svg';
+import youtubeIcon from '../assets/images/youtube_icon.svg';
 
-const portfolioApps: DockApp[] = [
+const allPortfolioApps: DockApp[] = [
   { 
     id: 'ae', 
     name: 'After Effects', 
@@ -26,7 +29,7 @@ const portfolioApps: DockApp[] = [
   },
   { 
     id: 'notebook', 
-    name: 'Kajecik (About & CV)', 
+    name: 'About & CV', 
     icon: 'https://framerusercontent.com/images/es0axIAu0guUZSRBu6xvsteey8w.png' 
   },
   { 
@@ -37,7 +40,17 @@ const portfolioApps: DockApp[] = [
   { 
     id: 'spotify', 
     name: 'Spotify', 
-    icon: 'https://cdn.jim-nielsen.com/macos/1024/spotify-2021-05-25.png?rf=1024' 
+    icon: spotifyIcon 
+  },
+  { 
+    id: 'behance', 
+    name: 'Behance (@Casey08)', 
+    icon: behanceIcon 
+  },
+  { 
+    id: 'youtube', 
+    name: 'YouTube (@Caseyxlive)', 
+    icon: youtubeIcon 
   },
   { 
     id: 'instagram', 
@@ -56,8 +69,50 @@ const portfolioApps: DockApp[] = [
   },
 ];
 
+const mobileDockApps: DockApp[] = [
+  { 
+    id: 'notebook', 
+    name: 'About & CV', 
+    icon: 'https://framerusercontent.com/images/es0axIAu0guUZSRBu6xvsteey8w.png' 
+  },
+  { 
+    id: 'gallery', 
+    name: 'Photos Gallery', 
+    icon: 'https://framerusercontent.com/images/yNLcekVy7df0d4hAoz6dZR8s.png' 
+  },
+  { 
+    id: 'behance', 
+    name: 'Behance', 
+    icon: behanceIcon 
+  },
+  { 
+    id: 'youtube', 
+    name: 'YouTube', 
+    icon: youtubeIcon 
+  },
+  { 
+    id: 'spotify', 
+    name: 'Spotify', 
+    icon: spotifyIcon 
+  },
+  { 
+    id: 'contact', 
+    name: 'Contact Mail', 
+    icon: 'https://framerusercontent.com/images/4ZZQ6ZFOyrBZ3TXhVZjMFK7zbGk.png' 
+  },
+];
+
 const InteractiveDockWrapper: React.FC = () => {
   const [openApps, setOpenApps] = useState<string[]>(['spotify']);
+  const [isMobile, setIsMobile] = useState<boolean>(typeof window !== 'undefined' ? window.innerWidth <= 768 : false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleAppClick = (appId: string) => {
     const win = window as any;
@@ -69,6 +124,10 @@ const InteractiveDockWrapper: React.FC = () => {
       win.openGalleryWindow?.();
     } else if (appId === 'spotify') {
       win.openSpotifyWindow?.();
+    } else if (appId === 'behance') {
+      window.open('https://www.behance.net/Casey08', '_blank');
+    } else if (appId === 'youtube') {
+      window.open('https://www.youtube.com/@Caseyxlive', '_blank');
     } else if (appId === 'instagram') {
       window.open('https://www.instagram.com/caseyxlive/', '_blank');
     } else if (appId === 'contact') {
@@ -82,9 +141,11 @@ const InteractiveDockWrapper: React.FC = () => {
     );
   };
 
+  const currentApps = isMobile ? mobileDockApps : allPortfolioApps;
+
   return (
     <MacOSDock
-      apps={portfolioApps}
+      apps={currentApps}
       onAppClick={handleAppClick}
       openApps={openApps}
     />
@@ -92,25 +153,19 @@ const InteractiveDockWrapper: React.FC = () => {
 };
 
 const mountApp = () => {
-  // 1. Mount Live Multi-User Cursors directly to document.body for unconstrained full-viewport wandering
-  const presenceContainer = document.createElement('div');
-  presenceContainer.id = 'live-cursors-root';
-  document.body.appendChild(presenceContainer);
-  const presenceRoot = ReactDOM.createRoot(presenceContainer);
-  presenceRoot.render(<LiveUserCursors />);
+  // 1. Mount Live Multi-User Cursors directly to document.body for desktop
+  if (typeof window !== 'undefined' && window.innerWidth > 768) {
+    const presenceContainer = document.createElement('div');
+    presenceContainer.id = 'live-cursors-root';
+    presenceContainer.style.pointerEvents = 'none';
+    document.body.appendChild(presenceContainer);
+    const presenceRoot = ReactDOM.createRoot(presenceContainer);
+    presenceRoot.render(<LiveUserCursors />);
+  }
 
   // 2. Mount MacOSDock to #mac-dock
   const dockElement = document.getElementById('mac-dock');
   if (dockElement) {
-    dockElement.style.position = 'fixed';
-    dockElement.style.bottom = '16px';
-    dockElement.style.left = '50%';
-    dockElement.style.transform = 'translateX(-50%)';
-    dockElement.style.zIndex = '500';
-    dockElement.style.background = 'transparent';
-    dockElement.style.border = 'none';
-    dockElement.style.padding = '0';
-
     const dockRoot = ReactDOM.createRoot(dockElement);
     dockRoot.render(<InteractiveDockWrapper />);
   }

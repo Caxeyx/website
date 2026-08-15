@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "predeploy": "npm run build",
-    "deploy": "firebase deploy --only hosting"
+    "deploy": "npx firebase-tools deploy --only hosting"
   },
   "dependencies": {
     "clsx": "^2.1.1",

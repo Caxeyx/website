@@ -3,56 +3,91 @@
 
 const PORTFOLIO_DATA = {
   personal: {
-    name: "CASEY",
-    title: "Art Director & Graphic Designer",
-    subtitle: "Art Direction · Visual Identity · Stage & Motion · Merch",
-    email: "khushalworkmail08@gmail.com",
+    name: "Khushal Chhabra",
+    title: "Graphic Designer & Content Strategist",
+    subtitle: "Graphic Design · Content Strategy · 3D Art · Video Editing",
+    email: "khushalchhabra08@gmail.com",
+    phone: "+91 8058100417",
     instagram: "https://www.instagram.com/caseyxlive/",
-    location: "Global / Remote",
-    bio: "Art Director, Graphic Designer, Photographer, and Stylist. Specializing in high-impact album artwork, key visuals for music tours and global brands, stage graphics, custom typography, and physical merchandise design.",
-    heroImage: "assets/images/wallpaper.png"
+    behance: "https://www.behance.net/Casey08",
+    youtube: "https://www.youtube.com/@Caseyxlive",
+    linkedin: "https://linkedin.com/in/khushal-chhabra",
+    bento: "https://bento.me/caseyx",
+    location: "Jaipur, India / Remote",
+    bio: "Creative graphic designer and content strategist with 3+ years delivering high-impact visual content across digital platforms. Proven results: 123K+ YouTube views, 200K+ Instagram impressions, and 500K+ cumulative platform views. Experienced with international clients and high-profile artists in the electronic music industry.",
+    heroImage: "assets/images/casey_portrait.png",
+    resumeUrl: "resume.html"
   },
 
   experience: [
     {
-      role: "Lead Art Director & Graphic Designer",
-      company: "SBM Label / Independent",
-      period: "2023 – Present",
-      description: "Directing creative vision for major album rollouts, concert stage visuals, vinyl packaging, and merchandise collections."
+      role: "Creative Designer",
+      company: "ELVT.live · London, UK (Remote)",
+      period: "Mar 2025 – Present",
+      description: "Design social media graphics and carousel content for electronic music events featuring artists Cristobal Pesce and Cristoph. Deliver brand-aligned visual assets targeting London's electronic music audience."
     },
     {
-      role: "Senior Graphic & Motion Designer",
-      company: "Newonce Media",
-      period: "2022 – 2023",
-      description: "Designed digital campaigns, interactive branding, event key visuals, and motion graphics for culture media channels."
+      role: "Content Strategist",
+      company: "Aceternity · Remote",
+      period: "Nov 2024 – Jan 2025",
+      description: "Drove 123K+ YouTube views, 200K+ Instagram impressions, and 4.3K hours watch time through strategic video content. Improved audience retention by 25% using data-driven content optimization."
     },
     {
-      role: "Brand Identity Designer",
-      company: "Creative Studio Albo",
-      period: "2020 – 2022",
-      description: "Crafted custom logotypes, publication design, and visual branding for lifestyle & beverage clients."
+      role: "Production Artist",
+      company: "NECMERconsult · Bengaluru, India",
+      period: "Mar 2024 – Present",
+      description: "Produce 30+ monthly videos, animations, and graphics contributing to 500K+ cumulative platform views. Recognized as Employee of the Month for exceptional output quality under tight deadlines."
     },
     {
-      role: "Freelance Artist & Photographer",
-      company: "Studio Casey",
-      period: "Since 2018",
-      description: "Visual identity design, fine art printmaking, fashion photography, and cover art."
+      role: "Video Editor & Designer",
+      company: "Freelance · Remote",
+      period: "May 2023 – Present",
+      description: "Deliver custom video editing, color grading, motion graphics, and sound design for diverse clients. Improved client engagement metrics by 30% through platform-specific content strategies."
+    },
+    {
+      role: "Video Editor",
+      company: "Bausch + Lomb · Remote (Freelance)",
+      period: "Sep 2022",
+      description: "Edited promotional and product launch videos for global healthcare brand, delivered ahead of schedule."
+    },
+    {
+      role: "Social Media Marketing Intern",
+      company: "JECRC University · Jaipur, India",
+      period: "Mar – Dec 2022",
+      description: "Executed social media content campaigns resulting in 15% increase in follower engagement."
     }
   ],
 
+  education: [
+    { degree: "B.A. Graphic Design", school: "JECRC University, Jaipur", period: "2020 – 2024" },
+    { degree: "Diploma, Animation & Film", school: "Reliance Education", period: "Completed" },
+    { degree: "Cert. Desktop Publishing", school: "Pro Creative", period: "Completed" }
+  ],
+
+  achievements: [
+    "123K+ YouTube views & 200K+ Instagram impressions",
+    "500K+ cumulative platform views",
+    "25% audience retention improvement",
+    "Employee of the Month — NECMERconsult",
+    "30% client engagement increase"
+  ],
+
   clients: [
-    "Adidas", "Pepsi", "Netflix", "Jägermeister", "Red Bull", 
-    "Ebilet", "Doritos", "Supreme", "ebilet", "Mata", "Białas", "Kacperczyk"
+    "ELVT.live", "Aceternity", "NECMERconsult", "Bausch + Lomb", 
+    "JECRC University", "Cristobal Pesce", "Cristoph", "SBM Label", "Newonce"
   ],
 
   services: [
-    "Art Direction & Creative Direction",
-    "Album Cover Artwork & Vinyl Packaging",
+    "Graphic Design & Visual Identity",
+    "3D Art & Motion Graphics (Blender, C4D)",
+    "Video Editing & Color Grading (Premiere, Final Cut)",
+    "Content Strategy & Social Media Planning",
+    "After Effects Motion Systems & VFX",
+    "Brand Identity & Campaign Development",
     "Key Visuals (Tours, Festivals, Brands)",
     "Stage Motion Graphics & Concert Visuals",
     "Custom Logotypes & Typography",
-    "Fashion Photography & Merchandise Styling",
-    "Social Media & Campaign Visual Systems"
+    "Fashion Photography & Merchandise Styling"
   ],
 
   interests: [
