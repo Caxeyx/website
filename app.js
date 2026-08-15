@@ -2194,7 +2194,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.openProtectedResume = function() {
     const pwd = prompt("🔒 Enter Passcode to View & Print Resume:");
     if (!pwd) return;
-    const valid = ['Khushal2000', 'khushal2000', 'casey0612', 'CASEY0612', 'caseyxresu', 'caseyxlivework', 'CASEY', '1234'];
+    const valid = ['Khushal2000', 'khushal2000', 'casey0612', 'CASEY0612', 'caseyxresu'];
     const val = pwd.trim();
     if (valid.includes(val) || valid.map(p => p.toLowerCase()).includes(val.toLowerCase())) {
       sessionStorage.setItem('resume_unlocked', 'true');
