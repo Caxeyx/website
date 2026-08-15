@@ -2194,8 +2194,9 @@ document.addEventListener("DOMContentLoaded", () => {
   window.openProtectedResume = function() {
     const pwd = prompt("🔒 Enter Passcode to View & Print Resume:");
     if (!pwd) return;
-    const valid = ['caseyxresu', 'caseyxlivework', 'caseyx', 'CASEY', '1234', 'caseyxlive'];
-    if (valid.includes(pwd.trim())) {
+    const valid = ['Khushal2000', 'khushal2000', 'casey0612', 'CASEY0612', 'caseyxresu', 'caseyxlivework', 'caseyx', 'CASEY', '1234', 'caseyxlive'];
+    const val = pwd.trim();
+    if (valid.includes(val) || valid.map(p => p.toLowerCase()).includes(val.toLowerCase())) {
       sessionStorage.setItem('resume_unlocked', 'true');
       window.open("resume.html", "_blank");
     } else {
