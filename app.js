@@ -2197,8 +2197,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const valid = ['Khushal2000', 'khushal2000', 'casey0612', 'CASEY0612', 'caseyxresu'];
     const val = pwd.trim();
     if (valid.includes(val) || valid.map(p => p.toLowerCase()).includes(val.toLowerCase())) {
-      sessionStorage.setItem('resume_unlocked', 'true');
-      window.open("resume.html", "_blank");
+      // Pass unlock token via URL hash (works cross-tab unlike sessionStorage)
+      window.open("resume.html#unlocked=caseyx2025", "_blank");
     } else {
       alert("❌ Incorrect Passcode!");
     }

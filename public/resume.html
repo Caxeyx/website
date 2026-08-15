@@ -218,11 +218,24 @@
   <script>
     // Passcodes: Khushal2000, casey0612, caseyxresu
     const validPasscodes = ['Khushal2000', 'khushal2000', 'casey0612', 'CASEY0612', 'caseyxresu'];
+    const UNLOCK_TOKEN = 'caseyx2025';
 
-    // Check if authorized in session
-    if (sessionStorage.getItem('resume_unlocked') === 'true') {
+    function showResume() {
       document.getElementById('password-overlay').style.display = 'none';
       document.getElementById('resume-content').style.display = 'block';
+      // Store in sessionStorage so refresh within this tab also works
+      sessionStorage.setItem('resume_unlocked', 'true');
+    }
+
+    // Check URL hash first (passed from parent tab after password check)
+    if (window.location.hash && window.location.hash.includes('unlocked=' + UNLOCK_TOKEN)) {
+      showResume();
+      // Clean up hash from URL bar without reloading
+      history.replaceState(null, '', window.location.pathname);
+    }
+    // Fallback: check sessionStorage (within-tab navigation)
+    else if (sessionStorage.getItem('resume_unlocked') === 'true') {
+      showResume();
     }
 
     function unlockResume() {
@@ -231,9 +244,7 @@
       const val = input.value.trim();
 
       if (validPasscodes.includes(val) || validPasscodes.map(p => p.toLowerCase()).includes(val.toLowerCase())) {
-        sessionStorage.setItem('resume_unlocked', 'true');
-        document.getElementById('password-overlay').style.display = 'none';
-        document.getElementById('resume-content').style.display = 'block';
+        showResume();
       } else {
         error.style.display = 'block';
         input.style.borderColor = '#ef4444';
