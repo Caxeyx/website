@@ -48,17 +48,11 @@ const PORTFOLIO_DATA = {
       company: "Bausch + Lomb · Remote (Freelance)",
       period: "Sep 2022",
       description: "Edited promotional and product launch videos for global healthcare brand, delivered ahead of schedule."
-    },
-    {
-      role: "Social Media Marketing Intern",
-      company: "JECRC University · Jaipur, India",
-      period: "Mar – Dec 2022",
-      description: "Executed social media content campaigns resulting in 15% increase in follower engagement."
     }
   ],
 
   education: [
-    { degree: "B.A. Graphic Design", school: "JECRC University, Jaipur", period: "2020 – 2024" },
+    { degree: "B.A. Graphic Design", school: "Jaipur, India", period: "2020 – 2024" },
     { degree: "Diploma, Animation & Film", school: "Reliance Education", period: "Completed" },
     { degree: "Cert. Desktop Publishing", school: "Pro Creative", period: "Completed" }
   ],
@@ -73,7 +67,7 @@ const PORTFOLIO_DATA = {
 
   clients: [
     "ELVT.live", "Aceternity", "NECMERconsult", "Bausch + Lomb", 
-    "JECRC University", "Cristobal Pesce", "Cristoph", "SBM Label", "Newonce"
+    "Cristobal Pesce", "Cristoph", "SBM Label", "Newonce"
   ],
 
   services: [
