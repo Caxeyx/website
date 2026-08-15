@@ -1592,52 +1592,33 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- Phone App ---
   window.openPhoneApp = function() {
-    const data = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : {});
-    const phone = (data.personal && data.personal.phone) ? data.personal.phone : "+91 8058100417";
     const content = `
       <div style="padding: 10px 0; text-align: center;">
-        <div style="font-size: 20px; font-weight: 900; margin-bottom: 4px;">Phone & Contacts</div>
-        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Direct Hotline to Casey</div>
+        <div style="font-size: 20px; font-weight: 900; margin-bottom: 4px;">Contacts & Direct Inquiries</div>
+        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Direct Channels to Casey</div>
 
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
-          <a href="tel:${phone}" style="background: #34c759; color: #fff; padding: 12px; border-radius: 16px; text-decoration: none; font-size: 12px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 4px 14px rgba(52,199,89,0.4);">
-            <span style="font-size: 18px;">📞</span> Call Now
+          <a href="mailto:khushalchhabra08@gmail.com" style="background: #ea4335; color: #fff; padding: 12px; border-radius: 16px; text-decoration: none; font-size: 12px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 4px 14px rgba(234,67,53,0.4);">
+            <span style="font-size: 18px;">✉️</span> Email
           </a>
-          <a href="https://wa.me/918058100417" target="_blank" style="background: #25d366; color: #fff; padding: 12px; border-radius: 16px; text-decoration: none; font-size: 12px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 4px 14px rgba(37,211,102,0.4);">
-            <span style="font-size: 18px;">💬</span> WhatsApp
+          <a href="https://www.instagram.com/caseyxlive/" target="_blank" style="background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); color: #fff; padding: 12px; border-radius: 16px; text-decoration: none; font-size: 12px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 4px 14px rgba(220,39,67,0.4);">
+            <span style="font-size: 18px;">📸</span> Instagram
           </a>
           <a href="https://t.me/caseyxlive" target="_blank" style="background: #0088cc; color: #fff; padding: 12px; border-radius: 16px; text-decoration: none; font-size: 12px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 4px 14px rgba(0,136,204,0.4);">
             <span style="font-size: 18px;">✈️</span> Telegram
           </a>
         </div>
 
-        <div id="phone-display-number" style="font-size: 26px; font-weight: 700; height: 36px; color: #fff; letter-spacing: 1px; margin-bottom: 12px;"></div>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; max-width: 260px; margin: 0 auto 16px auto;">
-          ${["1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"].map(k => `
-            <button onclick="
-              const d = document.getElementById('phone-display-number');
-              if (d) d.textContent += '${k}';
-              if (navigator.vibrate) navigator.vibrate(10);
-            " style="width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.18); color: #fff; font-size: 22px; font-weight: 600; cursor: pointer;">
-              ${k}
-            </button>
-          `).join("")}
-        </div>
+        <div id="phone-display-number" style="font-size: 18px; font-weight: 700; height: 36px; color: #60a5fa; letter-spacing: 0.5px; margin-bottom: 12px;">khushalchhabra08@gmail.com</div>
 
         <div style="display: flex; justify-content: center; gap: 16px;">
-          <a href="tel:${phone}" style="width: 58px; height: 58px; border-radius: 50%; background: #34c759; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; text-decoration: none; box-shadow: 0 6px 20px rgba(52,199,89,0.5);">
-            📞
+          <a href="mailto:khushalchhabra08@gmail.com" style="width: 58px; height: 58px; border-radius: 50%; background: #007aff; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; text-decoration: none; box-shadow: 0 6px 20px rgba(0,122,255,0.5);">
+            ✉️
           </a>
-          <button onclick="
-            const d = document.getElementById('phone-display-number');
-            if (d) d.textContent = d.textContent.slice(0, -1);
-          " style="width: 58px; height: 58px; border-radius: 50%; background: rgba(255,255,255,0.15); border: none; color: #fff; font-size: 18px; cursor: pointer;">
-            ⌫
-          </button>
         </div>
       </div>
     `;
-    createWindow({ id: "phone", title: "Phone", contentHTML: content });
+    createWindow({ id: "phone", title: "Contacts", contentHTML: content });
   };
 
   // --- Messages App (iMessage with Interactive Bot) ---
@@ -1707,7 +1688,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const caseyBubble = document.createElement("div");
       caseyBubble.style.cssText = "align-self: flex-start; max-width: 80%; background: rgba(255,255,255,0.12); padding: 10px 14px; border-radius: 18px 18px 18px 4px; font-size: 13px; color: #fff; line-height: 1.4;";
       
-      let reply = "Sounds awesome! Let's connect directly via email (khushalchhabra08@gmail.com) or WhatsApp (+91 8058100417) to lock in the timeline and deliverables.";
+      let reply = "Sounds awesome! Let's connect directly via email (khushalchhabra08@gmail.com) or Instagram (@caseyxlive) to lock in the timeline and deliverables.";
       if (userText.toLowerCase().includes("rate") || userText.toLowerCase().includes("cost")) {
         reply = "My project packages start with custom quotes based on scope. You can check my Wallet app for rate cards or drop a brief to khushalchhabra08@gmail.com!";
       } else if (userText.toLowerCase().includes("stage") || userText.toLowerCase().includes("tour")) {

@@ -7,7 +7,6 @@ const PORTFOLIO_DATA = {
     title: "Graphic Designer & Content Strategist",
     subtitle: "Graphic Design · Content Strategy · 3D Art · Video Editing",
     email: "khushalchhabra08@gmail.com",
-    phone: "+91 8058100417",
     instagram: "https://www.instagram.com/caseyxlive/",
     behance: "https://www.behance.net/Casey08",
     youtube: "https://www.youtube.com/@Caseyxlive",
