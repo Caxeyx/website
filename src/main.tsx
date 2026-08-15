@@ -71,34 +71,26 @@ const allPortfolioApps: DockApp[] = [
 
 const mobileDockApps: DockApp[] = [
   { 
-    id: 'notebook', 
-    name: 'About & CV', 
-    icon: 'https://framerusercontent.com/images/es0axIAu0guUZSRBu6xvsteey8w.png' 
+    id: 'phone', 
+    name: 'Phone', 
+    icon: 'assets/images/ios18_clean/phone.png',
+    badge: '183'
   },
   { 
-    id: 'gallery', 
-    name: 'Photos Gallery', 
-    icon: 'https://framerusercontent.com/images/yNLcekVy7df0d4hAoz6dZR8s.png' 
+    id: 'safari', 
+    name: 'Safari', 
+    icon: 'assets/images/ios18_clean/safari.png' 
   },
   { 
-    id: 'behance', 
-    name: 'Behance', 
-    icon: behanceIcon 
-  },
-  { 
-    id: 'youtube', 
-    name: 'YouTube', 
-    icon: youtubeIcon 
+    id: 'messages', 
+    name: 'Messages', 
+    icon: 'assets/images/ios18_clean/messages.png',
+    badge: '688'
   },
   { 
     id: 'spotify', 
-    name: 'Spotify', 
-    icon: spotifyIcon 
-  },
-  { 
-    id: 'contact', 
-    name: 'Contact Mail', 
-    icon: 'https://framerusercontent.com/images/4ZZQ6ZFOyrBZ3TXhVZjMFK7zbGk.png' 
+    name: 'Music', 
+    icon: 'assets/images/ios18_clean/music.png' 
   },
 ];
 
@@ -118,6 +110,12 @@ const InteractiveDockWrapper: React.FC = () => {
     const win = window as any;
     if (['ae', 'ps', 'ai', 'warn'].includes(appId)) {
       win.openAdobeDialog?.(appId);
+    } else if (appId === 'phone') {
+      win.openPhoneApp?.();
+    } else if (appId === 'safari') {
+      win.openSafariApp?.();
+    } else if (appId === 'messages') {
+      win.openMessagesApp?.();
     } else if (appId === 'notebook') {
       win.openNotebookWindow?.();
     } else if (appId === 'gallery') {
@@ -163,11 +161,14 @@ const mountApp = () => {
     presenceRoot.render(<LiveUserCursors />);
   }
 
-  // 2. Mount MacOSDock to #mac-dock
-  const dockElement = document.getElementById('mac-dock');
-  if (dockElement) {
-    const dockRoot = ReactDOM.createRoot(dockElement);
-    dockRoot.render(<InteractiveDockWrapper />);
+  // 2. Mount MacOSDock to #mac-dock — desktop only
+  // On mobile, app.js renderMobileDock() injects native HTML dock instead
+  if (typeof window !== 'undefined' && window.innerWidth > 768) {
+    const dockElement = document.getElementById('mac-dock');
+    if (dockElement) {
+      const dockRoot = ReactDOM.createRoot(dockElement);
+      dockRoot.render(<InteractiveDockWrapper />);
+    }
   }
 };
 

@@ -8,6 +8,7 @@ export interface DockApp {
   id: string;
   name: string;
   icon: string;
+  badge?: string;
 }
 
 export interface MacOSDockProps {
@@ -161,6 +162,35 @@ const DockItem: React.FC<DockItemProps> = ({
             target.src = 'https://cdn.jim-nielsen.com/macos/1024/finder-2021-09-10.png?rf=1024';
           }}
         />
+
+        {/* Notification Badge */}
+        {app.badge && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '-4px',
+              right: '-6px',
+              background: '#ff3b30',
+              color: '#ffffff',
+              fontSize: '10px',
+              fontWeight: 800,
+              padding: '1px 5px',
+              minWidth: '18px',
+              height: '18px',
+              borderRadius: '9px',
+              border: '1.5px solid rgba(0, 0, 0, 0.5)',
+              boxShadow: '0 2px 6px rgba(255, 59, 48, 0.6)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10,
+              letterSpacing: '-0.3px',
+              pointerEvents: 'none'
+            }}
+          >
+            {app.badge}
+          </div>
+        )}
 
         {/* Active Indicator Dot */}
         {isOpen && (

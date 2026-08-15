@@ -55,6 +55,30 @@ html, body {
   overflow: hidden;
 }
 
+/* Wallpaper fills background fully */
+.wallpaper-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 0;
+  transition: opacity 0.5s ease;
+}
+
+/* Desktop macOS Dock Positioning */
+#mac-dock {
+  position: fixed;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
 .wallpaper-video-wrapper {
   position: absolute;
   inset: 0;
@@ -1072,6 +1096,86 @@ html, body {
 }
 
 /* ==========================================================================
+   Desktop macOS Project Icons (auto-grid layout, draggable)
+   ========================================================================== */
+.desktop-grid {
+  position: absolute;
+  inset: 0;
+  top: 32px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.desktop-item {
+  position: absolute;
+  width: 88px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  pointer-events: auto;
+  border-radius: 10px;
+  padding: 6px 4px 6px 4px;
+  transition: background 0.15s ease, transform 0.15s ease;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.desktop-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.desktop-item:active,
+.desktop-item.is-dragging {
+  background: rgba(255, 255, 255, 0.18);
+  transform: scale(1.06);
+  z-index: 200;
+  cursor: grabbing;
+}
+
+.desktop-icon-wrapper {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.4);
+  background: rgba(20, 24, 32, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease;
+}
+
+.desktop-item:hover .desktop-icon-wrapper {
+  transform: scale(1.08);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.75), 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+.desktop-icon-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  display: block;
+}
+
+.desktop-label {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #ffffff;
+  text-align: center;
+  line-height: 1.2;
+  max-width: 86px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9), 0 2px 8px rgba(0, 0, 0, 0.7);
+  letter-spacing: -0.1px;
+}
+
+/* ==========================================================================
    Window Manager & Dialog Modals
    ========================================================================== */
 .window-container {
@@ -1449,10 +1553,20 @@ html, body {
 }
 
 @media (max-width: 768px) {
+  /* Hide video wallpaper on mobile — use static wallpaper instead */
+  .wallpaper-video-wrapper {
+    display: none !important;
+  }
+  #wallpaper-bg {
+    display: block !important;
+    z-index: 0;
+  }
+
   /* Hide Desktop Elements */
   .mac-menu-bar,
   .login-top-bar,
-  .login-bottom-controls {
+  .login-bottom-controls,
+  .desktop-widgets-layer {
     display: none !important;
   }
 
@@ -1483,317 +1597,563 @@ html, body {
   /* Show iOS Top Status Bar */
   .ios-status-bar {
     display: flex !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 48px !important;
+    padding: 0 20px !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    z-index: 9999 !important;
+    background: transparent !important;
+    pointer-events: auto !important;
+  }
+
+  .ios-time {
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.3px !important;
+    color: #ffffff !important;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7) !important;
+  }
+
+  .ios-icons {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    color: #ffffff !important;
+  }
+
+  /* 4 Cellular Signal Bars */
+  .ios-signal-bars {
+    display: inline-flex !important;
+    align-items: flex-end !important;
+    gap: 1.5px !important;
+    height: 12px !important;
+  }
+
+  .ios-signal-bars .signal-bar {
+    width: 3px !important;
+    background: #ffffff !important;
+    border-radius: 1px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6) !important;
+  }
+  .ios-signal-bars .bar-1 { height: 3.5px !important; }
+  .ios-signal-bars .bar-2 { height: 6px !important; }
+  .ios-signal-bars .bar-3 { height: 9px !important; }
+  .ios-signal-bars .bar-4 { height: 12px !important; }
+
+  .ios-wifi-icon {
+    margin: 0 1px !important;
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6)) !important;
+  }
+
+  /* iOS 18 Battery Pill with Number Inside */
+  .ios-battery-pill-container {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 1px !important;
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6)) !important;
+  }
+
+  .ios-battery-pill {
+    width: 25px !important;
+    height: 12px !important;
+    border-radius: 4px !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
+    padding: 1px !important;
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    background: rgba(0, 0, 0, 0.4) !important;
+  }
+
+  .ios-battery-percent-text {
+    position: absolute !important;
+    font-size: 8.5px !important;
+    font-weight: 800 !important;
+    color: #ffffff !important;
+    z-index: 2 !important;
+    letter-spacing: -0.4px !important;
+    line-height: 1 !important;
+  }
+
+  .ios-battery-fill {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    background: #ffffff !important;
+    border-radius: 1px !important;
+    opacity: 0.3 !important;
+  }
+
+  .ios-battery-nub {
+    width: 1.5px !important;
+    height: 4.5px !important;
+    background: rgba(255, 255, 255, 0.85) !important;
+    border-radius: 0 1.5px 1.5px 0 !important;
+  }
+
+  /* Dynamic Island */
+  .ios-dynamic-island {
+    position: absolute !important;
+    top: 8px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    height: 30px !important;
+    background: #000000 !important;
+    border-radius: 18px !important;
+    padding: 0 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.8) !important;
+    cursor: pointer !important;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    z-index: 10000 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .ios-dynamic-island:active {
+    transform: translateX(-50%) scale(0.96) !important;
   }
 
   /* Show iOS Home Indicator */
   .ios-home-indicator {
     display: block !important;
+    position: fixed !important;
+    bottom: 6px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 138px !important;
+    height: 5px !important;
+    background: rgba(255, 255, 255, 0.85) !important;
+    border-radius: 3px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6) !important;
+    z-index: 100010 !important;
+    cursor: pointer !important;
+    transition: opacity 0.2s ease, transform 0.2s ease !important;
   }
 
-  /* Mobile App Launcher & Home Screen Container */
+  .ios-home-indicator:active {
+    transform: translateX(-50%) scale(0.92) !important;
+    opacity: 0.5 !important;
+  }
+
+  /* ==========================================================================
+     iOS 18 SpringBoard Canvas & Swipeable Pages
+     ========================================================================== */
   .desktop-grid {
     position: fixed !important;
     inset: 0 !important;
-    padding: 56px 14px 100px 14px !important;
+    top: 44px !important;
+    bottom: 102px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    pointer-events: auto !important;
+    display: block !important;
+    z-index: 10 !important;
+  }
+
+  .ios-springboard-slider {
+    display: flex !important;
+    width: 200% !important;
+    height: 100% !important;
+    transition: transform 0.38s cubic-bezier(0.2, 0.9, 0.2, 1) !important;
+    will-change: transform !important;
+  }
+
+  .ios-springboard-page {
+    width: 50% !important;
+    height: 100% !important;
+    padding: 4px 16px 0 16px !important;
+    box-sizing: border-box !important;
     display: flex !important;
     flex-direction: column !important;
-    gap: 16px !important;
+    justify-content: flex-start !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
-    pointer-events: auto !important;
     -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
   }
 
-  /* Mobile Top Section: iOS Widgets & Featured Card */
-  .mobile-home-header {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    width: 100%;
-    margin-bottom: 4px;
+  .ios-springboard-page::-webkit-scrollbar {
+    display: none !important;
   }
 
-  /* Dual 2x2 Widget Row */
-  .mobile-widgets-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    width: 100%;
-  }
-
-  .mobile-widget-card {
-    background: rgba(20, 24, 34, 0.65);
-    backdrop-filter: blur(28px) saturate(190%);
-    -webkit-backdrop-filter: blur(28px) saturate(190%);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    border-radius: 20px;
-    padding: 14px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-    color: #ffffff;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    min-height: 124px;
-  }
-
-  .mobile-widget-clock-title {
-    font-size: 10px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    color: rgba(255, 255, 255, 0.65);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .mobile-widget-time {
-    font-size: 24px;
-    font-weight: 900;
-    letter-spacing: -0.5px;
-    margin: 4px 0 2px 0;
-  }
-
-  .mobile-widget-date {
-    font-size: 11px;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.85);
-  }
-
-  .mobile-widget-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 10px;
-    font-weight: 700;
-    color: #10b981;
-    margin-top: 4px;
-  }
-
-  /* Music Mini Widget */
-  .mobile-music-widget {
-    cursor: pointer;
-  }
-
-  .mobile-music-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .mobile-music-tag {
-    font-size: 10px;
-    font-weight: 800;
-    color: #1db954;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .mobile-music-track {
-    font-size: 12px;
-    font-weight: 800;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin: 4px 0 1px 0;
-  }
-
-  .mobile-music-artist {
-    font-size: 10px;
-    color: var(--text-muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .mobile-music-ctrls {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 6px;
-  }
-
-  .mobile-music-play-btn {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: #1db954;
-    color: #fff;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    cursor: pointer;
-    box-shadow: 0 4px 10px rgba(29, 185, 84, 0.4);
-  }
-
-  /* Section Titles on Mobile */
-  .mobile-section-heading {
-    font-size: 13px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    color: rgba(255, 255, 255, 0.7);
-    margin: 8px 4px 2px 4px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  /* 4-Column iOS App Grid */
-  .mobile-apps-grid {
+  /* 4-Column iOS 18 Home Screen App Grid */
+  .ios-apps-grid {
     display: grid !important;
     grid-template-columns: repeat(4, 1fr) !important;
-    gap: 16px 8px !important;
+    row-gap: clamp(6px, 1.6vh, 12px) !important;
+    column-gap: 10px !important;
     width: 100% !important;
+    align-items: start !important;
+    justify-items: center !important;
   }
 
-  .mobile-app-item {
+  /* 2x2 Weather Widget (Top-Left) */
+  .ios-widget-wrapper {
+    grid-column: span 2 !important;
+    grid-row: span 2 !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    cursor: pointer !important;
+  }
+
+  .ios-widget-weather-card {
+    width: 100% !important;
+    aspect-ratio: 1 / 1 !important;
+    background: rgba(30, 36, 50, 0.65) !important;
+    backdrop-filter: blur(32px) saturate(190%) !important;
+    -webkit-backdrop-filter: blur(32px) saturate(190%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.22) !important;
+    border-radius: 22px !important;
+    padding: 12px 14px !important;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+    color: #ffffff !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    transition: transform 0.15s ease, background 0.15s ease !important;
+  }
+
+  .ios-widget-wrapper:active .ios-widget-weather-card {
+    transform: scale(0.96) !important;
+  }
+
+  .weather-top-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+
+  .weather-location {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.2px !important;
+    color: #ffffff !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 3px !important;
+  }
+
+  .weather-arrow {
+    font-size: 11px !important;
+    opacity: 0.9 !important;
+  }
+
+  .weather-temp-main {
+    font-size: 38px !important;
+    font-weight: 300 !important;
+    letter-spacing: -1.5px !important;
+    line-height: 1 !important;
+    margin: 1px 0 0 0 !important;
+    color: #ffffff !important;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+  }
+
+  .weather-condition-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: rgba(255, 255, 255, 0.95) !important;
+    margin-top: 1px !important;
+  }
+
+  .weather-range {
+    font-size: 10.5px !important;
+    font-weight: 600 !important;
+    color: rgba(255, 255, 255, 0.75) !important;
+    letter-spacing: 0.2px !important;
+  }
+
+  /* iOS App Item */
+  .ios-app-item {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    cursor: pointer !important;
+    position: relative !important;
+    width: 58px !important;
+  }
+
+  .ios-app-item:active .ios-app-icon-box {
+    transform: scale(0.88) !important;
+  }
+
+  .ios-app-icon-box {
+    position: relative !important;
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 13px !important;
+    overflow: visible !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45) !important;
+    transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  .ios-app-icon-img {
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 13px !important;
+    object-fit: cover !important;
+    display: block !important;
+  }
+
+  /* Red iOS Notification Badge */
+  .ios-badge {
+    position: absolute !important;
+    top: -4px !important;
+    right: -5px !important;
+    background: #ff3b30 !important;
+    color: #ffffff !important;
+    font-size: 9.5px !important;
+    font-weight: 800 !important;
+    padding: 1px 5px !important;
+    min-width: 17px !important;
+    height: 17px !important;
+    border-radius: 9px !important;
+    border: 1.5px solid rgba(0, 0, 0, 0.6) !important;
+    box-shadow: 0 2px 8px rgba(255, 59, 48, 0.6) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 10 !important;
+    letter-spacing: -0.2px !important;
+  }
+
+  .ios-app-label {
+    margin-top: 3px !important;
+    font-size: 10.5px !important;
+    font-weight: 500 !important;
+    text-align: center !important;
+    color: #ffffff !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 2px 8px rgba(0, 0, 0, 0.7) !important;
+    line-height: 1.15 !important;
+    max-width: 68px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    letter-spacing: -0.1px !important;
+  }
+
+  /* Dynamic Calendar Icon */
+  .ios-dynamic-calendar-icon {
+    width: 56px !important;
+    height: 56px !important;
+    background: #ffffff !important;
+    border-radius: 13px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  }
+
+  .calendar-day-name {
+    font-size: 8.5px !important;
+    font-weight: 800 !important;
+    color: #ff3b30 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    margin-top: -2px !important;
+  }
+
+  .calendar-date-number {
+    font-size: 24px !important;
+    font-weight: 300 !important;
+    color: #000000 !important;
+    line-height: 1 !important;
+    letter-spacing: -0.5px !important;
+  }
+
+  /* Live Animated Clock Icon */
+  .ios-live-clock-icon {
+    width: 56px !important;
+    height: 56px !important;
+    background: #000000 !important;
+    border-radius: 13px !important;
+    position: relative !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45) !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  }
+
+  .clock-face-svg {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* Folder Squircle ("Camera shit") */
+  .ios-folder-box {
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 13px !important;
+    background: rgba(30, 36, 48, 0.65) !important;
+    backdrop-filter: blur(28px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.22) !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 3.5px !important;
+    padding: 6px !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45) !important;
+    transition: transform 0.15s ease !important;
+  }
+
+  .folder-mini-icon {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 4px !important;
+    object-fit: cover !important;
+  }
+
+  /* Page Indicator Pill */
+  .ios-page-indicator {
+    position: fixed !important;
+    bottom: 92px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    padding: 4px 10px !important;
+    background: rgba(20, 24, 34, 0.45) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    z-index: 50 !important;
+  }
+
+  .page-dot {
+    width: 6px !important;
+    height: 6px !important;
+    border-radius: 50% !important;
+    background: rgba(255, 255, 255, 0.35) !important;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    cursor: pointer !important;
+  }
+
+  .page-dot.active {
+    background: #ffffff !important;
+    width: 6px !important;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.9) !important;
+  }
+
+  /* iOS 18 Bottom Dock — native HTML dock (replaces React component on mobile) */
+  .mac-dock-mount-container,
+  #mac-dock {
+    position: fixed !important;
+    bottom: 10px !important;
+    left: 10px !important;
+    right: 10px !important;
+    transform: none !important;
+    width: auto !important;
+    height: 96px !important;
+    background: rgba(28, 32, 48, 0.55) !important;
+    backdrop-filter: blur(40px) saturate(220%) brightness(1.08) !important;
+    -webkit-backdrop-filter: blur(40px) saturate(220%) brightness(1.08) !important;
+    border-radius: 32px !important;
+    border: 1px solid rgba(255, 255, 255, 0.22) !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-evenly !important;
+    padding: 0 8px !important;
+    z-index: 10001 !important;
+    pointer-events: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Hide the React MacOSDock inner wrapper on mobile */
+  #mac-dock > div {
+    display: contents !important;
+  }
+  #mac-dock > div > div[style] {
+    all: unset !important;
+    display: contents !important;
+  }
+
+  /* iOS Dock Icon Items */
+  .ios-dock-item {
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
     cursor: pointer !important;
+    -webkit-tap-highlight-color: transparent !important;
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
     position: relative !important;
+    flex: 1 !important;
+    max-width: 90px !important;
   }
 
-  .mobile-app-item:active .mobile-app-icon {
-    transform: scale(0.9) !important;
+  .ios-dock-item:active {
+    transform: scale(0.88) !important;
   }
 
-  .mobile-app-icon {
-    width: 58px !important;
-    height: 58px !important;
-    border-radius: 14px !important;
-    overflow: hidden !important;
-    background: rgba(255, 255, 255, 0.1) !important;
-    border: 1px solid rgba(255, 255, 255, 0.22) !important;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5) !important;
+  .ios-dock-icon-box {
+    position: relative !important;
+    width: 68px !important;
+    height: 68px !important;
+    border-radius: 16px !important;
+    overflow: visible !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45) !important;
+    transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  .ios-dock-icon-img {
+    width: 68px !important;
+    height: 68px !important;
+    border-radius: 16px !important;
+    object-fit: cover !important;
+    display: block !important;
+    pointer-events: none !important;
+  }
+
+  /* Notification Badges on dock icons */
+  .ios-dock-badge {
+    position: absolute !important;
+    top: -6px !important;
+    right: -6px !important;
+    min-width: 20px !important;
+    height: 20px !important;
+    background: #ff3b30 !important;
+    color: #ffffff !important;
+    font-size: 10.5px !important;
+    font-weight: 800 !important;
+    border-radius: 10px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    transition: transform 0.15s ease !important;
+    padding: 0 5px !important;
+    border: 2px solid rgba(28, 32, 48, 0.9) !important;
+    letter-spacing: -0.3px !important;
+    line-height: 1 !important;
+    box-shadow: 0 2px 6px rgba(255, 59, 48, 0.6) !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
   }
 
-  .mobile-app-icon img {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important;
-    display: block !important;
-  }
-
-  .mobile-app-label {
-    margin-top: 5px !important;
-    font-size: 11px !important;
-    font-weight: 600 !important;
-    text-align: center !important;
-    color: #ffffff !important;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9) !important;
-    line-height: 1.2 !important;
-    max-width: 72px !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
-  }
-
-  /* Mobile Project Showcase Cards */
-  .mobile-projects-container {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    width: 100%;
-    margin-top: 4px;
-  }
-
-  .mobile-project-card {
-    background: rgba(18, 22, 32, 0.65);
-    backdrop-filter: blur(28px) saturate(190%);
-    -webkit-backdrop-filter: blur(28px) saturate(190%);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 18px;
-    padding: 12px;
-    display: flex;
-    gap: 14px;
-    align-items: center;
-    cursor: pointer;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-    transition: transform 0.15s ease, background 0.15s ease;
-  }
-
-  .mobile-project-card:active {
-    transform: scale(0.98);
-    background: rgba(255, 255, 255, 0.15);
-  }
-
-  .mobile-project-thumb {
-    width: 68px;
-    height: 68px;
-    border-radius: 12px;
-    overflow: hidden;
-    flex-shrink: 0;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  }
-
-  .mobile-project-thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .mobile-project-info {
-    flex: 1;
-    overflow: hidden;
-  }
-
-  .mobile-project-tag {
-    font-size: 10px;
-    font-weight: 800;
-    color: #60a5fa;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    margin-bottom: 2px;
-  }
-
-  .mobile-project-title {
-    font-size: 14px;
-    font-weight: 800;
-    color: #ffffff;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-bottom: 2px;
-  }
-
-  .mobile-project-client {
-    font-size: 11px;
-    color: var(--text-muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .mobile-project-arrow {
-    font-size: 16px;
-    color: rgba(255, 255, 255, 0.5);
-    margin-right: 4px;
-  }
-
-  /* Mobile Bottom Navigation Dock */
-  .mac-dock-mount-container,
-  #mac-dock {
+  /* Window Manager Layer on Mobile */
+  .window-container,
+  #window-stack {
     position: fixed !important;
-    bottom: 22px !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    z-index: 1000 !important;
-    width: fit-content !important;
-    max-width: 92vw !important;
-    display: flex !important;
-    justify-content: center !important;
-    pointer-events: auto !important;
+    inset: 0 !important;
+    z-index: 100000 !important;
+    pointer-events: none !important;
   }
 
   /* Mobile Bottom Sheet Windows (iOS Native Style) */
@@ -1805,18 +2165,77 @@ html, body {
     right: 0 !important;
     width: 100vw !important;
     max-width: 100vw !important;
-    height: 88vh !important;
-    max-height: 88vh !important;
-    border-radius: 28px 28px 0 0 !important;
+    height: 90vh !important;
+    max-height: 90vh !important;
+    border-radius: 32px 32px 0 0 !important;
     border-bottom: none !important;
     border-left: none !important;
     border-right: none !important;
     border-top: 1px solid rgba(255, 255, 255, 0.35) !important;
-    box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.8) !important;
+    background: rgba(18, 22, 34, 0.95) !important;
+    backdrop-filter: blur(50px) saturate(220%) !important;
+    -webkit-backdrop-filter: blur(50px) saturate(220%) !important;
+    box-shadow: 0 -20px 70px rgba(0, 0, 0, 0.95) !important;
     transform: translateY(100%) !important;
-    filter: none !important;
     transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease !important;
-    z-index: 10005 !important;
+    z-index: 100005 !important;
+    pointer-events: auto !important;
+  }
+
+  /* Folder Popup Overlay */
+  .ios-folder-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(10, 12, 18, 0.65) !important;
+    backdrop-filter: blur(40px) saturate(190%) !important;
+    -webkit-backdrop-filter: blur(40px) saturate(190%) !important;
+    z-index: 200000 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  .ios-folder-overlay.visible {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  .ios-folder-window {
+    width: 88vw !important;
+    max-width: 320px !important;
+    background: rgba(30, 36, 52, 0.75) !important;
+    backdrop-filter: blur(36px) saturate(210%) !important;
+    -webkit-backdrop-filter: blur(36px) saturate(210%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.24) !important;
+    border-radius: 32px !important;
+    padding: 24px 20px !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.75) !important;
+    transform: scale(0.85) !important;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  .ios-folder-overlay.visible .ios-folder-window {
+    transform: scale(1) !important;
+  }
+
+  .ios-folder-title {
+    font-size: 20px !important;
+    font-weight: 800 !important;
+    text-align: center !important;
+    color: #ffffff !important;
+    margin-bottom: 20px !important;
+  }
+
+  .ios-folder-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 16px 12px !important;
+    align-items: center !important;
+    justify-items: center !important;
   }
 
   .mac-window.visible {
@@ -1831,19 +2250,18 @@ html, body {
 
   .window-header {
     height: 52px !important;
-    border-radius: 28px 28px 0 0 !important;
+    border-radius: 32px 32px 0 0 !important;
     padding: 0 20px !important;
     cursor: default !important;
   }
 
-  /* iOS Pull Down Grabber Bar */
   .window-header::before {
     content: '' !important;
     position: absolute !important;
     top: 8px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
-    width: 40px !important;
+    width: 42px !important;
     height: 5px !important;
     background: rgba(255, 255, 255, 0.45) !important;
     border-radius: 3px !important;
@@ -1854,69 +2272,36 @@ html, body {
   }
 
   .window-title {
-    font-size: 15px !important;
+    font-size: 16px !important;
     font-weight: 800 !important;
     text-align: left !important;
-    padding: 0 !important;
-  }
-
-  .window-header-actions {
-    display: flex !important;
-    align-items: center !important;
-  }
-
-  /* Mobile Friendly Close Button */
-  .mobile-window-close-btn {
-    width: 32px !important;
-    height: 32px !important;
-    border-radius: 50% !important;
-    background: rgba(255, 255, 255, 0.2) !important;
-    border: 1px solid rgba(255, 255, 255, 0.3) !important;
-    color: #ffffff !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-size: 14px !important;
-    font-weight: 700 !important;
-    cursor: pointer !important;
-    transition: background 0.15s ease !important;
-  }
-
-  .mobile-window-close-btn:active {
-    background: rgba(255, 255, 255, 0.4) !important;
   }
 
   .window-body {
-    padding: 16px 18px 40px 18px !important;
-    max-height: calc(88vh - 52px) !important;
+    padding: 16px 18px 45px 18px !important;
+    max-height: calc(90vh - 52px) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
   }
 
-  /* Modal Grids on Mobile */
-  .project-modal-grid {
-    grid-template-columns: 1fr !important;
-    gap: 16px !important;
+  /* Specific App Modal Styles */
+  .ios-modal-section {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 14px;
   }
 
-  .project-cover-large {
-    max-height: 240px !important;
-    object-fit: cover !important;
+  .ios-modal-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   }
 
-  .project-title-large {
-    font-size: 20px !important;
-  }
-
-  .bio-card {
-    flex-direction: column !important;
-    text-align: center !important;
-  }
-
-  .gallery-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 10px !important;
-  }
-
-  .gallery-card img {
-    height: 120px !important;
+  .ios-modal-row:last-child {
+    border-bottom: none;
   }
 }

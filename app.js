@@ -1,10 +1,11 @@
 /* ==========================================================================
-   CASEY PORTFOLIO — Unified macOS Desktop & iOS Mobile Engine
+   CASEY PORTFOLIO — Unified macOS Desktop & Authentic iOS 18 Mobile Engine
    ========================================================================== */
 
 document.addEventListener("DOMContentLoaded", () => {
   let highestZIndex = 200;
   let activeWindows = {};
+  let currentSpringBoardPage = 0;
 
   // Initialize Core Elements
   const desktopGrid = document.getElementById("desktop-grid");
@@ -25,36 +26,55 @@ document.addEventListener("DOMContentLoaded", () => {
   const islandEq = document.getElementById("island-eq");
 
   // ==========================================================================
-  // 1. Clock & Date Management (macOS Menu, iOS Status Bar, Lock Screens)
+  // 1. Live Clock & Calendar Date Synchronization
   // ==========================================================================
+  const daysOfWeek = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+
   function updateAllClocks() {
     const now = new Date();
     
     // Time Strings
     const time12 = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
     const timeSimple = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: false });
-    const timeShort12 = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    const timeStatus = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: false });
     
     // Date Strings
     const dateLong = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
     const dateShort = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     const dateWidget = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    const dayName = daysOfWeek[now.getDay()];
+    const dateNum = now.getDate();
 
     if (menuClock) menuClock.textContent = dateShort;
     if (loginClock) loginClock.textContent = time12;
     if (iosLockClock) iosLockClock.textContent = timeSimple;
     if (iosLockDate) iosLockDate.textContent = dateLong;
-    if (iosStatusTime) iosStatusTime.textContent = timeShort12;
+    if (iosStatusTime) iosStatusTime.textContent = timeStatus;
 
+    // Desktop Widgets
     const widgetTimeEl = document.getElementById("widget-digital-time");
     const widgetDateEl = document.getElementById("widget-date-display");
     if (widgetTimeEl) widgetTimeEl.textContent = time12;
     if (widgetDateEl) widgetDateEl.textContent = dateWidget;
 
-    const mobileWidgetTime = document.getElementById("mobile-widget-time");
-    const mobileWidgetDate = document.getElementById("mobile-widget-date");
-    if (mobileWidgetTime) mobileWidgetTime.textContent = time12;
-    if (mobileWidgetDate) mobileWidgetDate.textContent = dateWidget;
+    // Dynamic Calendar Icon on Home Screen
+    const calDayEl = document.getElementById("dynamic-cal-day");
+    const calDateEl = document.getElementById("dynamic-cal-date");
+    if (calDayEl) calDayEl.textContent = dayName;
+    if (calDateEl) calDateEl.textContent = dateNum;
+
+    // Live Analog Clock Icon Hands
+    const hrHand = document.getElementById("clock-hr-hand");
+    const minHand = document.getElementById("clock-min-hand");
+    const secHand = document.getElementById("clock-sec-hand");
+    if (hrHand && minHand && secHand) {
+      const s = now.getSeconds();
+      const m = now.getMinutes() + s / 60;
+      const h = (now.getHours() % 12) + m / 60;
+      hrHand.setAttribute("transform", `rotate(${h * 30} 30 30)`);
+      minHand.setAttribute("transform", `rotate(${m * 6} 30 30)`);
+      secHand.setAttribute("transform", `rotate(${s * 6} 30 30)`);
+    }
   }
 
   updateAllClocks();
@@ -156,14 +176,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const pct = Math.min(100, (currentTrackTime / track.duration) * 100);
     if (widgetProgressFill) widgetProgressFill.style.width = `${pct}%`;
     if (widgetCurrentTime) widgetCurrentTime.textContent = formatTime(currentTrackTime);
-
-    // Mobile Widget
-    const mobileTrackTitle = document.getElementById("mobile-music-track-title");
-    const mobileArtist = document.getElementById("mobile-music-artist-name");
-    const mobilePlayBtn = document.getElementById("mobile-music-play-btn");
-    if (mobileTrackTitle) mobileTrackTitle.textContent = track.title;
-    if (mobileArtist) mobileArtist.textContent = track.artist;
-    if (mobilePlayBtn) mobilePlayBtn.textContent = isSpotifyPlaying ? "⏸" : "▶";
   }
 
   function startSpotifyTimer() {
@@ -235,7 +247,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setTimeout(() => {
       if (bootProgressFill) bootProgressFill.style.width = "85%";
-      if (bootStatusText) bootStatusText.textContent = "Welcome back, Casey!";
+      if (bootStatusText) bootStatusText.textContent = "Welcome to Casey's Studio!";
     }, 450);
 
     setTimeout(() => {
@@ -282,7 +294,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }, { passive: true });
 
   // ==========================================================================
-  // 4. Responsive Grid & App Launcher (Desktop Scattered + Mobile SpringBoard)
+  // 4. SpringBoard Renderer (Authentic iOS 18 Home Screen + Multi-Page Physics)
   // ==========================================================================
   function renderAppGrid() {
     const data = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : null);
@@ -292,183 +304,383 @@ document.addEventListener("DOMContentLoaded", () => {
     const isMobile = window.innerWidth <= 768;
 
     if (isMobile) {
-      // ----------------------------------------------------------------------
-      // Mobile iOS SpringBoard Layout
-      // ----------------------------------------------------------------------
       const now = new Date();
-      const time12 = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-      const dateWidget = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-      const currentTrack = spotifyTracks[currentTrackIdx];
+      const dayName = daysOfWeek[now.getDay()];
+      const dateNum = now.getDate();
 
+      // Multi-Page SpringBoard Slider
       desktopGrid.innerHTML = `
-        <!-- Top iOS Widgets Header -->
-        <div class="mobile-home-header">
-          <div class="mobile-widgets-row">
-            <!-- Clock & Status Widget -->
-            <div class="mobile-widget-card" onclick="window.openNotebookWindow && window.openNotebookWindow()">
-              <div class="mobile-widget-clock-title">
-                <span>STUDIO</span>
-                <span>🕒</span>
+        <div id="springboard-slider" class="ios-springboard-slider">
+          
+          <!-- ================= PAGE 1: EXACT REFERENCE HOME SCREEN ================= -->
+          <div class="ios-springboard-page" id="page-0">
+            <div class="ios-apps-grid">
+              
+              <!-- 2x2 Weather Widget (Top-Left) -->
+              <div class="ios-widget-wrapper" onclick="window.openWeatherApp()">
+                <div class="ios-widget-weather-card">
+                  <div class="weather-top-row">
+                    <span class="weather-location">New Delhi <span class="weather-arrow">↗</span></span>
+                  </div>
+                  <div class="weather-temp-main">29°</div>
+                  <div class="weather-condition-row">
+                    <span style="font-size: 14px;">☁️</span>
+                    <span>Cloudy</span>
+                  </div>
+                  <div class="weather-range">H:32° L:27°</div>
+                </div>
+                <span class="ios-app-label">Weather</span>
               </div>
-              <div>
-                <div id="mobile-widget-time" class="mobile-widget-time">${time12}</div>
-                <div id="mobile-widget-date" class="mobile-widget-date">${dateWidget}</div>
-              </div>
-              <div class="mobile-widget-status">
-                <span class="status-dot"></span> Available
-              </div>
-            </div>
 
-            <!-- Spotify Now Playing Widget -->
-            <div class="mobile-widget-card mobile-music-widget" onclick="window.openSpotifyWindow && window.openSpotifyWindow()">
-              <div class="mobile-music-header">
-                <span class="mobile-music-tag">
-                  <svg viewBox="0 0 24 24" width="12" height="12" fill="#1db954"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.516 17.316c-.218.358-.686.474-1.044.256-2.864-1.75-6.467-2.146-10.71-1.176-.407.094-.816-.16-.91-.567-.093-.408.16-.817.568-.91 4.646-1.062 8.632-.612 11.84 1.35.358.218.474.686.256 1.047zm1.47-3.27c-.274.446-.86.588-1.306.314-3.278-2.014-8.277-2.598-12.155-1.42-.505.153-1.04-.135-1.194-.64-.153-.505.135-1.04.64-1.194 4.43-1.344 9.943-.695 13.7 1.614.446.274.588.86.314 1.306zm.127-3.41c-3.931-2.334-10.42-2.55-14.186-1.407-.604.183-1.242-.162-1.425-.766-.183-.604.162-1.242.766-1.425 4.316-1.31 11.48-1.053 16.002 1.63.543.322.723 1.028.4 1.57-.322.544-1.027.724-1.57.402z"/></svg>
-                  SPOTIFY
-                </span>
-                <span style="font-size: 10px; color: rgba(255,255,255,0.6);">PLAYING</span>
+              <!-- Top-Right 2x2 Grid Apps -->
+              <!-- FaceTime -->
+              <div class="ios-app-item" onclick="window.openFaceTimeApp()">
+                <div class="ios-app-icon-box">
+                  <img class="ios-app-icon-img" src="assets/images/ios18_clean/facetime.png" alt="FaceTime">
+                  <span class="ios-badge">2</span>
+                </div>
+                <span class="ios-app-label">FaceTime</span>
               </div>
-              <div>
-                <div id="mobile-music-track-title" class="mobile-music-track">${currentTrack.title}</div>
-                <div id="mobile-music-artist-name" class="mobile-music-artist">${currentTrack.artist}</div>
+
+              <!-- Calendar (Dynamic Day & Date) -->
+              <div class="ios-app-item" onclick="window.openCalendarApp()">
+                <div class="ios-app-icon-box ios-dynamic-calendar-icon">
+                  <span id="dynamic-cal-day" class="calendar-day-name">${dayName}</span>
+                  <span id="dynamic-cal-date" class="calendar-date-number">${dateNum}</span>
+                </div>
+                <span class="ios-app-label">Calendar</span>
               </div>
-              <div class="mobile-music-ctrls" onclick="event.stopPropagation();">
-                <button class="music-btn" onclick="window.spotifyPrevTrack && window.spotifyPrevTrack()">⏮</button>
-                <button id="mobile-music-play-btn" class="mobile-music-play-btn" onclick="window.spotifyTogglePlay && window.spotifyTogglePlay()">
-                  ${isSpotifyPlaying ? "⏸" : "▶"}
-                </button>
-                <button class="music-btn" onclick="window.spotifyNextTrack && window.spotifyNextTrack()">⏭</button>
+
+              <!-- Photos -->
+              <div class="ios-app-item" onclick="window.openGalleryWindow()">
+                <div class="ios-app-icon-box">
+                  <img class="ios-app-icon-img" src="assets/images/ios18_clean/photos.png" alt="Photos">
+                </div>
+                <span class="ios-app-label">Photos</span>
               </div>
+
+              <!-- Camera -->
+              <div class="ios-app-item" onclick="window.openCameraApp()">
+                <div class="ios-app-icon-box">
+                  <img class="ios-app-icon-img" src="assets/images/ios18_clean/camera.png" alt="Camera">
+                </div>
+                <span class="ios-app-label">Camera</span>
+              </div>
+
+              <!-- Row 2 -->
+              <!-- Mail (1,134) -->
+              <div class="ios-app-item" onclick="window.openContactWindow()">
+                <div class="ios-app-icon-box">
+                  <img class="ios-app-icon-img" src="assets/images/ios18_clean/mail.png" alt="Mail">
+                  <span class="ios-badge">1,134</span>
+                </div>
+                <span class="ios-app-label">Mail</span>
+              </div>
+
+              <!-- Notes -->
+              <div class="ios-app-item" onclick="window.openNotesApp()">
+                <div class="ios-app-icon-box">
+                  <img class="ios-app-icon-img" src="assets/images/ios18_clean/notes.png" alt="Notes">
+                </div>
+                <span class="ios-app-label">Notes</span>
+              </div>
+
+              <!-- Reminders (3) -->
+              <div class="ios-app-item" onclick="window.openRemindersApp()">
+                <div class="ios-app-icon-box">
+                  <img class="ios-app-icon-img" src="assets/images/ios18_clean/reminders.png" alt="Reminders">
+                  <span class="ios-badge">3</span>
+                </div>
+                <span class="ios-app-label">Reminders</span>
+              </div>
+
+              <!-- Clock (Live Ticking SVG) -->
+              <div class="ios-app-item" onclick="window.openClockApp()">
+                <div class="ios-app-icon-box ios-live-clock-icon">
+                  <svg class="clock-face-svg" viewBox="0 0 60 60">
+                    <circle cx="30" cy="30" r="28" fill="#ffffff" stroke="rgba(0,0,0,0.1)" stroke-width="1"/>
+                    ${[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map(deg => `
+                      <line x1="30" y1="6" x2="30" y2="${deg % 90 === 0 ? '10' : '8'}" stroke="#000000" stroke-width="${deg % 90 === 0 ? '2' : '1'}" transform="rotate(${deg} 30 30)"/>
+                    `).join("")}
+                    <line id="clock-hr-hand" x1="30" y1="30" x2="30" y2="15" stroke="#000000" stroke-width="2.5" stroke-linecap="round"/>
+                    <line id="clock-min-hand" x1="30" y1="30" x2="30" y2="10" stroke="#000000" stroke-width="1.8" stroke-linecap="round"/>
+                    <line id="clock-sec-hand" x1="30" y1="34" x2="30" y2="8" stroke="#ff3b30" stroke-width="1" stroke-linecap="round"/>
+                    <circle cx="30" cy="30" r="2" fill="#ff3b30"/>
+                  </svg>
+                </div>
+                <span class="ios-app-label">Clock</span>
+              </div>
+
+              <!-- Row 3 -->
+              <!-- TV -->
+              <div class="ios-app-item" onclick="window.openTvApp()">
+                <div class="ios-app-icon-box">
+                  <img class="ios-app-icon-img" src="assets/images/ios18_clean/tv.png" alt="TV">
+                </div>
+                <span class="ios-app-label">TV</span>
+              </div>
+
+              <!-- Podcasts -->
+              <div class="ios-app-item" onclick="window.openPodcastsApp()">
+                <div class="ios-app-icon-box">
+                  <img class="ios-app-icon-img" src="assets/images/ios18_clean/podcasts.png" alt="Podcasts">
+                </div>
+                <span class="ios-app-label">Podcasts</span>
+              </div>
+
+              <!-- App Store -->
+              <div class="ios-app-item" onclick="window.openAppStoreApp()">
+                <div class="ios-app-icon-box">
+                  <img class="ios-app-icon-img" src="assets/images/ios18_clean/appstore.png" alt="App Store">
+                </div>
+                <span class="ios-app-label">App Store</span>
+              </div>
+
+              <!-- Maps -->
+              <div class="ios-app-item" onclick="window.openMapsApp()">
+                <div class="ios-app-icon-box">
+                  <img class="ios-app-icon-img" src="assets/images/ios18_clean/maps.png" alt="Maps">
+                </div>
+                <span class="ios-app-label">Maps</span>
+              </div>
+
+              <!-- Row 4 -->
+              <!-- Health -->
+              <div class="ios-app-item" onclick="window.openHealthApp()">
+                <div class="ios-app-icon-box">
+                  <img class="ios-app-icon-img" src="assets/images/ios18_clean/health.png" alt="Health">
+                </div>
+                <span class="ios-app-label">Health</span>
+              </div>
+
+              <!-- Wallet -->
+              <div class="ios-app-item" onclick="window.openWalletApp()">
+                <div class="ios-app-icon-box">
+                  <img class="ios-app-icon-img" src="assets/images/ios18_clean/wallet.png" alt="Wallet">
+                </div>
+                <span class="ios-app-label">Wallet</span>
+              </div>
+
+              <!-- Settings (3) -->
+              <div class="ios-app-item" onclick="window.openSettingsApp()">
+                <div class="ios-app-icon-box">
+                  <img class="ios-app-icon-img" src="assets/images/ios18_clean/settings.png" alt="Settings">
+                  <span class="ios-badge">3</span>
+                </div>
+                <span class="ios-app-label">Settings</span>
+              </div>
+
+              <!-- Passwords -->
+              <div class="ios-app-item" onclick="window.openPasswordsApp()">
+                <div class="ios-app-icon-box">
+                  <img class="ios-app-icon-img" src="assets/images/ios18_clean/passwords.png" alt="Passwords">
+                </div>
+                <span class="ios-app-label">Passwords</span>
+              </div>
+
+              <!-- Row 5 -->
+              <!-- Folder: "Camera shit" -->
+              <div class="ios-app-item" onclick="window.openCameraFolder()">
+                <div class="ios-folder-box">
+                  <img class="folder-mini-icon" src="assets/images/ios18_clean/camera.png" alt="Camera">
+                  <img class="folder-mini-icon" src="assets/images/ios18_clean/photos.png" alt="Photos">
+                  <img class="folder-mini-icon" src="https://framerusercontent.com/images/fZcO2HO3MMDvuS9IcWLgq5MyMc.png" alt="Instagram">
+                  <img class="folder-mini-icon" src="assets/images/ios18_clean/finalcut_camera.png" alt="Visuals">
+                </div>
+                <span class="ios-app-label">Camera shit</span>
+              </div>
+
+              <!-- Riot Mobile -->
+              <div class="ios-app-item" onclick="window.openRiotApp()">
+                <div class="ios-app-icon-box">
+                  <img class="ios-app-icon-img" src="assets/images/ios18_clean/riotmobile.png" alt="Riot Mobile">
+                </div>
+                <span class="ios-app-label">Riot Mobile</span>
+              </div>
+
             </div>
           </div>
+
+          <!-- ================= PAGE 2: STUDIO CREATIVE APPS & WORKS ================= -->
+          <div class="ios-springboard-page" id="page-1">
+            <div class="ios-apps-grid">
+              
+              <!-- Live Project Banner Widget (2x2) -->
+              <div class="ios-widget-wrapper" onclick="window.openSpotifyWindow()">
+                <div class="ios-widget-weather-card" style="background: linear-gradient(135deg, rgba(29, 185, 84, 0.4) 0%, rgba(10, 20, 30, 0.8) 100%);">
+                  <div class="weather-top-row">
+                    <span class="weather-location" style="color: #1db954;">NOW PLAYING</span>
+                    <span style="font-size: 10px; background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 8px;">VINYL</span>
+                  </div>
+                  <div style="font-size: 16px; font-weight: 800; color: #fff; margin-top: 6px;">HOTEL MAFIJA</div>
+                  <div style="font-size: 11px; color: rgba(255,255,255,0.75);">Casey & SBM Label</div>
+                  <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px;">
+                    <span style="font-size: 11px; color: #1db954; font-weight: 700;">▶ Playing Master</span>
+                    <span style="font-size: 18px;">🎵</span>
+                  </div>
+                </div>
+                <span class="ios-app-label">Studio Music</span>
+              </div>
+
+              <!-- Creative Apps Grid -->
+              <!-- After Effects -->
+              <div class="ios-app-item" onclick="window.openAdobeDialog('ae')">
+                <div class="ios-app-icon-box">
+                  <img class="ios-app-icon-img" src="https://framerusercontent.com/images/FGXr3pqtmk0UpCXHi0IZJgC4H8.png" alt="After Effects">
+                </div>
+                <span class="ios-app-label">After Effects</span>
+              </div>
+
+              <!-- Photoshop -->
+              <div class="ios-app-item" onclick="window.openAdobeDialog('ps')">
+                <div class="ios-app-icon-box">
+                  <img class="ios-app-icon-img" src="https://framerusercontent.com/images/iDBBsIGms7v4vkBAa7EBeh9PGuM.png" alt="Photoshop">
+                </div>
+                <span class="ios-app-label">Photoshop</span>
+              </div>
+
+              <!-- Illustrator -->
+              <div class="ios-app-item" onclick="window.openAdobeDialog('ai')">
+                <div class="ios-app-icon-box">
+                  <img class="ios-app-icon-img" src="https://framerusercontent.com/images/VHJFQu7ykJIdCqTTduCtUcpcA.png" alt="Illustrator">
+                </div>
+                <span class="ios-app-label">Illustrator</span>
+              </div>
+
+              <!-- System Log -->
+              <div class="ios-app-item" onclick="window.openAdobeDialog('warn')">
+                <div class="ios-app-icon-box">
+                  <img class="ios-app-icon-img" src="https://framerusercontent.com/images/BSPnJPSH4K1WxhDJJbEfUgT7U.png" alt="System Log">
+                </div>
+                <span class="ios-app-label">System Log</span>
+              </div>
+
+              <!-- Behance -->
+              <div class="ios-app-item" onclick="window.open('https://www.behance.net/Casey08', '_blank')">
+                <div class="ios-app-icon-box" style="background: #0057ff;">
+                  <img class="ios-app-icon-img" src="assets/images/behance_icon.svg" alt="Behance">
+                </div>
+                <span class="ios-app-label">Behance</span>
+              </div>
+
+              <!-- YouTube -->
+              <div class="ios-app-item" onclick="window.open('https://www.youtube.com/@Caseyxlive', '_blank')">
+                <div class="ios-app-icon-box" style="background: #cc0000;">
+                  <img class="ios-app-icon-img" src="assets/images/youtube_icon.svg" alt="YouTube">
+                </div>
+                <span class="ios-app-label">YouTube</span>
+              </div>
+
+              <!-- Instagram -->
+              <div class="ios-app-item" onclick="window.open('https://www.instagram.com/caseyxlive/', '_blank')">
+                <div class="ios-app-icon-box" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);">
+                  <img class="ios-app-icon-img" src="https://framerusercontent.com/images/fZcO2HO3MMDvuS9IcWLgq5MyMc.png" alt="Instagram">
+                </div>
+                <span class="ios-app-label">Instagram</span>
+              </div>
+
+              <!-- Bin of Ideas -->
+              <div class="ios-app-item" onclick="window.openBinWindow()">
+                <div class="ios-app-icon-box" style="background: #27272a;">
+                  <img class="ios-app-icon-img" src="https://framerusercontent.com/images/Hfn1FB5V1VnB099tUlAIyjV1tC4.png" alt="Bin of Ideas">
+                </div>
+                <span class="ios-app-label">Bin of Ideas</span>
+              </div>
+
+              <!-- Swift Playgrounds -->
+              <div class="ios-app-item" onclick="window.openPlaygroundsApp()">
+                <div class="ios-app-icon-box">
+                  <img class="ios-app-icon-img" src="assets/images/ios18_clean/playgrounds.png" alt="Playgrounds">
+                </div>
+                <span class="ios-app-label">Playgrounds</span>
+              </div>
+
+              <!-- TestFlight -->
+              <div class="ios-app-item" onclick="window.openTestFlightApp()">
+                <div class="ios-app-icon-box">
+                  <img class="ios-app-icon-img" src="assets/images/ios18_clean/testflight.png" alt="TestFlight">
+                </div>
+                <span class="ios-app-label">TestFlight</span>
+              </div>
+
+              <!-- Files -->
+              <div class="ios-app-item" onclick="window.openFilesApp()">
+                <div class="ios-app-icon-box">
+                  <img class="ios-app-icon-img" src="assets/images/ios18_clean/files.png" alt="Files">
+                </div>
+                <span class="ios-app-label">Files</span>
+              </div>
+
+              <!-- Shazam -->
+              <div class="ios-app-item" onclick="window.openShazamApp()">
+                <div class="ios-app-icon-box">
+                  <img class="ios-app-icon-img" src="assets/images/ios18_clean/shazam.png" alt="Shazam">
+                </div>
+                <span class="ios-app-label">Shazam</span>
+              </div>
+
+              <!-- Voice Memos -->
+              <div class="ios-app-item" onclick="window.openVoiceMemosApp()">
+                <div class="ios-app-icon-box">
+                  <img class="ios-app-icon-img" src="assets/images/ios18_clean/voicememos.png" alt="Voice Memos">
+                </div>
+                <span class="ios-app-label">Voice Memos</span>
+              </div>
+
+              <!-- Translate -->
+              <div class="ios-app-item" onclick="window.openTranslateApp()">
+                <div class="ios-app-icon-box">
+                  <img class="ios-app-icon-img" src="assets/images/ios18_clean/translate.png" alt="Translate">
+                </div>
+                <span class="ios-app-label">Translate</span>
+              </div>
+
+              <!-- Keynote -->
+              <div class="ios-app-item" onclick="window.openNotebookWindow()">
+                <div class="ios-app-icon-box">
+                  <img class="ios-app-icon-img" src="assets/images/ios18_clean/keynote.png" alt="Keynote">
+                </div>
+                <span class="ios-app-label">Pitch Deck</span>
+              </div>
+
+            </div>
+          </div>
+
         </div>
-
-        <!-- Core iOS System Apps -->
-        <div class="mobile-section-heading">
-          <span>APPLICATIONS</span>
-          <span style="font-size: 10px; color: rgba(255,255,255,0.5);">Tap to launch</span>
-        </div>
-
-        <div class="mobile-apps-grid">
-          <div class="mobile-app-item" onclick="window.openNotebookWindow && window.openNotebookWindow()">
-            <div class="mobile-app-icon" style="background: #ffffff;">
-              <img src="https://framerusercontent.com/images/es0axIAu0guUZSRBu6xvsteey8w.png" alt="About & CV">
-            </div>
-            <span class="mobile-app-label">About & CV</span>
-          </div>
-
-          <div class="mobile-app-item" onclick="window.openGalleryWindow && window.openGalleryWindow()">
-            <div class="mobile-app-icon" style="background: #ffffff;">
-              <img src="https://framerusercontent.com/images/yNLcekVy7df0d4hAoz6dZR8s.png" alt="Photos Gallery">
-            </div>
-            <span class="mobile-app-label">Photos</span>
-          </div>
-
-          <div class="mobile-app-item" onclick="window.openSpotifyWindow && window.openSpotifyWindow()">
-            <div class="mobile-app-icon" style="background: #121212;">
-              <img src="https://framerusercontent.com/images/vs3eHHOnNIgYRpCxqrlx6kGu7ZE.png?scale-down-to=2048" alt="Spotify Player">
-            </div>
-            <span class="mobile-app-label">Spotify</span>
-          </div>
-
-          <div class="mobile-app-item" onclick="window.openContactWindow && window.openContactWindow()">
-            <div class="mobile-app-icon" style="background: #0078d4;">
-              <img src="https://framerusercontent.com/images/4ZZQ6ZFOyrBZ3TXhVZjMFK7zbGk.png" alt="Contact Mail">
-            </div>
-            <span class="mobile-app-label">Contact</span>
-          </div>
-
-          <div class="mobile-app-item" onclick="window.open('https://www.behance.net/Casey08', '_blank')">
-            <div class="mobile-app-icon" style="background: #0057ff;">
-              <img src="assets/images/behance_icon.svg" alt="Behance">
-            </div>
-            <span class="mobile-app-label">Behance</span>
-          </div>
-
-          <div class="mobile-app-item" onclick="window.open('https://www.youtube.com/@Caseyxlive', '_blank')">
-            <div class="mobile-app-icon" style="background: #cc0000;">
-              <img src="assets/images/youtube_icon.svg" alt="YouTube">
-            </div>
-            <span class="mobile-app-label">YouTube</span>
-          </div>
-
-          <div class="mobile-app-item" onclick="window.open('https://www.instagram.com/caseyxlive/', '_blank')">
-            <div class="mobile-app-icon" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);">
-              <img src="https://framerusercontent.com/images/fZcO2HO3MMDvuS9IcWLgq5MyMc.png" alt="Instagram">
-            </div>
-            <span class="mobile-app-label">Instagram</span>
-          </div>
-
-          <div class="mobile-app-item" onclick="window.openBinWindow && window.openBinWindow()">
-            <div class="mobile-app-icon" style="background: #27272a;">
-              <img src="https://framerusercontent.com/images/Hfn1FB5V1VnB099tUlAIyjV1tC4.png" alt="Bin of Ideas">
-            </div>
-            <span class="mobile-app-label">Bin of Ideas</span>
-          </div>
-
-          <div class="mobile-app-item" onclick="window.openAdobeDialog && window.openAdobeDialog('warn')">
-            <div class="mobile-app-icon" style="background: #2a2200;">
-              <img src="https://framerusercontent.com/images/BSPnJPSH4K1WxhDJJbEfUgT7U.png" alt="System Alert">
-            </div>
-            <span class="mobile-app-label">System Log</span>
-          </div>
-
-          <div class="mobile-app-item" onclick="window.openAdobeDialog && window.openAdobeDialog('ae')">
-            <div class="mobile-app-icon" style="background: #00005b;">
-              <img src="https://framerusercontent.com/images/FGXr3pqtmk0UpCXHi0IZJgC4H8.png" alt="After Effects">
-            </div>
-            <span class="mobile-app-label">After Effects</span>
-          </div>
-        </div>
-
-        <!-- Featured Projects Showcase Section -->
-        <div class="mobile-section-heading">
-          <span>FEATURED PROJECTS</span>
-          <span style="font-size: 10px; color: rgba(255,255,255,0.5);">${data.projects.length} Works</span>
-        </div>
-
-        <div class="mobile-projects-container" id="mobile-projects-list"></div>
       `;
 
-      // Render Project Cards in mobile container
-      const projectsList = document.getElementById("mobile-projects-list");
-      if (projectsList) {
-        data.projects.forEach((proj) => {
-          const card = document.createElement("div");
-          card.className = "mobile-project-card";
-          card.innerHTML = `
-            <div class="mobile-project-thumb">
-              <img src="${proj.cover}" alt="${proj.title}" loading="lazy">
-            </div>
-            <div class="mobile-project-info">
-              <div class="mobile-project-tag">${proj.category}</div>
-              <div class="mobile-project-title">${proj.title}</div>
-              <div class="mobile-project-client">${proj.client} · ${proj.year}</div>
-            </div>
-            <div class="mobile-project-arrow">›</div>
-          `;
-          card.addEventListener("click", () => openProjectModal(proj));
-          projectsList.appendChild(card);
-        });
-      }
+      setupSpringBoardSwipe();
+      updateAllClocks();
 
     } else {
       // ----------------------------------------------------------------------
-      // Desktop macOS Scattered Canvas Layout with Smooth Draggable Physics
+      // Desktop macOS Auto-Grid Layout — clean column arrangement, draggable
       // ----------------------------------------------------------------------
-      const gridWidth = desktopGrid.clientWidth || window.innerWidth;
-      const gridHeight = desktopGrid.clientHeight || window.innerHeight;
 
-      data.projects.forEach((proj) => {
+      // Layout constants
+      const ICON_SIZE  = 88;   // icon box width + label
+      const ICON_GAP   = 28;   // gap between icons
+      const CELL       = ICON_SIZE + ICON_GAP;
+      const START_X    = 30;   // left margin
+      const START_Y    = 52;   // below menu bar
+      const RIGHT_SAFE = 210;  // avoid widgets panel
+      const BOTTOM_SAFE = 90;  // above dock
+
+      const availH = (window.innerHeight - START_Y - BOTTOM_SAFE);
+      const rowsPerCol = Math.max(1, Math.floor(availH / CELL));
+
+      data.projects.forEach((proj, idx) => {
+        const col = Math.floor(idx / rowsPerCol);
+        const row = idx % rowsPerCol;
+
+        const posX = START_X + col * CELL;
+        const posY = START_Y + row * CELL;
+
         const item = document.createElement("div");
         item.className = "desktop-item";
         item.dataset.id = proj.id;
-
-        const posX = (proj.pos.x / 100) * gridWidth;
-        const posY = (proj.pos.y / 100) * gridHeight;
-
         item.style.left = `${posX}px`;
-        item.style.top = `${posY}px`;
+        item.style.top  = `${posY}px`;
 
         item.innerHTML = `
           <div class="desktop-icon-wrapper">
@@ -499,14 +711,13 @@ document.addEventListener("DOMContentLoaded", () => {
           const onMouseMove = (me) => {
             const dx = me.clientX - startX;
             const dy = me.clientY - startY;
-            if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
-              hasMoved = true;
-            }
+            if (Math.abs(dx) > 4 || Math.abs(dy) > 4) hasMoved = true;
             if (hasMoved) {
-              const newLeft = Math.max(10, Math.min(window.innerWidth - 90, itemX + dx));
-              const newTop = Math.max(35, Math.min(window.innerHeight - 100, itemY + dy));
+              const maxX = window.innerWidth - RIGHT_SAFE - ICON_SIZE - 10;
+              const newLeft = Math.max(10, Math.min(maxX, itemX + dx));
+              const newTop  = Math.max(35, Math.min(window.innerHeight - BOTTOM_SAFE - ICON_SIZE, itemY + dy));
               item.style.left = `${newLeft}px`;
-              item.style.top = `${newTop}px`;
+              item.style.top  = `${newTop}px`;
             }
           };
 
@@ -516,20 +727,120 @@ document.addEventListener("DOMContentLoaded", () => {
             item.style.zIndex = "";
             document.removeEventListener("mousemove", onMouseMove);
             document.removeEventListener("mouseup", onMouseUp);
-
-            if (!hasMoved) {
-              openProjectModal(proj);
-            }
+            if (!hasMoved) openProjectModal(proj);
           };
 
           document.addEventListener("mousemove", onMouseMove);
           document.addEventListener("mouseup", onMouseUp);
         });
 
-        desktopGrid.appendChild(item);
       });
     }
+
+    // On mobile, also inject the native iOS dock into #mac-dock
+    if (isMobile) {
+      renderMobileDock();
+    }
   }
+
+  // ==========================================================================
+  // iOS 18 Native Bottom Dock (bypasses React component on mobile)
+  // ==========================================================================
+  function renderMobileDock() {
+    const dockEl = document.getElementById("mac-dock");
+    if (!dockEl) return;
+
+    const dockApps = [
+      {
+        id: "phone",
+        label: "Phone",
+        icon: "assets/images/ios18_clean/phone.png",
+        badge: "183",
+        onClick: "window.openPhoneApp && window.openPhoneApp()"
+      },
+      {
+        id: "safari",
+        label: "Safari",
+        icon: "assets/images/ios18_clean/safari.png",
+        badge: null,
+        onClick: "window.openSafariApp && window.openSafariApp()"
+      },
+      {
+        id: "messages",
+        label: "Messages",
+        icon: "assets/images/ios18_clean/messages.png",
+        badge: "688",
+        onClick: "window.openMessagesApp && window.openMessagesApp()"
+      },
+      {
+        id: "music",
+        label: "Music",
+        icon: "assets/images/ios18_clean/music.png",
+        badge: null,
+        onClick: "window.openSpotifyWindow && window.openSpotifyWindow()"
+      }
+    ];
+
+    dockEl.innerHTML = dockApps.map(app => `
+      <div class="ios-dock-item" onclick="${app.onClick}">
+        <div class="ios-dock-icon-box">
+          <img src="${app.icon}" alt="${app.label}" class="ios-dock-icon-img" draggable="false">
+          ${app.badge ? `<span class="ios-dock-badge">${app.badge}</span>` : ""}
+        </div>
+      </div>
+    `).join("");
+  }
+
+  // Multi-Page SpringBoard Horizontal Swipe
+  function setupSpringBoardSwipe() {
+    const slider = document.getElementById("springboard-slider");
+    if (!slider) return;
+
+    let startX = 0;
+    let startY = 0;
+    let isSwiping = false;
+
+    slider.addEventListener("touchstart", (e) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      isSwiping = true;
+    }, { passive: true });
+
+    slider.addEventListener("touchend", (e) => {
+      if (!isSwiping) return;
+      const endX = e.changedTouches[0].clientX;
+      const endY = e.changedTouches[0].clientY;
+      const diffX = startX - endX;
+      const diffY = startY - endY;
+
+      // Ensure horizontal swipe
+      if (Math.abs(diffX) > 45 && Math.abs(diffX) > Math.abs(diffY)) {
+        if (diffX > 0 && currentSpringBoardPage === 0) {
+          switchSpringBoardPage(1);
+        } else if (diffX < 0 && currentSpringBoardPage === 1) {
+          switchSpringBoardPage(0);
+        }
+      }
+      isSwiping = false;
+    }, { passive: true });
+  }
+
+  window.switchSpringBoardPage = function(pageIdx) {
+    currentSpringBoardPage = pageIdx;
+    const slider = document.getElementById("springboard-slider");
+    if (slider) {
+      slider.style.transform = `translateX(-${pageIdx * 50}%)`;
+    }
+    const dot0 = document.getElementById("dot-page-0");
+    const dot1 = document.getElementById("dot-page-1");
+    if (dot0 && dot1) {
+      dot0.classList.toggle("active", pageIdx === 0);
+      dot1.classList.toggle("active", pageIdx === 1);
+    }
+    if (navigator.vibrate) {
+      try { navigator.vibrate(10); } catch (e) {}
+    }
+  };
 
   renderAppGrid();
   window.addEventListener("resize", renderAppGrid);
@@ -537,7 +848,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // ==========================================================================
   // 5. Window Manager Core (Desktop Floating Windows + iOS Bottom Sheets)
   // ==========================================================================
-  function createWindow({ id, title, width = "620px", contentHTML, top = "15%", left = "25%", originEl = null }) {
+  function createWindow({ id, title, width = "620px", contentHTML, top = "15%", left = "25%" }) {
     if (activeWindows[id]) {
       focusWindow(activeWindows[id]);
       return activeWindows[id];
@@ -639,7 +950,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const isMobile = window.innerWidth <= 768;
 
     if (isMobile) {
-      // Mobile Header Swipe Down to Dismiss
       let touchStartY = 0;
       let currentTranslateY = 0;
 
@@ -668,7 +978,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }, { passive: true });
 
     } else {
-      // Desktop Header Draggable
       let isDragging = false;
       let offsetX = 0;
       let offsetY = 0;
@@ -702,8 +1011,702 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ==========================================================================
-  // 6. Application Modals: Project Details, About/CV, Gallery, Contact, Spotify
+  // 6. Interactive iOS 18 Modals & Core Application Windows
   // ==========================================================================
+
+  // --- Weather App ---
+  window.openWeatherApp = function() {
+    const content = `
+      <div style="text-align: center; padding: 10px 0 20px 0;">
+        <div style="font-size: 24px; font-weight: 700; color: #fff;">New Delhi</div>
+        <div style="font-size: 64px; font-weight: 200; color: #fff; line-height: 1; margin: 6px 0;">29°</div>
+        <div style="font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.85);">Cloudy</div>
+        <div style="font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.65); margin-top: 2px;">H:32°  L:27°</div>
+      </div>
+
+      <div class="ios-modal-section">
+        <div style="font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase; margin-bottom: 12px;">Cloudy conditions will continue for the rest of the day.</div>
+        <div style="display: flex; gap: 18px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none;">
+          ${[
+            { t: "Now", i: "☁️", temp: "29°" },
+            { t: "7 PM", i: "☁️", temp: "28°" },
+            { t: "8 PM", i: "🌧️", temp: "27°" },
+            { t: "9 PM", i: "🌧️", temp: "27°" },
+            { t: "10 PM", i: "☁️", temp: "26°" },
+            { t: "11 PM", i: "🌙", temp: "25°" },
+            { t: "12 AM", i: "🌙", temp: "24°" },
+          ].map(h => `
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 44px;">
+              <span style="font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.85);">${h.t}</span>
+              <span style="font-size: 18px;">${h.i}</span>
+              <span style="font-size: 14px; font-weight: 700; color: #fff;">${h.temp}</span>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+
+      <div class="ios-modal-section">
+        <div style="font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase; margin-bottom: 10px;">10-DAY FORECAST</div>
+        ${[
+          { d: "Today", i: "☁️", min: 27, max: 32 },
+          { d: "Sun", i: "🌧️", min: 26, max: 31 },
+          { d: "Mon", i: "⛈️", min: 25, max: 30 },
+          { d: "Tue", i: "⛅", min: 26, max: 33 },
+          { d: "Wed", i: "☀️", min: 27, max: 34 },
+          { d: "Thu", i: "☀️", min: 28, max: 35 }
+        ].map(f => `
+          <div class="ios-modal-row">
+            <span style="font-size: 14px; font-weight: 700; width: 60px;">${f.d}</span>
+            <span style="font-size: 18px;">${f.i}</span>
+            <div style="display: flex; align-items: center; gap: 8px; flex: 1; justify-content: flex-end;">
+              <span style="font-size: 13px; color: rgba(255,255,255,0.6);">${f.min}°</span>
+              <div style="width: 80px; height: 4px; background: linear-gradient(90deg, #60a5fa 0%, #f59e0b 100%); border-radius: 2px;"></div>
+              <span style="font-size: 13px; font-weight: 700;">${f.max}°</span>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="ios-modal-section">
+          <div style="font-size: 10px; font-weight: 800; color: rgba(255,255,255,0.6);">AIR QUALITY</div>
+          <div style="font-size: 22px; font-weight: 800; margin: 4px 0;">42 - Good</div>
+          <div style="font-size: 11px; color: rgba(255,255,255,0.7);">Air quality is ideal for outdoor creative shoots.</div>
+        </div>
+        <div class="ios-modal-section">
+          <div style="font-size: 10px; font-weight: 800; color: rgba(255,255,255,0.6);">UV INDEX</div>
+          <div style="font-size: 22px; font-weight: 800; margin: 4px 0;">6 - Moderate</div>
+          <div style="font-size: 11px; color: rgba(255,255,255,0.7);">Use protection until 5:00 PM.</div>
+        </div>
+      </div>
+    `;
+    createWindow({ id: "weather", title: "Weather", contentHTML: content });
+  };
+
+  // --- Calendar App ---
+  window.openCalendarApp = function() {
+    const content = `
+      <div style="padding: 6px 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <div>
+            <h2 style="font-size: 22px; font-weight: 900;">August 2026</h2>
+            <div style="font-size: 12px; color: #ff3b30; font-weight: 700;">Casey's Studio Schedule</div>
+          </div>
+          <button onclick="window.openContactWindow()" style="background: #007aff; color: #fff; border: none; padding: 8px 14px; border-radius: 18px; font-size: 12px; font-weight: 700; cursor: pointer;">
+            + Book Project
+          </button>
+        </div>
+
+        <div class="ios-modal-section">
+          <div style="font-size: 11px; font-weight: 800; color: #ff3b30; text-transform: uppercase; margin-bottom: 10px;">Upcoming Milestones & Availability</div>
+          ${[
+            { time: "Today · 2:00 PM", title: "Album Packaging Deluxe Foil Final Proof", tag: "SBM Label", color: "#10b981" },
+            { time: "Mon, Aug 17", title: "Arena Tour Stage LED Visual Loop Rendering", tag: "Concert Tour", color: "#3b82f6" },
+            { time: "Thu, Aug 20", title: "Streetwear Merch Drop Lookbook Shoot", tag: "Capsule Drop", color: "#f59e0b" },
+            { time: "Next Month", title: "Open for Q4 Album Art & Tour Visual Contracts", tag: "Booking Open", color: "#8b5cf6" }
+          ].map(e => `
+            <div style="display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.08);">
+              <div style="width: 4px; border-radius: 2px; background: ${e.color};"></div>
+              <div>
+                <div style="font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.6);">${e.time}</div>
+                <div style="font-size: 14px; font-weight: 800; color: #fff; margin: 2px 0;">${e.title}</div>
+                <span style="font-size: 10px; font-weight: 800; background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 10px; color: ${e.color};">${e.tag}</span>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `;
+    createWindow({ id: "calendar", title: "Calendar", contentHTML: content });
+  };
+
+  // --- Camera App ---
+  window.openCameraApp = function() {
+    const content = `
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+        <div style="position: relative; width: 100%; height: 380px; background: #000; border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,0.2);">
+          <video id="camera-feed" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover;"></video>
+          <div id="camera-fallback" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: url('assets/images/casey_portrait.png') center/cover; filter: contrast(1.1);">
+            <div style="background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); padding: 8px 16px; border-radius: 14px; font-size: 12px; font-weight: 700; color: #fff;">
+              📸 Live Viewfinder Active
+            </div>
+          </div>
+          
+          <div style="position: absolute; inset: 0; pointer-events: none; display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; opacity: 0.25;">
+            <div style="border-right: 1px solid #fff; border-bottom: 1px solid #fff;"></div>
+            <div style="border-right: 1px solid #fff; border-bottom: 1px solid #fff;"></div>
+            <div style="border-bottom: 1px solid #fff;"></div>
+            <div style="border-right: 1px solid #fff; border-bottom: 1px solid #fff;"></div>
+            <div style="border-right: 1px solid #fff; border-bottom: 1px solid #fff;"></div>
+            <div style="border-bottom: 1px solid #fff;"></div>
+            <div style="border-right: 1px solid #fff;"></div>
+            <div style="border-right: 1px solid #fff;"></div>
+            <div></div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 18px; font-size: 12px; font-weight: 800; color: rgba(255,255,255,0.6); margin: 16px 0 12px 0;">
+          <span>CINEMATIC</span>
+          <span>VIDEO</span>
+          <span style="color: #f59e0b;">PHOTO</span>
+          <span>PORTRAIT</span>
+          <span>PANO</span>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-around; width: 100%; max-width: 280px;">
+          <div onclick="window.openGalleryWindow()" style="width: 44px; height: 44px; border-radius: 10px; overflow: hidden; border: 2px solid #fff; cursor: pointer;">
+            <img src="assets/images/casey_portrait.png" style="width: 100%; height: 100%; object-fit: cover;">
+          </div>
+          <button onclick="
+            const f = document.getElementById('camera-fallback');
+            if (f) {
+              f.style.filter = 'brightness(2.5)';
+              setTimeout(() => f.style.filter = 'contrast(1.1)', 150);
+            }
+            if (navigator.vibrate) navigator.vibrate(20);
+          " style="width: 68px; height: 68px; border-radius: 50%; background: #ffffff; border: 4px solid rgba(0,0,0,0.8); box-shadow: 0 0 0 3px #ffffff; cursor: pointer; transition: transform 0.1s ease;">
+          </button>
+          <button onclick="window.openGalleryWindow()" style="width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.15); border: none; color: #fff; font-size: 18px; cursor: pointer;">
+            🖼️
+          </button>
+        </div>
+      </div>
+    `;
+    createWindow({ id: "camera", title: "Camera", contentHTML: content });
+
+    setTimeout(() => {
+      const video = document.getElementById('camera-feed');
+      const fallback = document.getElementById('camera-fallback');
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+          .then(stream => {
+            if (video) {
+              video.srcObject = stream;
+              if (fallback) fallback.style.display = 'none';
+            }
+          })
+          .catch(e => console.log("Camera access:", e));
+      }
+    }, 100);
+  };
+
+  // --- Folder Popup ("Camera shit") ---
+  window.openCameraFolder = function() {
+    const overlay = document.getElementById('ios-folder-overlay');
+    if (overlay) overlay.classList.add('visible');
+    if (navigator.vibrate) try { navigator.vibrate(10); } catch(e){}
+  };
+
+  window.closeCameraFolder = function() {
+    const overlay = document.getElementById('ios-folder-overlay');
+    if (overlay) overlay.classList.remove('visible');
+  };
+
+  // --- Phone App ---
+  window.openPhoneApp = function() {
+    const data = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : {});
+    const phone = (data.personal && data.personal.phone) ? data.personal.phone : "+91 8058100417";
+    const content = `
+      <div style="padding: 10px 0; text-align: center;">
+        <div style="font-size: 20px; font-weight: 900; margin-bottom: 4px;">Phone & Contacts</div>
+        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Direct Hotline to Casey</div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
+          <a href="tel:${phone}" style="background: #34c759; color: #fff; padding: 12px; border-radius: 16px; text-decoration: none; font-size: 12px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 4px 14px rgba(52,199,89,0.4);">
+            <span style="font-size: 18px;">📞</span> Call Now
+          </a>
+          <a href="https://wa.me/918058100417" target="_blank" style="background: #25d366; color: #fff; padding: 12px; border-radius: 16px; text-decoration: none; font-size: 12px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 4px 14px rgba(37,211,102,0.4);">
+            <span style="font-size: 18px;">💬</span> WhatsApp
+          </a>
+          <a href="https://t.me/caseyxlive" target="_blank" style="background: #0088cc; color: #fff; padding: 12px; border-radius: 16px; text-decoration: none; font-size: 12px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 4px 14px rgba(0,136,204,0.4);">
+            <span style="font-size: 18px;">✈️</span> Telegram
+          </a>
+        </div>
+
+        <div id="phone-display-number" style="font-size: 26px; font-weight: 700; height: 36px; color: #fff; letter-spacing: 1px; margin-bottom: 12px;"></div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; max-width: 260px; margin: 0 auto 16px auto;">
+          ${["1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"].map(k => `
+            <button onclick="
+              const d = document.getElementById('phone-display-number');
+              if (d) d.textContent += '${k}';
+              if (navigator.vibrate) navigator.vibrate(10);
+            " style="width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.18); color: #fff; font-size: 22px; font-weight: 600; cursor: pointer;">
+              ${k}
+            </button>
+          `).join("")}
+        </div>
+
+        <div style="display: flex; justify-content: center; gap: 16px;">
+          <a href="tel:${phone}" style="width: 58px; height: 58px; border-radius: 50%; background: #34c759; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; text-decoration: none; box-shadow: 0 6px 20px rgba(52,199,89,0.5);">
+            📞
+          </a>
+          <button onclick="
+            const d = document.getElementById('phone-display-number');
+            if (d) d.textContent = d.textContent.slice(0, -1);
+          " style="width: 58px; height: 58px; border-radius: 50%; background: rgba(255,255,255,0.15); border: none; color: #fff; font-size: 18px; cursor: pointer;">
+            ⌫
+          </button>
+        </div>
+      </div>
+    `;
+    createWindow({ id: "phone", title: "Phone", contentHTML: content });
+  };
+
+  // --- Messages App (iMessage with Interactive Bot) ---
+  window.openMessagesApp = function() {
+    const content = `
+      <div style="display: flex; flex-direction: column; height: 460px;">
+        <div style="display: flex; flex-direction: column; align-items: center; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+          <img src="assets/images/casey_portrait.png" style="width: 48px; height: 48px; border-radius: 50%; margin-bottom: 4px; border: 1px solid rgba(255,255,255,0.3);">
+          <div style="font-size: 14px; font-weight: 800; color: #fff;">Casey (Khushal)</div>
+          <div style="font-size: 11px; color: #34c759; font-weight: 700;">● Active Now · iMessage</div>
+        </div>
+
+        <div id="imessage-thread" style="flex: 1; overflow-y: auto; padding: 14px 0; display: flex; flex-direction: column; gap: 10px;">
+          <div style="align-self: flex-start; max-width: 80%; background: rgba(255,255,255,0.12); padding: 10px 14px; border-radius: 18px 18px 18px 4px; font-size: 13px; color: #fff; line-height: 1.4;">
+            Hey! Thanks for checking out my iOS 18 portfolio. What kind of design or art direction project are you planning?
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px; overflow-x: auto; padding: 6px 0; scrollbar-width: none;">
+          <button onclick="window.sendAutoMessage('🔥 Looking for an Album Cover & Deluxe Vinyl rollout!')" style="white-space: nowrap; background: rgba(0,122,255,0.2); border: 1px solid #007aff; color: #60a5fa; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 14px; cursor: pointer;">
+            🔥 Album Cover & Vinyl
+          </button>
+          <button onclick="window.sendAutoMessage('⚡ Need Arena Concert Stage Motion Loops!')" style="white-space: nowrap; background: rgba(0,122,255,0.2); border: 1px solid #007aff; color: #60a5fa; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 14px; cursor: pointer;">
+            ⚡ Tour Stage Visuals
+          </button>
+          <button onclick="window.sendAutoMessage('💼 What are your rates and availability?')" style="white-space: nowrap; background: rgba(0,122,255,0.2); border: 1px solid #007aff; color: #60a5fa; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 14px; cursor: pointer;">
+            💼 Rates & Timeline
+          </button>
+        </div>
+
+        <form onsubmit="event.preventDefault(); window.handleUserMessage();" style="display: flex; gap: 8px; margin-top: 8px;">
+          <input id="imessage-input" type="text" placeholder="iMessage" style="flex: 1; height: 38px; border-radius: 19px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 0 16px; font-size: 13px; outline: none;">
+          <button type="submit" style="width: 38px; height: 38px; border-radius: 50%; background: #007aff; border: none; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer;">
+            ↑
+          </button>
+        </form>
+      </div>
+    `;
+    createWindow({ id: "messages", title: "iMessage", contentHTML: content });
+  };
+
+  window.sendAutoMessage = function(text) {
+    const input = document.getElementById("imessage-input");
+    if (input) {
+      input.value = text;
+      window.handleUserMessage();
+    }
+  };
+
+  window.handleUserMessage = function() {
+    const input = document.getElementById("imessage-input");
+    const thread = document.getElementById("imessage-thread");
+    if (!input || !thread || !input.value.trim()) return;
+
+    const userText = input.value.trim();
+    input.value = "";
+
+    // Append User Bubble
+    const userBubble = document.createElement("div");
+    userBubble.style.cssText = "align-self: flex-end; max-width: 80%; background: #007aff; padding: 10px 14px; border-radius: 18px 18px 4px 18px; font-size: 13px; color: #fff; line-height: 1.4;";
+    userBubble.textContent = userText;
+    thread.appendChild(userBubble);
+    thread.scrollTop = thread.scrollHeight;
+
+    // Casey Reply
+    setTimeout(() => {
+      const caseyBubble = document.createElement("div");
+      caseyBubble.style.cssText = "align-self: flex-start; max-width: 80%; background: rgba(255,255,255,0.12); padding: 10px 14px; border-radius: 18px 18px 18px 4px; font-size: 13px; color: #fff; line-height: 1.4;";
+      
+      let reply = "Sounds awesome! Let's connect directly via email (khushalchhabra08@gmail.com) or WhatsApp (+91 8058100417) to lock in the timeline and deliverables.";
+      if (userText.toLowerCase().includes("rate") || userText.toLowerCase().includes("cost")) {
+        reply = "My project packages start with custom quotes based on scope. You can check my Wallet app for rate cards or drop a brief to khushalchhabra08@gmail.com!";
+      } else if (userText.toLowerCase().includes("stage") || userText.toLowerCase().includes("tour")) {
+        reply = "Stage motion loops and LED visuals are my specialty! I render in 4K/60fps with seamless looping for Resolume/AV software.";
+      }
+      
+      caseyBubble.textContent = reply;
+      thread.appendChild(caseyBubble);
+      thread.scrollTop = thread.scrollHeight;
+      if (navigator.vibrate) try { navigator.vibrate(15); } catch(e){}
+    }, 600);
+  };
+
+  // --- Notes App ---
+  window.openNotesApp = function() {
+    const data = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : {});
+    const content = `
+      <div style="padding: 4px 0;">
+        <h2 style="font-size: 22px; font-weight: 900; margin-bottom: 14px;">Notes</h2>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div class="ios-modal-section" style="cursor: pointer;" onclick="window.openNotebookWindow()">
+            <div style="font-size: 15px; font-weight: 800; color: #f59e0b; margin-bottom: 4px;">📝 About Casey (CV & Bio)</div>
+            <div style="font-size: 12px; color: var(--text-muted); line-height: 1.4;">${data.personal.bio}</div>
+            <div style="font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 6px;">Tap to view full CV & Experience ›</div>
+          </div>
+
+          <div class="ios-modal-section">
+            <div style="font-size: 15px; font-weight: 800; color: #60a5fa; margin-bottom: 4px;">🎨 Design Philosophy</div>
+            <div style="font-size: 12px; color: var(--text-muted); line-height: 1.4;">
+              Merging high-contrast brutalist aesthetics with analogue warmth and precision typography for modern music culture.
+            </div>
+          </div>
+
+          <div class="ios-modal-section">
+            <div style="font-size: 15px; font-weight: 800; color: #10b981; margin-bottom: 4px;">⚡ Capabilities & Tooling</div>
+            <div style="font-size: 12px; color: var(--text-muted); line-height: 1.4;">
+              After Effects, Photoshop, Illustrator, Cinema 4D, Blender, Figma, Premiere Pro, Final Cut Pro.
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    createWindow({ id: "notes", title: "Notes", contentHTML: content });
+  };
+
+  // --- Reminders App ---
+  window.openRemindersApp = function() {
+    const content = `
+      <div style="padding: 4px 0;">
+        <h2 style="font-size: 22px; font-weight: 900; color: #3b82f6; margin-bottom: 14px;">Reminders</h2>
+        <div class="ios-modal-section">
+          <div style="font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.6); text-transform: uppercase; margin-bottom: 12px;">Active Studio Deliverables</div>
+          ${[
+            "Finalize deluxe gatefold foil embossing proof for SBM Label",
+            "Export 4K LED concert stage loops for nationwide stadium tour",
+            "Package streetwear capsule hoodie graphics for screenprinting",
+            "Deliver Spotify Canvas visualizer loops for new single rollout",
+            "Update Behance portfolio with latest 3D typography explorations"
+          ].map((r, idx) => `
+            <div class="ios-modal-row" onclick="
+              const c = this.querySelector('.rem-circle');
+              c.classList.toggle('checked');
+              if (c.classList.contains('checked')) {
+                c.style.background = '#3b82f6';
+                this.style.opacity = '0.5';
+              } else {
+                c.style.background = 'transparent';
+                this.style.opacity = '1';
+              }
+            " style="cursor: pointer;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="rem-circle" style="width: 20px; height: 20px; border-radius: 50%; border: 2px solid #3b82f6; transition: all 0.2s ease;"></div>
+                <span style="font-size: 13px; color: #fff;">${r}</span>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `;
+    createWindow({ id: "reminders", title: "Reminders", contentHTML: content });
+  };
+
+  // --- Clock App ---
+  window.openClockApp = function() {
+    const now = new Date();
+    const content = `
+      <div style="padding: 4px 0;">
+        <h2 style="font-size: 22px; font-weight: 900; margin-bottom: 14px;">World Clock</h2>
+        <div class="ios-modal-section">
+          ${[
+            { city: "Warsaw", offset: "+1.5 HRS", time: now.toLocaleTimeString('en-US', { timeZone: 'Europe/Warsaw', hour: '2-digit', minute: '2-digit' }) },
+            { city: "London", offset: "+0.5 HRS", time: now.toLocaleTimeString('en-US', { timeZone: 'Europe/London', hour: '2-digit', minute: '2-digit' }) },
+            { city: "New York", offset: "-9.5 HRS", time: now.toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit' }) },
+            { city: "Tokyo", offset: "+3.5 HRS", time: now.toLocaleTimeString('en-US', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' }) },
+            { city: "Jaipur (Studio)", offset: "LOCAL", time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) }
+          ].map(c => `
+            <div class="ios-modal-row">
+              <div>
+                <div style="font-size: 11px; color: rgba(255,255,255,0.5);">${c.offset}</div>
+                <div style="font-size: 16px; font-weight: 800; color: #fff;">${c.city}</div>
+              </div>
+              <div style="font-size: 24px; font-weight: 300; color: #fff;">${c.time}</div>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `;
+    createWindow({ id: "clock", title: "Clock", contentHTML: content });
+  };
+
+  // --- TV App (Motion Showreel) ---
+  window.openTvApp = function() {
+    const content = `
+      <div style="padding: 4px 0;">
+        <h2 style="font-size: 22px; font-weight: 900; margin-bottom: 6px;">Stage & Motion TV</h2>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">Arena concert visuals, 3D typography loops, and music video trailers.</p>
+        <div style="border-radius: 16px; overflow: hidden; background: #000; box-shadow: 0 10px 30px rgba(0,0,0,0.6); margin-bottom: 16px;">
+          <video src="assets/images/purple-eyes-live-wallpaper.mp4" autoplay loop muted controls playsinline style="width: 100%; max-height: 240px; object-fit: cover;"></video>
+        </div>
+        <div class="ios-modal-section">
+          <div style="font-size: 14px; font-weight: 800; margin-bottom: 4px;">Live Arena LED Loops</div>
+          <div style="font-size: 12px; color: var(--text-muted);">High impact audio-reactive animations built in Blender & After Effects for festival stages.</div>
+        </div>
+      </div>
+    `;
+    createWindow({ id: "tv", title: "Apple TV", contentHTML: content });
+  };
+
+  // --- Podcasts App ---
+  window.openPodcastsApp = function() {
+    const content = `
+      <div style="padding: 4px 0;">
+        <h2 style="font-size: 22px; font-weight: 900; color: #a855f7; margin-bottom: 14px;">Podcasts & Talks</h2>
+        <div class="ios-modal-section">
+          ${[
+            { title: "Ep 12: The Art of Hip-Hop Vinyl Packaging", show: "Casey Studio Sessions", dur: "42 min" },
+            { title: "Ep 08: Stage Motion Loops for Arena Tours", show: "Visual Culture", dur: "38 min" },
+            { title: "Ep 03: Typography Systems in Electronic Music", show: "Design Breakdown", dur: "29 min" }
+          ].map(p => `
+            <div class="ios-modal-row" onclick="window.openSpotifyWindow()" style="cursor: pointer;">
+              <div>
+                <div style="font-size: 14px; font-weight: 800; color: #fff;">${p.title}</div>
+                <div style="font-size: 11px; color: var(--text-muted);">${p.show} · ${p.dur}</div>
+              </div>
+              <span style="font-size: 18px; color: #a855f7;">▶</span>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `;
+    createWindow({ id: "podcasts", title: "Podcasts", contentHTML: content });
+  };
+
+  // --- App Store App (Featured Projects Showcase) ---
+  window.openAppStoreApp = function() {
+    const data = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : {});
+    const content = `
+      <div style="padding: 4px 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <h2 style="font-size: 22px; font-weight: 900; color: #007aff;">App Store</h2>
+          <span style="font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.6);">${data.projects.length} Works Available</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          ${(data.projects || []).map(p => `
+            <div class="ios-modal-section" style="display: flex; gap: 14px; align-items: center;">
+              <img src="${p.cover}" style="width: 58px; height: 58px; border-radius: 14px; object-fit: cover; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">
+              <div style="flex: 1; overflow: hidden;">
+                <div style="font-size: 14px; font-weight: 800; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.title}</div>
+                <div style="font-size: 11px; color: #60a5fa; font-weight: 700;">${p.category}</div>
+                <div style="font-size: 10px; color: var(--text-muted);">${p.client} · ${p.year}</div>
+              </div>
+              <button onclick="window.openProjectModal(${JSON.stringify(p).replace(/"/g, '&quot;')})" style="background: rgba(255,255,255,0.2); color: #007aff; border: none; font-size: 12px; font-weight: 800; padding: 6px 14px; border-radius: 16px; cursor: pointer;">
+                GET
+              </button>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `;
+    createWindow({ id: "appstore", title: "App Store", contentHTML: content });
+  };
+
+  // --- Maps App (Studio Location & Global Clients) ---
+  window.openMapsApp = function() {
+    const content = `
+      <div style="padding: 4px 0;">
+        <h2 style="font-size: 22px; font-weight: 900; margin-bottom: 12px;">Global Clients & Studio</h2>
+        <div class="ios-modal-section" style="text-align: center; padding: 20px;">
+          <div style="font-size: 40px; margin-bottom: 8px;">🌍</div>
+          <div style="font-size: 18px; font-weight: 800; color: #fff;">Jaipur · London · Warsaw</div>
+          <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Available for projects worldwide with seamless remote collaboration.</div>
+        </div>
+        <div class="ios-modal-section">
+          <div style="font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.6); text-transform: uppercase; margin-bottom: 10px;">Client Distribution</div>
+          <div class="ios-modal-row"><span>London, United Kingdom</span><span style="color:#60a5fa; font-weight:700;">ELVT.live</span></div>
+          <div class="ios-modal-row"><span>Warsaw, Poland</span><span style="color:#60a5fa; font-weight:700;">SBM Label & Newonce</span></div>
+          <div class="ios-modal-row"><span>Bengaluru, India</span><span style="color:#60a5fa; font-weight:700;">NECMERconsult</span></div>
+          <div class="ios-modal-row"><span>Global (Remote)</span><span style="color:#60a5fa; font-weight:700;">Aceternity & Bausch + Lomb</span></div>
+        </div>
+      </div>
+    `;
+    createWindow({ id: "maps", title: "Maps", contentHTML: content });
+  };
+
+  // --- Health App (Creative Stats) ---
+  window.openHealthApp = function() {
+    const content = `
+      <div style="padding: 4px 0;">
+        <h2 style="font-size: 22px; font-weight: 900; color: #ff2d55; margin-bottom: 14px;">Studio Health & Stats</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <div class="ios-modal-section">
+            <div style="font-size: 10px; font-weight: 800; color: #ff2d55;">VIEWS DELIVERED</div>
+            <div style="font-size: 24px; font-weight: 900; color: #fff; margin: 4px 0;">500K+</div>
+            <div style="font-size: 11px; color: var(--text-muted);">Cumulative social reach</div>
+          </div>
+          <div class="ios-modal-section">
+            <div style="font-size: 10px; font-weight: 800; color: #34c759;">CLIENT HAPPINESS</div>
+            <div style="font-size: 24px; font-weight: 900; color: #fff; margin: 4px 0;">100%</div>
+            <div style="font-size: 11px; color: var(--text-muted);">On-time delivery</div>
+          </div>
+        </div>
+        <div class="ios-modal-section">
+          <div style="font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.6); text-transform: uppercase; margin-bottom: 10px;">Weekly Creative Rings</div>
+          <div class="ios-modal-row"><span>🔴 Design Output</span><span style="font-weight:700; color:#ff2d55;">380% (Goal Met)</span></div>
+          <div class="ios-modal-row"><span>🟢 Render Efficiency</span><span style="font-weight:700; color:#34c759;">100% 4K/60fps</span></div>
+          <div class="ios-modal-row"><span>🔵 Typography Precision</span><span style="font-weight:700; color:#007aff;">Flawless Kerning</span></div>
+        </div>
+      </div>
+    `;
+    createWindow({ id: "health", title: "Health", contentHTML: content });
+  };
+
+  // --- Wallet App (Apple Passes) ---
+  window.openWalletApp = function() {
+    const content = `
+      <div style="padding: 4px 0;">
+        <h2 style="font-size: 22px; font-weight: 900; margin-bottom: 14px;">Apple Wallet</h2>
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          
+          <!-- VIP Pass -->
+          <div style="background: linear-gradient(135deg, #1f2937 0%, #111827 100%); border: 1px solid rgba(255,255,255,0.25); border-radius: 20px; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+              <span style="font-size: 12px; font-weight: 800; color: #f59e0b; letter-spacing: 0.5px;">STUDIO VIP PASS</span>
+              <span style="font-size: 14px;"></span>
+            </div>
+            <div style="font-size: 20px; font-weight: 900; color: #fff;">CASEY ALL-ACCESS</div>
+            <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 4px;">Art Direction & Brand Identity</div>
+            <div style="display: flex; justify-content: space-between; margin-top: 20px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
+              <span style="font-size: 11px; color: rgba(255,255,255,0.6);">HOLDER: VIP CLIENT</span>
+              <span style="font-size: 11px; color: #10b981; font-weight: 700;">VALID: 2026/2027</span>
+            </div>
+          </div>
+
+          <!-- Rate Card Pass -->
+          <div style="background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%); border: 1px solid rgba(255,255,255,0.25); border-radius: 20px; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.6);" onclick="window.openContactWindow()" style="cursor: pointer;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+              <span style="font-size: 12px; font-weight: 800; color: #60a5fa; letter-spacing: 0.5px;">PROJECT ESTIMATES</span>
+              <span style="font-size: 14px;">🎫</span>
+            </div>
+            <div style="font-size: 18px; font-weight: 900; color: #fff;">REQUEST CUSTOM QUOTE</div>
+            <div style="font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 4px;">Tap to initiate a direct inquiry with Casey ›</div>
+          </div>
+
+        </div>
+      </div>
+    `;
+    createWindow({ id: "wallet", title: "Wallet", contentHTML: content });
+  };
+
+  // --- Settings App (Wallpaper & System Customizer) ---
+  window.openSettingsApp = function() {
+    const content = `
+      <div style="padding: 4px 0;">
+        <h2 style="font-size: 22px; font-weight: 900; margin-bottom: 14px;">Settings</h2>
+        
+        <div class="ios-modal-section">
+          <div style="font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.6); text-transform: uppercase; margin-bottom: 10px;">Wallpaper Selection</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div onclick="window.switchWallpaper('ios18')" style="background: #1e293b; padding: 10px; border-radius: 12px; border: 2px solid #3b82f6; text-align: center; cursor: pointer;">
+              <div style="font-size: 12px; font-weight: 800; color: #fff;">iOS 18 Dark</div>
+              <div style="font-size: 10px; color: #60a5fa;">Moody Liquid (Active)</div>
+            </div>
+            <div onclick="window.switchWallpaper('video')" style="background: #1e293b; padding: 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.15); text-align: center; cursor: pointer;">
+              <div style="font-size: 12px; font-weight: 800; color: #fff;">Purple Eyes</div>
+              <div style="font-size: 10px; color: var(--text-muted);">Live Video Loop</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ios-modal-section">
+          <div style="font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.6); text-transform: uppercase; margin-bottom: 10px;">System Information</div>
+          <div class="ios-modal-row"><span>iOS Version</span><span style="font-weight:700; color:#fff;">iOS 18.0 (22A3354)</span></div>
+          <div class="ios-modal-row"><span>Designer</span><span style="font-weight:700; color:#fff;">Khushal Chhabra (Casey)</span></div>
+          <div class="ios-modal-row"><span>Touch ID / Face ID</span><span style="font-weight:700; color:#34c759;">Enabled</span></div>
+        </div>
+      </div>
+    `;
+    createWindow({ id: "settings", title: "Settings", contentHTML: content });
+  };
+
+  window.switchWallpaper = function(type) {
+    const bg = document.getElementById("wallpaper-bg");
+    const video = document.getElementById("wallpaper-video-wrapper");
+    if (type === "video") {
+      if (bg) bg.style.display = "none";
+      if (video) video.style.display = "block";
+    } else {
+      if (bg) {
+        bg.style.display = "block";
+        bg.style.backgroundImage = "url('assets/images/ios18_wallpaper.jpg')";
+      }
+      if (video) video.style.display = "none";
+    }
+  };
+
+  // --- Passwords App (Secret Vault) ---
+  window.openPasswordsApp = function() {
+    const content = `
+      <div style="padding: 4px 0; text-align: center;">
+        <div style="font-size: 36px; margin-bottom: 8px;">🔑</div>
+        <h2 style="font-size: 20px; font-weight: 900; margin-bottom: 4px;">Passwords & Vault</h2>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Protected creative assets and unlocked archives.</p>
+        <button onclick="window.openProtectedResume()" style="background: #10b981; color: #fff; border: none; padding: 12px 20px; border-radius: 20px; font-size: 13px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 14px rgba(16,185,129,0.4);">
+          🔒 Unlock PDF Resume
+        </button>
+      </div>
+    `;
+    createWindow({ id: "passwords", title: "Passwords", contentHTML: content });
+  };
+
+  // --- Riot Mobile App ---
+  window.openRiotApp = function() {
+    const content = `
+      <div style="padding: 4px 0;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+          <img src="assets/images/ios18_clean/riotmobile.png" style="width: 44px; height: 44px; border-radius: 12px;">
+          <div>
+            <h2 style="font-size: 20px; font-weight: 900; color: #eb0029; margin: 0;">Riot Games Case Studies</h2>
+            <div style="font-size: 11px; color: var(--text-muted);">Esports & Tournament Visual Assets</div>
+          </div>
+        </div>
+        <div class="ios-modal-section">
+          <div style="font-size: 14px; font-weight: 800; color: #fff; margin-bottom: 4px;">VALORANT & League Key Visuals</div>
+          <div style="font-size: 12px; color: var(--text-muted); line-height: 1.4;">
+            High-octane promotional graphics, tournament key visuals, and player broadcast graphics tailored for competitive gaming audiences.
+          </div>
+        </div>
+      </div>
+    `;
+    createWindow({ id: "riot", title: "Riot Mobile", contentHTML: content });
+  };
+
+  // --- Additional iOS Apps ---
+  window.openFaceTimeApp = function() {
+    window.openPhoneApp();
+  };
+
+  window.openSafariApp = function() {
+    window.open("https://www.behance.net/Casey08", "_blank");
+  };
+
+  window.openFilesApp = function() {
+    window.openBinWindow();
+  };
+
+  window.openPlaygroundsApp = function() {
+    window.openAdobeDialog("warn");
+  };
+
+  window.openTestFlightApp = function() {
+    window.openAppStoreApp();
+  };
+
+  window.openVoiceMemosApp = function() {
+    window.openSpotifyWindow();
+  };
+
+  window.openTranslateApp = function() {
+    window.openNotesApp();
+  };
+
+  window.openShazamApp = function() {
+    window.openSpotifyWindow();
+  };
+
+  // --- Project Modal ---
   function openProjectModal(project) {
     const content = `
       <div class="project-modal-grid">
@@ -734,7 +1737,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   window.openProjectModal = openProjectModal;
 
-  // About & CV Notebook
+  // --- Notebook / CV Modal ---
   window.openNotebookWindow = function() {
     const data = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : {});
     const content = `
@@ -831,7 +1834,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // Gallery Window
+  // --- Gallery Window ---
   window.openGalleryWindow = function() {
     const data = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : {});
     const content = `
@@ -855,7 +1858,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  // Bin of Ideas Window
+  // --- Bin of Ideas Window ---
   window.openBinWindow = function() {
     const data = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : {});
     const content = `
@@ -883,7 +1886,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  // Spotify Player Window
+  // --- Spotify Player Window ---
   window.openSpotifyWindow = function() {
     const content = `
       <div style="background: #121212; padding: 14px; border-radius: 12px; color: #fff;">
@@ -925,7 +1928,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  // Contact Window
+  // --- Contact Window ---
   window.openContactWindow = function() {
     const data = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : {});
     const email = (data.personal && data.personal.email) ? data.personal.email : "khushalchhabra08@gmail.com";
@@ -943,7 +1946,6 @@ document.addEventListener("DOMContentLoaded", () => {
           Art Direction · Visual Identity · Album Packaging · Stage Motion
         </p>
 
-        <!-- Copyable Email Card -->
         <div style="display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.18); padding: 8px 14px; border-radius: 20px; width: fit-content; margin: 0 auto 20px auto;">
           <span style="font-size: 12px; font-weight: 700; color: #ffffff;">${email}</span>
           <button 
@@ -983,7 +1985,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  // Adobe Dialog Easter Eggs
+  // --- Adobe Dialog Easter Eggs ---
   window.openAdobeDialog = function(type) {
     const data = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : {});
     const adobeDialogs = data.adobeDialogs || {};

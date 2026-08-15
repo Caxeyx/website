@@ -11,8 +11,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="./assets/index-BN0cQ6eS.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-BqeWbJ9M.css">
+  <script type="module" crossorigin src="./assets/index-DR5AmY11.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-DWLJVEmx.css">
 </head>
 <body>
 
@@ -153,8 +153,11 @@
   <!-- Main System Canvas -->
   <div id="desktop-canvas">
     
-    <!-- Ambient Background Looping Live Video Wallpaper -->
-    <div class="wallpaper-video-wrapper">
+    <!-- Wallpaper Layer -->
+    <!-- Static dark wallpaper shown on mobile only (overridden by CSS) -->
+    <div id="wallpaper-bg" class="wallpaper-bg" style="background-image: url('./assets/ios18_wallpaper-DVV80KCa.jpg');"></div>
+    <!-- Video wallpaper shown on desktop by default -->
+    <div class="wallpaper-video-wrapper" id="wallpaper-video-wrapper">
       <video 
         class="wallpaper-video" 
         src="./assets/purple-eyes-live-wallpaper-BHdRkC4Z.mp4" 
@@ -168,7 +171,7 @@
 
     <!-- iOS 18 iPhone Top Status Bar & Dynamic Island (Mobile Viewport) -->
     <header class="ios-status-bar">
-      <span class="ios-time" id="ios-status-time">9:41</span>
+      <span class="ios-time" id="ios-status-time">6:24</span>
       
       <!-- Interactive Dynamic Island -->
       <div class="ios-dynamic-island" id="ios-dynamic-island" onclick="window.openSpotifyWindow && window.openSpotifyWindow()" title="Tap to expand Spotify Player">
@@ -188,12 +191,26 @@
       </div>
 
       <div class="ios-icons">
-        <span class="ios-5g">5G</span>
+        <!-- 4 Cellular Signal Bars -->
+        <div class="ios-signal-bars" title="Cellular 5G Signal">
+          <span class="signal-bar bar-1"></span>
+          <span class="signal-bar bar-2"></span>
+          <span class="signal-bar bar-3"></span>
+          <span class="signal-bar bar-4"></span>
+        </div>
+        
         <!-- Wi-Fi Icon -->
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 3C7.03 3 2.53 4.98 0 8.18l12 14.82L24 8.18C21.47 4.98 16.97 3 12 3z"/></svg>
-        <!-- Battery Icon Pill -->
-        <div class="ios-battery-pill">
-          <div class="ios-battery-fill"></div>
+        <svg class="ios-wifi-icon" viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+          <path d="M12 3C7.03 3 2.53 4.98 0 8.18l12 14.82L24 8.18C21.47 4.98 16.97 3 12 3z"/>
+        </svg>
+
+        <!-- iOS 18 Battery Pill with Percentage Number Inside -->
+        <div class="ios-battery-pill-container" title="Battery: 22%">
+          <div class="ios-battery-pill">
+            <span id="ios-battery-percent" class="ios-battery-percent-text">22</span>
+            <div id="ios-battery-fill-level" class="ios-battery-fill" style="width: 22%;"></div>
+          </div>
+          <div class="ios-battery-nub"></div>
         </div>
       </div>
     </header>
@@ -315,6 +332,62 @@
 
     <!-- macOS / iOS Interactive React Dock Mount Point -->
     <footer id="mac-dock" class="mac-dock-mount-container"></footer>
+
+    <!-- iOS 18 Home Screen Page Indicator Dots (Mobile Only) -->
+    <div id="ios-page-indicator" class="ios-page-indicator">
+      <span id="dot-page-0" class="page-dot active" onclick="window.switchSpringBoardPage && window.switchSpringBoardPage(0)"></span>
+      <span id="dot-page-1" class="page-dot" onclick="window.switchSpringBoardPage && window.switchSpringBoardPage(1)"></span>
+    </div>
+
+    <!-- iOS Folder Popup Overlay ("Camera shit") -->
+    <div id="ios-folder-overlay" class="ios-folder-overlay" onclick="window.closeCameraFolder && window.closeCameraFolder()">
+      <div class="ios-folder-window" onclick="event.stopPropagation()">
+        <div class="ios-folder-title">Camera shit</div>
+        <div class="ios-folder-grid">
+          <div class="ios-app-item" onclick="window.closeCameraFolder(); window.openCameraApp();">
+            <div class="ios-app-icon-box">
+              <img class="ios-app-icon-img" src="./assets/camera-CdPjGlut.png" alt="Camera">
+            </div>
+            <span class="ios-app-label">Camera</span>
+          </div>
+
+          <div class="ios-app-item" onclick="window.closeCameraFolder(); window.openGalleryWindow();">
+            <div class="ios-app-icon-box">
+              <img class="ios-app-icon-img" src="./assets/photos-qHc3bmSe.png" alt="Photos">
+            </div>
+            <span class="ios-app-label">Photos</span>
+          </div>
+
+          <div class="ios-app-item" onclick="window.closeCameraFolder(); window.open('https://www.instagram.com/caseyxlive/', '_blank');">
+            <div class="ios-app-icon-box">
+              <img class="ios-app-icon-img" src="https://framerusercontent.com/images/fZcO2HO3MMDvuS9IcWLgq5MyMc.png" alt="Instagram">
+            </div>
+            <span class="ios-app-label">Instagram</span>
+          </div>
+
+          <div class="ios-app-item" onclick="window.closeCameraFolder(); window.openTvApp();">
+            <div class="ios-app-icon-box">
+              <img class="ios-app-icon-img" src="./assets/finalcut_camera-CyBuuSKD.png" alt="Visuals">
+            </div>
+            <span class="ios-app-label">Visuals</span>
+          </div>
+
+          <div class="ios-app-item" onclick="window.closeCameraFolder(); window.openAdobeDialog('ps');">
+            <div class="ios-app-icon-box">
+              <img class="ios-app-icon-img" src="./assets/journal-CKxwlQrL.png" alt="Lightroom">
+            </div>
+            <span class="ios-app-label">Lightroom</span>
+          </div>
+
+          <div class="ios-app-item" onclick="window.closeCameraFolder(); window.openGalleryWindow();">
+            <div class="ios-app-icon-box">
+              <img class="ios-app-icon-img" src="./assets/freeform-BgWnFFzm.png" alt="VSCO">
+            </div>
+            <span class="ios-app-label">VSCO</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- iOS Home Indicator -->
     <div class="ios-home-indicator" onclick="window.closeAllMobileWindows && window.closeAllMobileWindows()"></div>
