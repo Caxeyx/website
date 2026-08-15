@@ -333,9 +333,9 @@
     <footer id="mac-dock" class="mac-dock-mount-container"></footer>
 
     <!-- iOS 18 Home Screen Page Indicator Dots (Mobile Only) -->
-    <div id="ios-page-indicator" class="ios-page-indicator">
-      <span id="dot-page-0" class="page-dot active" onclick="window.switchSpringBoardPage && window.switchSpringBoardPage(0)"></span>
-      <span id="dot-page-1" class="page-dot" onclick="window.switchSpringBoardPage && window.switchSpringBoardPage(1)"></span>
+    <div id="ios-page-indicator" class="ios-page-indicator" role="tablist" aria-label="SpringBoard Pages">
+      <button type="button" id="dot-page-0" class="page-dot active" onclick="window.switchSpringBoardPage && window.switchSpringBoardPage(0)" aria-label="Page 1" role="tab" aria-selected="true"></button>
+      <button type="button" id="dot-page-1" class="page-dot" onclick="window.switchSpringBoardPage && window.switchSpringBoardPage(1)" aria-label="Page 2" role="tab" aria-selected="false"></button>
     </div>
 
     <!-- iOS Folder Popup Overlay ("Camera shit") -->

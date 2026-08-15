@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import MacOSDock, { DockApp } from '@/components/ui/mac-os-dock';
 import LiveUserCursors from '@/components/ui/live-user-cursors';
 import spotifyIcon from '../assets/images/spotify_icon.svg';
-import behanceIcon from '../assets/images/behance_icon.svg';
+import behanceIcon from '../assets/images/behance-square-color-icon.svg';
 import youtubeIcon from '../assets/images/youtube_icon.svg';
 
 const allPortfolioApps: DockApp[] = [
@@ -39,7 +39,7 @@ const allPortfolioApps: DockApp[] = [
   },
   { 
     id: 'spotify', 
-    name: 'Spotify', 
+    name: 'Music Player (Full Songs)', 
     icon: spotifyIcon 
   },
   { 
@@ -150,30 +150,63 @@ const InteractiveDockWrapper: React.FC = () => {
   );
 };
 
-const mountApp = () => {
-  // 1. Mount Live Multi-User Cursors directly to document.body for desktop
-  if (typeof window !== 'undefined' && window.innerWidth > 768) {
-    const presenceContainer = document.createElement('div');
-    presenceContainer.id = 'live-cursors-root';
-    presenceContainer.style.pointerEvents = 'none';
-    document.body.appendChild(presenceContainer);
-    const presenceRoot = ReactDOM.createRoot(presenceContainer);
-    presenceRoot.render(<LiveUserCursors />);
+let dockRoot: ReactDOM.Root | null = null;
+let presenceRoot: ReactDOM.Root | null = null;
+
+export const updateDesktopReactComponents = () => {
+  if (typeof window === 'undefined') return;
+  const isDesktop = window.innerWidth > 768;
+
+  // 1. Mount / Unmount Live Multi-User Cursors for desktop
+  const existingPresence = document.getElementById('live-cursors-root');
+  if (isDesktop) {
+    if (!existingPresence) {
+      const presenceContainer = document.createElement('div');
+      presenceContainer.id = 'live-cursors-root';
+      presenceContainer.style.pointerEvents = 'none';
+      document.body.appendChild(presenceContainer);
+      presenceRoot = ReactDOM.createRoot(presenceContainer);
+      presenceRoot.render(<LiveUserCursors />);
+    }
+  } else {
+    if (existingPresence && presenceRoot) {
+      try {
+        presenceRoot.unmount();
+      } catch (e) {}
+      existingPresence.remove();
+      presenceRoot = null;
+    }
   }
 
-  // 2. Mount MacOSDock to #mac-dock — desktop only
-  // On mobile, app.js renderMobileDock() injects native HTML dock instead
-  if (typeof window !== 'undefined' && window.innerWidth > 768) {
-    const dockElement = document.getElementById('mac-dock');
-    if (dockElement) {
-      const dockRoot = ReactDOM.createRoot(dockElement);
-      dockRoot.render(<InteractiveDockWrapper />);
+  // 2. Mount / Unmount MacOSDock to #mac-dock for desktop
+  const dockElement = document.getElementById('mac-dock');
+  if (dockElement) {
+    if (isDesktop) {
+      if (!dockRoot) {
+        dockElement.innerHTML = '';
+        dockRoot = ReactDOM.createRoot(dockElement);
+        dockRoot.render(<InteractiveDockWrapper />);
+      }
+    } else {
+      if (dockRoot) {
+        try {
+          dockRoot.unmount();
+        } catch (e) {}
+        dockRoot = null;
+      }
+      if ((window as any).renderMobileDock) {
+        (window as any).renderMobileDock();
+      }
     }
   }
 };
 
+(window as any).updateDesktopReactComponents = updateDesktopReactComponents;
+
+window.addEventListener('resize', updateDesktopReactComponents);
+
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', mountApp);
+  document.addEventListener('DOMContentLoaded', updateDesktopReactComponents);
 } else {
-  mountApp();
+  updateDesktopReactComponents();
 }

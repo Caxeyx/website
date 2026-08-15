@@ -88,45 +88,108 @@ document.addEventListener("DOMContentLoaded", () => {
   // ==========================================================================
   // 2. Real HTML5 Audio & Spotify Engine (Dynamic Island Sync)
   // ==========================================================================
-  const spotifyTracks = [
-    {
-      title: "HOTEL MAFIJA VINYL",
-      artist: "Casey & SBM Label",
-      cover: "https://framerusercontent.com/images/vs3eHHOnNIgYRpCxqrlx6kGu7ZE.png?scale-down-to=2048",
-      audioUrl: "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3",
-      duration: 225
-    },
-    {
-      title: "TRASA PO KOŃCU ŚWIATA",
-      artist: "Kacperczyk & Casey",
-      cover: "https://framerusercontent.com/images/Lx5tLMHaVdhs7fD27bCK8cvb2v4.jpg?scale-down-to=2048",
-      audioUrl: "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3",
-      duration: 198
-    },
-    {
-      title: "RYK X SEXED",
-      artist: "Casey Art Direction",
-      cover: "https://framerusercontent.com/images/jWCd6yieKKyRymQkEZLe6vjBEI.jpg?scale-down-to=2048",
-      audioUrl: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a8d184.mp3",
-      duration: 212
-    },
-    {
-      title: "PIERWSZY SWAG W POLSCE",
-      artist: "Casey Studio Rollout",
-      cover: "https://framerusercontent.com/images/zaWs4d37fEOTdAisIq7UlAJyIU.png?scale-down-to=2048",
-      audioUrl: "https://cdn.pixabay.com/download/audio/2021/11/24/audio_3316d97c72.mp3",
-      duration: 185
-    }
-  ];
+  // ==========================================================================
+  // 2. Music Player Engine (YouTube Music Full Playlist & Audio Mode)
+  // ==========================================================================
+  const portfolioData = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : {});
+  const spotifyTracks = (portfolioData.youtubeTracks && portfolioData.youtubeTracks.length > 0)
+    ? portfolioData.youtubeTracks
+    : [
+        {
+          title: "I Smoked Away My Brain",
+          artist: "A$AP Rocky (I'm God x Demons)",
+          cover: "https://i.ytimg.com/vi/kSUmxeLL-ak/hqdefault.jpg",
+          videoId: "kSUmxeLL-ak",
+          audioUrl: "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3",
+          duration: 191
+        },
+        {
+          title: "STOLE YA FLOW",
+          artist: "A$AP Rocky",
+          cover: "https://i.ytimg.com/vi/8-CeCO0GzVg/hqdefault.jpg",
+          videoId: "8-CeCO0GzVg",
+          audioUrl: "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3",
+          duration: 200
+        },
+        {
+          title: "White Ferrari",
+          artist: "Frank Ocean",
+          cover: "https://i.ytimg.com/vi/ToO4VFCoR7U/hqdefault.jpg",
+          videoId: "ToO4VFCoR7U",
+          audioUrl: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a8d184.mp3",
+          duration: 249
+        },
+        {
+          title: "PRIDE.",
+          artist: "Kendrick Lamar",
+          cover: "https://i.ytimg.com/vi/J87pJrxvJ5E/hqdefault.jpg",
+          videoId: "J87pJrxvJ5E",
+          audioUrl: "https://cdn.pixabay.com/download/audio/2021/11/24/audio_3316d97c72.mp3",
+          duration: 276
+        }
+      ];
 
   let currentTrackIdx = 0;
-  let currentTrackTime = 25;
+  let currentTrackTime = 0;
   let isSpotifyPlaying = false;
   let spotifyInterval = null;
 
   const realAudio = new Audio();
   realAudio.loop = true;
   realAudio.volume = 0.5;
+
+  // Background YouTube Audio Engine (Zero Video UI)
+  let ytAudioPlayer = null;
+  let isYtReady = false;
+
+  function initYtAudioEngine() {
+    if (!document.getElementById("yt-audio-container")) {
+      const container = document.createElement("div");
+      container.id = "yt-audio-container";
+      container.style.cssText = "position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-999;overflow:hidden;";
+      container.innerHTML = `<div id="yt-audio-iframe-target"></div>`;
+      document.body.appendChild(container);
+
+      if (!window.YT) {
+        const tag = document.createElement("script");
+        tag.src = "https://www.youtube.com/iframe_api";
+        document.head.appendChild(tag);
+      }
+    }
+  }
+
+  window.onYouTubeIframeAPIReady = function() {
+    if (typeof YT !== "undefined" && YT.Player) {
+      ytAudioPlayer = new YT.Player("yt-audio-iframe-target", {
+        height: "1",
+        width: "1",
+        playerVars: {
+          playsinline: 1,
+          enablejsapi: 1,
+          autoplay: 0,
+          controls: 0,
+          origin: window.location.origin
+        },
+        events: {
+          onReady: () => {
+            isYtReady = true;
+          },
+          onStateChange: (event) => {
+            if (event.data === YT.PlayerState.PLAYING) {
+              isSpotifyPlaying = true;
+            } else if (event.data === YT.PlayerState.PAUSED) {
+              isSpotifyPlaying = false;
+            } else if (event.data === YT.PlayerState.ENDED) {
+              window.spotifyNextTrack();
+            }
+            updateSpotifyDisplay();
+          }
+        }
+      });
+    }
+  };
+
+  initYtAudioEngine();
 
   function formatTime(seconds) {
     const mins = Math.floor(seconds / 60);
@@ -136,18 +199,37 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function playCurrentAudio() {
     const track = spotifyTracks[currentTrackIdx];
-    if (realAudio.src !== track.audioUrl) {
-      realAudio.src = track.audioUrl;
+    if (ytAudioPlayer && isYtReady && track && track.videoId) {
+      realAudio.pause();
+      try {
+        ytAudioPlayer.loadVideoById({
+          videoId: track.videoId,
+          startSeconds: currentTrackTime || 0
+        });
+        ytAudioPlayer.playVideo();
+      } catch (e) {
+        console.log("YouTube audio stream active:", e);
+      }
+    } else {
+      if (track && track.audioUrl) {
+        if (realAudio.src !== track.audioUrl) {
+          realAudio.src = track.audioUrl;
+        }
+        realAudio.play().catch(e => console.log("Audio autoplay handled:", e));
+      }
     }
-    realAudio.play().catch(e => console.log("Audio autoplay handled:", e));
   }
 
   function pauseCurrentAudio() {
+    if (ytAudioPlayer && isYtReady) {
+      try { ytAudioPlayer.pauseVideo(); } catch (e) {}
+    }
     realAudio.pause();
   }
 
   function updateSpotifyDisplay() {
     const track = spotifyTracks[currentTrackIdx];
+    if (!track) return;
 
     // Dynamic Island
     if (islandSongTitle) islandSongTitle.textContent = track.title;
@@ -176,6 +258,38 @@ document.addEventListener("DOMContentLoaded", () => {
     const pct = Math.min(100, (currentTrackTime / track.duration) * 100);
     if (widgetProgressFill) widgetProgressFill.style.width = `${pct}%`;
     if (widgetCurrentTime) widgetCurrentTime.textContent = formatTime(currentTrackTime);
+
+    // Modal Audio-Only Player Sync
+    const modalCover = document.getElementById("modal-song-cover");
+    const modalTitle = document.getElementById("modal-song-title");
+    const modalArtist = document.getElementById("modal-song-artist");
+    const modalProgress = document.getElementById("modal-song-progress-fill");
+    const modalCurrentTime = document.getElementById("modal-song-current-time");
+    const modalDuration = document.getElementById("modal-song-duration");
+    const modalPlayBtn = document.getElementById("modal-play-btn");
+    const modalVinyl = document.getElementById("modal-vinyl-disc");
+    const modalArtWrapper = document.getElementById("modal-art-wrapper");
+    const modalEq = document.getElementById("modal-live-eq");
+
+    if (modalCover) modalCover.src = track.cover;
+    if (modalTitle) modalTitle.textContent = track.title;
+    if (modalArtist) modalArtist.textContent = track.artist;
+    if (modalDuration) modalDuration.textContent = formatTime(track.duration);
+    if (modalCurrentTime) modalCurrentTime.textContent = formatTime(currentTrackTime);
+    if (modalProgress) modalProgress.style.width = `${pct}%`;
+    if (modalPlayBtn) modalPlayBtn.textContent = isSpotifyPlaying ? "⏸" : "▶";
+    if (modalVinyl) modalVinyl.classList.toggle("playing", isSpotifyPlaying);
+    if (modalArtWrapper) modalArtWrapper.classList.toggle("playing", isSpotifyPlaying);
+    if (modalEq) modalEq.classList.toggle("playing", isSpotifyPlaying);
+
+    // Queue active states
+    document.querySelectorAll(".audio-queue-item").forEach((item, idx) => {
+      if (idx === currentTrackIdx) {
+        item.classList.add("active");
+      } else {
+        item.classList.remove("active");
+      }
+    });
   }
 
   function startSpotifyTimer() {
@@ -183,7 +297,19 @@ document.addEventListener("DOMContentLoaded", () => {
     spotifyInterval = setInterval(() => {
       if (!isSpotifyPlaying) return;
       const track = spotifyTracks[currentTrackIdx];
-      currentTrackTime += 1;
+      if (!track) return;
+      if (ytAudioPlayer && isYtReady && typeof ytAudioPlayer.getCurrentTime === "function") {
+        try {
+          const ytSecs = Math.floor(ytAudioPlayer.getCurrentTime());
+          if (ytSecs > 0) currentTrackTime = ytSecs;
+          else currentTrackTime += 1;
+        } catch (e) {
+          currentTrackTime += 1;
+        }
+      } else {
+        currentTrackTime += 1;
+      }
+
       if (currentTrackTime >= track.duration) {
         currentTrackTime = 0;
         currentTrackIdx = (currentTrackIdx + 1) % spotifyTracks.length;
@@ -215,6 +341,28 @@ document.addEventListener("DOMContentLoaded", () => {
     currentTrackTime = 0;
     updateSpotifyDisplay();
     if (isSpotifyPlaying) playCurrentAudio();
+  };
+
+  window.selectAudioTrack = function(idx) {
+    currentTrackIdx = idx;
+    currentTrackTime = 0;
+    isSpotifyPlaying = true;
+    playCurrentAudio();
+    updateSpotifyDisplay();
+  };
+
+  window.seekAudioProgress = function(e) {
+    const bar = document.getElementById("modal-progress-bg");
+    if (!bar) return;
+    const rect = bar.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const ratio = Math.max(0, Math.min(1, clickX / rect.width));
+    const track = spotifyTracks[currentTrackIdx];
+    currentTrackTime = Math.floor(ratio * track.duration);
+    if (ytAudioPlayer && isYtReady && track && track.videoId) {
+      try { ytAudioPlayer.seekTo(currentTrackTime, true); } catch (err) {}
+    }
+    updateSpotifyDisplay();
   };
 
   updateSpotifyDisplay();
@@ -557,8 +705,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
               <!-- Behance -->
               <div class="ios-app-item" onclick="window.open('https://www.behance.net/Casey08', '_blank')">
-                <div class="ios-app-icon-box" style="background: #0057ff;">
-                  <img class="ios-app-icon-img" src="assets/images/behance_icon.svg" alt="Behance">
+                <div class="ios-app-icon-box">
+                  <img class="ios-app-icon-img" src="assets/images/behance-square-color-icon.svg" alt="Behance">
                 </div>
                 <span class="ios-app-label">Behance</span>
               </div>
@@ -651,40 +799,86 @@ document.addEventListener("DOMContentLoaded", () => {
 
       setupSpringBoardSwipe();
       updateAllClocks();
+      if (currentSpringBoardPage !== 0) {
+        window.switchSpringBoardPage(currentSpringBoardPage);
+      }
 
     } else {
       // ----------------------------------------------------------------------
-      // Desktop macOS Auto-Grid Layout — clean column arrangement, draggable
       // ----------------------------------------------------------------------
+      // Desktop macOS Natural Scattered Layout — organic workspace, draggable
+      // ----------------------------------------------------------------------
+      const START_X     = 28;   // left margin
+      const START_Y     = 46;   // below top menu bar
+      const RIGHT_SAFE  = 230;  // avoid right widgets panel
+      const BOTTOM_SAFE = 120;  // avoid bottom dock
+      const ICON_WIDTH  = 88;
+      const ICON_HEIGHT = 96;
 
-      // Layout constants
-      const ICON_SIZE  = 88;   // icon box width + label
-      const ICON_GAP   = 28;   // gap between icons
-      const CELL       = ICON_SIZE + ICON_GAP;
-      const START_X    = 30;   // left margin
-      const START_Y    = 52;   // below menu bar
-      const RIGHT_SAFE = 210;  // avoid widgets panel
-      const BOTTOM_SAFE = 90;  // above dock
+      const minX = START_X;
+      const maxX = Math.max(minX, window.innerWidth - RIGHT_SAFE - ICON_WIDTH);
+      const minY = START_Y;
+      const maxY = Math.max(minY, window.innerHeight - BOTTOM_SAFE - ICON_HEIGHT);
 
-      const availH = (window.innerHeight - START_Y - BOTTOM_SAFE);
-      const rowsPerCol = Math.max(1, Math.floor(availH / CELL));
+      const availW = Math.max(100, maxX - minX);
+      const availH = Math.max(100, maxY - minY);
 
-      data.projects.forEach((proj, idx) => {
-        const col = Math.floor(idx / rowsPerCol);
-        const row = idx % rowsPerCol;
+      // 1. Initial coordinates based on pos.x / pos.y
+      const positions = data.projects.map((proj, idx) => {
+        let px = (proj.pos && typeof proj.pos.x === "number") 
+          ? minX + (proj.pos.x / 100) * availW 
+          : minX + (idx % 6) * 110;
+        let py = (proj.pos && typeof proj.pos.y === "number") 
+          ? minY + (proj.pos.y / 100) * availH 
+          : minY + Math.floor(idx / 6) * 115;
+        return { x: px, y: py, proj };
+      });
 
-        const posX = START_X + col * CELL;
-        const posY = START_Y + row * CELL;
+      // 2. Physics relaxation passes to disperse tight clusters
+      const MIN_DIST_X = 104;
+      const MIN_DIST_Y = 110;
 
+      for (let step = 0; step < 40; step++) {
+        for (let i = 0; i < positions.length; i++) {
+          for (let j = i + 1; j < positions.length; j++) {
+            const p1 = positions[i];
+            const p2 = positions[j];
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+
+            if (Math.abs(dx) < MIN_DIST_X && Math.abs(dy) < MIN_DIST_Y) {
+              const overlapX = MIN_DIST_X - Math.abs(dx);
+              const overlapY = MIN_DIST_Y - Math.abs(dy);
+
+              const shiftX = (overlapX / 2) * (dx >= 0 ? 1 : -1);
+              const shiftY = (overlapY / 2) * (dy >= 0 ? 1 : -1);
+
+              p1.x -= shiftX * 0.7;
+              p1.y -= shiftY * 0.7;
+              p2.x += shiftX * 0.7;
+              p2.y += shiftY * 0.7;
+            }
+          }
+        }
+
+        // Keep inside desktop bounds
+        for (const p of positions) {
+          p.x = Math.max(minX, Math.min(maxX, p.x));
+          p.y = Math.max(minY, Math.min(maxY, p.y));
+        }
+      }
+
+      // 3. Render scattered items
+      positions.forEach(({ x, y, proj }) => {
         const item = document.createElement("div");
         item.className = "desktop-item";
         item.dataset.id = proj.id;
-        item.style.left = `${posX}px`;
-        item.style.top  = `${posY}px`;
+        item.style.left = `${Math.round(x)}px`;
+        item.style.top  = `${Math.round(y)}px`;
 
         item.innerHTML = `
           <div class="desktop-icon-wrapper">
-            <img src="${proj.cover}" alt="${proj.title}" draggable="false" loading="lazy">
+            <img src="${proj.cover}" alt="${proj.title}" draggable="false" loading="lazy" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80'">
           </div>
           <div class="desktop-label">${proj.title}</div>
         `;
@@ -713,9 +907,10 @@ document.addEventListener("DOMContentLoaded", () => {
             const dy = me.clientY - startY;
             if (Math.abs(dx) > 4 || Math.abs(dy) > 4) hasMoved = true;
             if (hasMoved) {
-              const maxX = window.innerWidth - RIGHT_SAFE - ICON_SIZE - 10;
-              const newLeft = Math.max(10, Math.min(maxX, itemX + dx));
-              const newTop  = Math.max(35, Math.min(window.innerHeight - BOTTOM_SAFE - ICON_SIZE, itemY + dy));
+              const maxDragX = window.innerWidth - ICON_WIDTH - 10;
+              const maxDragY = window.innerHeight - 100;
+              const newLeft = Math.max(10, Math.min(maxDragX, itemX + dx));
+              const newTop  = Math.max(34, Math.min(maxDragY, itemY + dy));
               item.style.left = `${newLeft}px`;
               item.style.top  = `${newTop}px`;
             }
@@ -734,12 +929,15 @@ document.addEventListener("DOMContentLoaded", () => {
           document.addEventListener("mouseup", onMouseUp);
         });
 
+        desktopGrid.appendChild(item);
       });
     }
 
-    // On mobile, also inject the native iOS dock into #mac-dock
+    // On mobile, inject native iOS dock; on desktop, mount macOS React dock
     if (isMobile) {
       renderMobileDock();
+    } else if (window.updateDesktopReactComponents) {
+      window.updateDesktopReactComponents();
     }
   }
 
@@ -790,45 +988,171 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     `).join("");
   }
+  window.renderMobileDock = renderMobileDock;
 
-  // Multi-Page SpringBoard Horizontal Swipe
+  // Multi-Page SpringBoard Horizontal Swipe & Drag Physics
+  let activeSwipeCleanup = null;
+
   function setupSpringBoardSwipe() {
     const slider = document.getElementById("springboard-slider");
-    if (!slider) return;
+    const container = document.getElementById("desktop-grid");
+    if (!slider || !container) return;
+
+    if (activeSwipeCleanup) {
+      activeSwipeCleanup();
+      activeSwipeCleanup = null;
+    }
+
+    slider.style.transform = `translateX(-${currentSpringBoardPage * 50}%)`;
 
     let startX = 0;
     let startY = 0;
-    let isSwiping = false;
+    let currentX = 0;
+    let currentY = 0;
+    let isDragging = false;
+    let hasMovedHorizontal = false;
+    let startTime = 0;
 
-    slider.addEventListener("touchstart", (e) => {
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
-      isSwiping = true;
-    }, { passive: true });
+    const onStart = (clientX, clientY) => {
+      startX = clientX;
+      startY = clientY;
+      currentX = clientX;
+      currentY = clientY;
+      startTime = Date.now();
+      isDragging = true;
+      hasMovedHorizontal = false;
+      slider.style.transition = "none";
+    };
 
-    slider.addEventListener("touchend", (e) => {
-      if (!isSwiping) return;
-      const endX = e.changedTouches[0].clientX;
-      const endY = e.changedTouches[0].clientY;
-      const diffX = startX - endX;
-      const diffY = startY - endY;
+    const onMove = (clientX, clientY, e) => {
+      if (!isDragging) return;
+      currentX = clientX;
+      currentY = clientY;
+      const diffX = clientX - startX;
+      const diffY = clientY - startY;
 
-      // Ensure horizontal swipe
-      if (Math.abs(diffX) > 45 && Math.abs(diffX) > Math.abs(diffY)) {
-        if (diffX > 0 && currentSpringBoardPage === 0) {
-          switchSpringBoardPage(1);
-        } else if (diffX < 0 && currentSpringBoardPage === 1) {
-          switchSpringBoardPage(0);
+      if (!hasMovedHorizontal) {
+        if (Math.abs(diffX) > 6 && Math.abs(diffX) >= Math.abs(diffY)) {
+          hasMovedHorizontal = true;
+          window.__suppressNextAppClick = true;
+        } else if (Math.abs(diffY) > 8 && Math.abs(diffY) > Math.abs(diffX)) {
+          isDragging = false;
+          slider.style.transition = "transform 0.35s cubic-bezier(0.2, 0.9, 0.2, 1)";
+          slider.style.transform = `translateX(-${currentSpringBoardPage * 50}%)`;
+          return;
         }
       }
-      isSwiping = false;
-    }, { passive: true });
+
+      if (hasMovedHorizontal) {
+        if (e && e.cancelable) e.preventDefault();
+        window.__suppressNextAppClick = true;
+
+        const sliderWidth = slider.offsetWidth || window.innerWidth * 2;
+        const basePercent = -(currentSpringBoardPage * 50);
+        let dragPercent = (diffX / sliderWidth) * 100;
+
+        if ((currentSpringBoardPage === 0 && diffX > 0) || (currentSpringBoardPage === 1 && diffX < 0)) {
+          dragPercent *= 0.25;
+        }
+
+        slider.style.transform = `translateX(${basePercent + dragPercent}%)`;
+      }
+    };
+
+    const onEnd = () => {
+      if (!isDragging) return;
+      isDragging = false;
+      slider.style.transition = "transform 0.35s cubic-bezier(0.2, 0.9, 0.2, 1)";
+
+      const diffX = currentX - startX;
+      const duration = Date.now() - startTime;
+      const velocity = Math.abs(diffX) / Math.max(duration, 1);
+
+      if (hasMovedHorizontal) {
+        window.__suppressNextAppClick = true;
+        setTimeout(() => {
+          window.__suppressNextAppClick = false;
+        }, 250);
+
+        if ((diffX < -30 || (diffX < -15 && velocity > 0.2)) && currentSpringBoardPage === 0) {
+          switchSpringBoardPage(1);
+        } else if ((diffX > 30 || (diffX > 15 && velocity > 0.2)) && currentSpringBoardPage === 1) {
+          switchSpringBoardPage(0);
+        } else {
+          slider.style.transform = `translateX(-${currentSpringBoardPage * 50}%)`;
+        }
+      } else {
+        slider.style.transform = `translateX(-${currentSpringBoardPage * 50}%)`;
+      }
+    };
+
+    // Touch handlers for mobile
+    const touchStartHandler = (e) => {
+      if (e.touches && e.touches.length === 1) {
+        onStart(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    };
+
+    const touchMoveHandler = (e) => {
+      if (e.touches && e.touches.length === 1) {
+        onMove(e.touches[0].clientX, e.touches[0].clientY, e);
+      }
+    };
+
+    const touchEndHandler = () => {
+      onEnd();
+    };
+
+    // Mouse handlers for desktop / emulator
+    const mouseDownHandler = (e) => {
+      if (e.button !== 0) return;
+      onStart(e.clientX, e.clientY);
+      window.addEventListener("mousemove", mouseMoveHandler);
+      window.addEventListener("mouseup", mouseUpHandler);
+    };
+
+    const mouseMoveHandler = (e) => {
+      onMove(e.clientX, e.clientY, e);
+    };
+
+    const mouseUpHandler = () => {
+      onEnd();
+      window.removeEventListener("mousemove", mouseMoveHandler);
+      window.removeEventListener("mouseup", mouseUpHandler);
+    };
+
+    slider.addEventListener("touchstart", touchStartHandler, { passive: true });
+    slider.addEventListener("touchmove", touchMoveHandler, { passive: false });
+    slider.addEventListener("touchend", touchEndHandler, { passive: true });
+    slider.addEventListener("touchcancel", touchEndHandler, { passive: true });
+    slider.addEventListener("mousedown", mouseDownHandler);
+
+    activeSwipeCleanup = () => {
+      slider.removeEventListener("touchstart", touchStartHandler);
+      slider.removeEventListener("touchmove", touchMoveHandler);
+      slider.removeEventListener("touchend", touchEndHandler);
+      slider.removeEventListener("touchcancel", touchEndHandler);
+      slider.removeEventListener("mousedown", mouseDownHandler);
+      window.removeEventListener("mousemove", mouseMoveHandler);
+      window.removeEventListener("mouseup", mouseUpHandler);
+    };
   }
+
+  // Global click suppressor when swiping
+  document.addEventListener("click", (e) => {
+    if (window.__suppressNextAppClick) {
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      e.preventDefault();
+      window.__suppressNextAppClick = false;
+    }
+  }, true);
 
   window.switchSpringBoardPage = function(pageIdx) {
     currentSpringBoardPage = pageIdx;
     const slider = document.getElementById("springboard-slider");
     if (slider) {
+      slider.style.transition = "transform 0.38s cubic-bezier(0.2, 0.9, 0.2, 1)";
       slider.style.transform = `translateX(-${pageIdx * 50}%)`;
     }
     const dot0 = document.getElementById("dot-page-0");
@@ -836,6 +1160,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (dot0 && dot1) {
       dot0.classList.toggle("active", pageIdx === 0);
       dot1.classList.toggle("active", pageIdx === 1);
+      dot0.setAttribute("aria-selected", pageIdx === 0 ? "true" : "false");
+      dot1.setAttribute("aria-selected", pageIdx === 1 ? "true" : "false");
     }
     if (navigator.vibrate) {
       try { navigator.vibrate(10); } catch (e) {}
@@ -877,16 +1203,13 @@ document.addEventListener("DOMContentLoaded", () => {
           <button class="traffic-btn maximize" title="Maximize">+</button>
         </div>
         <div class="window-title">${title}</div>
-        <div class="window-header-actions">
-          <button class="mobile-window-close-btn" title="Close" onclick="window.closeWindow && window.closeWindow('${id}')">✕</button>
-        </div>
       </div>
       <div class="window-body">
         ${contentHTML}
       </div>
     `;
 
-    // Window controls
+    // Window controls (Desktop)
     const closeBtn = win.querySelector(".traffic-btn.close");
     if (closeBtn) closeBtn.addEventListener("click", (e) => { e.stopPropagation(); closeWindow(id); });
     
@@ -903,7 +1226,7 @@ document.addEventListener("DOMContentLoaded", () => {
     win.addEventListener("mousedown", () => focusWindow(win));
     win.addEventListener("touchstart", () => focusWindow(win), { passive: true });
 
-    // Enable dragging on desktop and swipe-down-to-dismiss on mobile
+    // Enable dragging on desktop and Apple-like swipe-down-to-dismiss on mobile
     setupWindowInteraction(win, id);
 
     windowStack.appendChild(win);
@@ -942,7 +1265,7 @@ document.addEventListener("DOMContentLoaded", () => {
     Object.keys(activeWindows).forEach(id => closeWindow(id));
   };
 
-  // Setup Dragging (Desktop) & Swipe Down Dismissal (Mobile)
+  // Setup Dragging (Desktop) & Apple Slide Down Dismissal (Mobile)
   function setupWindowInteraction(win, id) {
     const header = win.querySelector(".window-header");
     if (!header) return;
@@ -950,32 +1273,97 @@ document.addEventListener("DOMContentLoaded", () => {
     const isMobile = window.innerWidth <= 768;
 
     if (isMobile) {
-      let touchStartY = 0;
+      let startY = 0;
+      let startX = 0;
       let currentTranslateY = 0;
+      let startTime = 0;
+      let isDragging = false;
 
-      header.addEventListener("touchstart", (e) => {
-        touchStartY = e.touches[0].clientY;
+      const handleStart = (clientY, clientX) => {
+        startY = clientY;
+        startX = clientX;
+        startTime = Date.now();
+        currentTranslateY = 0;
+        isDragging = true;
         win.style.transition = "none";
-      }, { passive: true });
+      };
 
-      header.addEventListener("touchmove", (e) => {
-        const touchY = e.touches[0].clientY;
-        const diff = touchY - touchStartY;
-        if (diff > 0) {
-          currentTranslateY = diff;
-          win.style.transform = `translateY(${diff}px)`;
+      const handleMove = (clientY, clientX, e) => {
+        if (!isDragging) return;
+        const diffY = clientY - startY;
+        const diffX = clientX - startX;
+
+        // If dragging downward, follow finger directly
+        if (diffY > 0) {
+          if (e && e.cancelable) e.preventDefault();
+          currentTranslateY = diffY;
+          win.style.transform = `translateY(${diffY}px)`;
+        } else if (diffY < 0) {
+          // Rubber banding upward resistance
+          currentTranslateY = diffY * 0.2;
+          win.style.transform = `translateY(${currentTranslateY}px)`;
         }
-      }, { passive: true });
+      };
 
-      header.addEventListener("touchend", () => {
-        win.style.transition = "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)";
-        if (currentTranslateY > 80) {
-          closeWindow(id);
+      const handleEnd = () => {
+        if (!isDragging) return;
+        isDragging = false;
+        win.style.transition = "transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)";
+
+        const duration = Date.now() - startTime;
+        const velocity = currentTranslateY / Math.max(duration, 1);
+
+        // Apple sheet dismiss logic: dragged down > 50px or flicked down
+        if (currentTranslateY > 50 || (currentTranslateY > 15 && velocity > 0.2)) {
+          win.style.transform = "translateY(100%)";
+          setTimeout(() => {
+            closeWindow(id);
+          }, 240);
         } else {
           win.style.transform = "translateY(0)";
         }
         currentTranslateY = 0;
+      };
+
+      // Touch events on the mobile header grabber area
+      header.addEventListener("touchstart", (e) => {
+        if (e.touches && e.touches.length === 1) {
+          handleStart(e.touches[0].clientY, e.touches[0].clientX);
+        }
       }, { passive: true });
+
+      header.addEventListener("touchmove", (e) => {
+        if (e.touches && e.touches.length === 1) {
+          handleMove(e.touches[0].clientY, e.touches[0].clientX, e);
+        }
+      }, { passive: false });
+
+      header.addEventListener("touchend", () => {
+        handleEnd();
+      }, { passive: true });
+
+      header.addEventListener("touchcancel", () => {
+        handleEnd();
+      }, { passive: true });
+
+      // Mouse drag down on header (for testing and hybrid touch)
+      header.addEventListener("mousedown", (e) => {
+        if (e.button !== 0) return;
+        handleStart(e.clientY, e.clientX);
+
+        const onMouseMove = (me) => {
+          handleMove(me.clientY, me.clientX, me);
+        };
+
+        const onMouseUp = () => {
+          handleEnd();
+          window.removeEventListener("mousemove", onMouseMove);
+          window.removeEventListener("mouseup", onMouseUp);
+        };
+
+        window.addEventListener("mousemove", onMouseMove);
+        window.addEventListener("mouseup", onMouseUp);
+      });
 
     } else {
       let isDragging = false;
@@ -983,7 +1371,7 @@ document.addEventListener("DOMContentLoaded", () => {
       let offsetY = 0;
 
       header.addEventListener("mousedown", (e) => {
-        if (e.target.classList.contains("traffic-btn") || e.target.classList.contains("mobile-window-close-btn")) return;
+        if (e.target.classList.contains("traffic-btn")) return;
         isDragging = true;
         offsetX = e.clientX - win.offsetLeft;
         offsetY = e.clientY - win.offsetTop;
@@ -1834,26 +2222,51 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // --- Gallery Window ---
+  // --- Photos / Gallery Window ---
   window.openGalleryWindow = function() {
     const data = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : {});
     const content = `
-      <div class="gallery-grid">
-        ${(data.gallery || []).map(item => `
-          <div class="gallery-card">
-            <img src="${item.image}" alt="${item.title}" onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80'">
-            <div class="gallery-caption">${item.title} (${item.category})</div>
+      <div class="photos-app-container">
+        <div class="photos-hero-banner">
+          <div class="photos-hero-title">Photos & Visual Archive</div>
+          <div class="photos-hero-subtitle">Selected Key Visuals, 3D Art & Behance Case Studies by Casey (Khushal Chhabra)</div>
+          <div class="photos-behance-pill" onclick="window.open('https://www.behance.net/Casey08', '_blank')">
+            <img src="assets/images/behance-square-color-icon.svg" alt="Behance" width="16" height="16">
+            <span>Explore Behance Profile ↗</span>
           </div>
-        `).join("")}
+        </div>
+
+        <div class="gallery-grid">
+          ${(data.gallery || []).map(item => `
+            <div class="gallery-card ${item.isBehance ? 'is-behance-card' : ''}" onclick="${item.behanceUrl ? `window.open('${item.behanceUrl}', '_blank')` : ''}">
+              <div class="gallery-img-wrapper">
+                <img src="${item.image}" alt="${item.title}" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80'">
+                ${item.isBehance ? `
+                  <span class="gallery-behance-tag">
+                    <img src="assets/images/behance-square-color-icon.svg" width="12" height="12" alt="Behance">
+                    <span>Behance</span>
+                  </span>
+                ` : ''}
+              </div>
+              <div class="gallery-caption-box">
+                <div class="gallery-title">${item.title}</div>
+                <div class="gallery-meta">
+                  <span class="gallery-category">${item.category}</span>
+                  ${item.behanceUrl ? `<span class="gallery-link-cta">View ↗</span>` : ''}
+                </div>
+              </div>
+            </div>
+          `).join("")}
+        </div>
       </div>
     `;
 
     createWindow({
       id: "gallery",
       title: "Photos & Art Showcase",
-      width: "660px",
-      top: "14%",
-      left: "24%",
+      width: "680px",
+      top: "12%",
+      left: "22%",
       contentHTML: content
     });
   };
@@ -1886,47 +2299,104 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  // --- Spotify Player Window ---
+  // --- Music Player Window (YouTube Music Audio-Only Experience) ---
   window.openSpotifyWindow = function() {
+    const track = spotifyTracks[currentTrackIdx] || spotifyTracks[0];
+    const pct = Math.min(100, (currentTrackTime / track.duration) * 100);
+
     const content = `
-      <div style="background: #121212; padding: 14px; border-radius: 12px; color: #fff;">
-        <div style="display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #1db954 0%, #0a2912 100%); padding: 14px 18px; border-radius: 10px; margin-bottom: 14px;">
-          <div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M12 0C5.376 0 0 5.376 0 12s5.376 12 12 12 12-5.376 12-12S18.624 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.48-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141 4.38-1.38 9.841-.72 13.561 1.56.36.18.54.78.18 1.26zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.18-1.2-.18-1.38-.72-.18-.6.18-1.2.72-1.38 4.26-1.26 11.28-1.02 15.721 1.62.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
-              <h3 style="font-size: 16px; font-weight: 900; margin: 0; color: #fff;">SPOTIFY PLAYER</h3>
+      <div class="audio-player-container">
+        <!-- Top Bar -->
+        <div class="audio-player-header">
+          <div class="audio-header-left">
+            <img src="assets/images/ios18_clean/music.png" class="audio-app-icon" alt="Apple Music">
+            <div>
+              <div class="audio-header-title">Casey's YouTube Music</div>
+              <div class="audio-header-sub">Curated Playlist • Audio Mode (${spotifyTracks.length} Songs)</div>
             </div>
-            <div style="font-size: 11px; color: rgba(255,255,255,0.85); margin-top: 4px;">Top Recommendation Playlist</div>
           </div>
-          <div style="font-size: 10px; font-weight: 700; background: rgba(0,0,0,0.35); padding: 4px 10px; border-radius: 12px; border: 1px solid rgba(30,215,96,0.3); color: #fff; display: flex; align-items: center; gap: 6px;">
-            <span style="width: 6px; height: 6px; background-color: #1db954; border-radius: 50%; box-shadow: 0 0 6px #1db954;"></span> Connected
+          <div class="audio-external-links">
+            <a href="https://music.youtube.com/playlist?list=PL5Twt3mfOd_PVsJrFh4dA-f6IWFUAwHAf&si=NU98HG94E22UrT0K" target="_blank" class="audio-ext-pill audio-ext-yt" title="Open in YouTube Music">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="#ff4d4d"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+              <span>YT Music ↗</span>
+            </a>
+            <a href="https://open.spotify.com/playlist/4eBpz8sWLVz9EfuPOY2NpW" target="_blank" class="audio-ext-pill audio-ext-spotify" title="Open in Spotify">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="#1db954"><path d="M12 0C5.376 0 0 5.376 0 12s5.376 12 12 12 12-5.376 12-12S18.624 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.48-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141 4.38-1.38 9.841-.72 13.561 1.56.36.18.54.78.18 1.26zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.18-1.2-.18-1.38-.72-.18-.6.18-1.2.72-1.38 4.26-1.26 11.28-1.02 15.721 1.62.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+              <span>Spotify ↗</span>
+            </a>
           </div>
         </div>
 
-        <div style="border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.7); background: #000;">
-          <iframe
-            title="Spotify Embed: Recommendation Playlist"
-            src="https://open.spotify.com/embed/playlist/4eBpz8sWLVz9EfuPOY2NpW?utm_source=generator&theme=0"
-            width="100%"
-            height="360"
-            style="min-height: 340px;"
-            frameBorder="0"
-            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-            loading="lazy">
-          </iframe>
+        <!-- Vinyl & Cover Artwork Stage -->
+        <div class="audio-stage">
+          <div id="modal-art-wrapper" class="audio-art-wrapper ${isSpotifyPlaying ? 'playing' : ''}">
+            <img id="modal-song-cover" src="${track.cover}" class="audio-art-img" alt="Artwork" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80'">
+            <div id="modal-vinyl-disc" class="audio-vinyl-disc ${isSpotifyPlaying ? 'playing' : ''}">
+              <div class="audio-vinyl-center"></div>
+            </div>
+          </div>
+          <div class="audio-info-col">
+            <div class="audio-now-tag">
+              <span>NOW PLAYING</span>
+              <div id="modal-live-eq" class="audio-live-eq ${isSpotifyPlaying ? 'playing' : ''}">
+                <span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+            <div id="modal-song-title" class="audio-track-title">${track.title}</div>
+            <div id="modal-song-artist" class="audio-track-artist">${track.artist}</div>
+          </div>
+        </div>
+
+        <!-- Timeline Scrubber -->
+        <div class="audio-timeline-box">
+          <div id="modal-progress-bg" class="audio-progress-bar-bg" onclick="window.seekAudioProgress(event)">
+            <div id="modal-song-progress-fill" class="audio-progress-fill" style="width: ${pct}%;"></div>
+          </div>
+          <div class="audio-timestamps">
+            <span id="modal-song-current-time">${formatTime(currentTrackTime)}</span>
+            <span id="modal-song-duration">${formatTime(track.duration)}</span>
+          </div>
+        </div>
+
+        <!-- Transport Controls -->
+        <div class="audio-controls-row">
+          <button class="audio-ctrl-btn" onclick="window.spotifyPrevTrack && window.spotifyPrevTrack()" title="Previous Track">⏮</button>
+          <button id="modal-play-btn" class="audio-play-btn-large" onclick="window.spotifyTogglePlay && window.spotifyTogglePlay()" title="Play / Pause">
+            ${isSpotifyPlaying ? '⏸' : '▶'}
+          </button>
+          <button class="audio-ctrl-btn" onclick="window.spotifyNextTrack && window.spotifyNextTrack()" title="Next Track">⏭</button>
+        </div>
+
+        <!-- Tracklist Queue -->
+        <div class="audio-queue-container">
+          <div class="audio-queue-title">YouTube Music Playlist (${spotifyTracks.length} Full Songs)</div>
+          ${spotifyTracks.map((t, idx) => `
+            <div id="audio-queue-item-${idx}" class="audio-queue-item ${idx === currentTrackIdx ? 'active' : ''}" onclick="window.selectAudioTrack(${idx})">
+              <div class="audio-queue-item-left">
+                <span class="audio-queue-idx">${idx + 1}</span>
+                <div>
+                  <div class="audio-queue-name">${t.title}</div>
+                  <div class="audio-queue-artist">${t.artist}</div>
+                </div>
+              </div>
+              <span class="audio-queue-dur">${formatTime(t.duration)}</span>
+            </div>
+          `).join("")}
         </div>
       </div>
     `;
 
     createWindow({
       id: "spotify",
-      title: "Spotify Player",
-      width: "560px",
-      top: "10%",
-      left: "26%",
+      title: "YouTube Music • Full Songs Audio Player",
+      width: "520px",
+      top: "12%",
+      left: "28%",
       contentHTML: content
     });
   };
+
+  window.openMusicWindow = window.openSpotifyWindow;
 
   // --- Contact Window ---
   window.openContactWindow = function() {
