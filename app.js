@@ -241,6 +241,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Desktop Sonoma Widget
+    const widgetMusicEl = document.getElementById("widget-music");
+    const widgetVinylDisc = document.getElementById("widget-vinyl-disc");
     const widgetSongCover = document.getElementById("widget-song-cover");
     const widgetSongTitle = document.getElementById("widget-song-title");
     const widgetSongArtist = document.getElementById("widget-song-artist");
@@ -249,6 +251,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const widgetDurationTime = document.getElementById("widget-song-duration");
     const widgetPlayBtn = document.getElementById("widget-play-btn");
 
+    if (widgetMusicEl) widgetMusicEl.classList.toggle("is-playing", isSpotifyPlaying);
+    if (widgetVinylDisc) widgetVinylDisc.classList.toggle("playing", isSpotifyPlaying);
     if (widgetSongCover) widgetSongCover.src = track.cover;
     if (widgetSongTitle) widgetSongTitle.textContent = track.title;
     if (widgetSongArtist) widgetSongArtist.textContent = track.artist;
@@ -1598,7 +1602,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Direct Channels to Casey</div>
 
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
-          <a href="mailto:khushalchhabra08@gmail.com" style="background: #ea4335; color: #fff; padding: 12px; border-radius: 16px; text-decoration: none; font-size: 12px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 4px 14px rgba(234,67,53,0.4);">
+          <a href="mailto:khushalworkmail08@gmail.com" style="background: #ea4335; color: #fff; padding: 12px; border-radius: 16px; text-decoration: none; font-size: 12px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 4px 14px rgba(234,67,53,0.4);">
             <span style="font-size: 18px;">✉️</span> Email
           </a>
           <a href="https://www.instagram.com/caseyxlive/" target="_blank" style="background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); color: #fff; padding: 12px; border-radius: 16px; text-decoration: none; font-size: 12px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 4px 14px rgba(220,39,67,0.4);">
@@ -1609,10 +1613,10 @@ document.addEventListener("DOMContentLoaded", () => {
           </a>
         </div>
 
-        <div id="phone-display-number" style="font-size: 18px; font-weight: 700; height: 36px; color: #60a5fa; letter-spacing: 0.5px; margin-bottom: 12px;">khushalchhabra08@gmail.com</div>
+        <div id="phone-display-number" style="font-size: 18px; font-weight: 700; height: 36px; color: #60a5fa; letter-spacing: 0.5px; margin-bottom: 12px;">khushalworkmail08@gmail.com</div>
 
         <div style="display: flex; justify-content: center; gap: 16px;">
-          <a href="mailto:khushalchhabra08@gmail.com" style="width: 58px; height: 58px; border-radius: 50%; background: #007aff; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; text-decoration: none; box-shadow: 0 6px 20px rgba(0,122,255,0.5);">
+          <a href="mailto:khushalworkmail08@gmail.com" style="width: 58px; height: 58px; border-radius: 50%; background: #007aff; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; text-decoration: none; box-shadow: 0 6px 20px rgba(0,122,255,0.5);">
             ✉️
           </a>
         </div>
@@ -2210,23 +2214,39 @@ document.addEventListener("DOMContentLoaded", () => {
     const content = `
       <div class="photos-app-container">
         <div class="photos-hero-banner">
-          <div class="photos-hero-title">Photos & Visual Archive</div>
-          <div class="photos-hero-subtitle">Selected Key Visuals, 3D Art & Behance Case Studies by Casey (Khushal Chhabra)</div>
-          <div class="photos-behance-pill" onclick="window.open('https://www.behance.net/Casey08', '_blank')">
-            <img src="assets/images/behance-square-color-icon.svg" alt="Behance" width="16" height="16">
-            <span>Explore Behance Profile ↗</span>
+          <div class="photos-hero-title">Photos & Art Showcase</div>
+          <div class="photos-hero-subtitle">Selected Key Visuals, 3D Art, Tour Graphics & Instagram Works by Casey (Khushal Chhabra)</div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px;">
+            <div class="photos-behance-pill" onclick="window.open('https://www.behance.net/Casey08', '_blank')">
+              <img src="assets/images/behance-square-color-icon.svg" alt="Behance" width="16" height="16">
+              <span>Explore Behance ↗</span>
+            </div>
+            <div class="photos-behance-pill" style="background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); box-shadow: 0 4px 12px rgba(220,39,67,0.4);" onclick="window.open('https://www.instagram.com/caseyxlive/', '_blank')">
+              <span style="font-size: 13px;">📸</span>
+              <span>Instagram (@caseyxlive) ↗</span>
+            </div>
           </div>
         </div>
 
         <div class="gallery-grid">
-          ${(data.gallery || []).map(item => `
-            <div class="gallery-card ${item.isBehance ? 'is-behance-card' : ''}" onclick="${item.behanceUrl ? `window.open('${item.behanceUrl}', '_blank')` : ''}">
+          ${(data.gallery || []).map(item => {
+            const targetUrl = item.url || item.behanceUrl || item.instagramUrl || '';
+            const isBehance = item.isBehance || (targetUrl && targetUrl.includes('behance.net'));
+            const isInstagram = item.isInstagram || (targetUrl && targetUrl.includes('instagram.com'));
+            return `
+            <div class="gallery-card ${isBehance ? 'is-behance-card' : ''} ${isInstagram ? 'is-instagram-card' : ''}" onclick="${targetUrl ? `window.open('${targetUrl}', '_blank')` : ''}">
               <div class="gallery-img-wrapper">
                 <img src="${item.image}" alt="${item.title}" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80'">
-                ${item.isBehance ? `
+                ${isBehance ? `
                   <span class="gallery-behance-tag">
                     <img src="assets/images/behance-square-color-icon.svg" width="12" height="12" alt="Behance">
                     <span>Behance</span>
+                  </span>
+                ` : ''}
+                ${isInstagram ? `
+                  <span class="gallery-instagram-tag">
+                    <span>📸</span>
+                    <span>Instagram</span>
                   </span>
                 ` : ''}
               </div>
@@ -2234,11 +2254,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="gallery-title">${item.title}</div>
                 <div class="gallery-meta">
                   <span class="gallery-category">${item.category}</span>
-                  ${item.behanceUrl ? `<span class="gallery-link-cta">View ↗</span>` : ''}
+                  ${targetUrl ? `<span class="gallery-link-cta" style="${isInstagram ? 'color: #ff5277;' : ''}">View ↗</span>` : ''}
                 </div>
               </div>
             </div>
-          `).join("")}
+            `;
+          }).join("")}
         </div>
       </div>
     `;
@@ -2246,9 +2267,9 @@ document.addEventListener("DOMContentLoaded", () => {
     createWindow({
       id: "gallery",
       title: "Photos & Art Showcase",
-      width: "680px",
-      top: "12%",
-      left: "22%",
+      width: "740px",
+      top: "10%",
+      left: "20%",
       contentHTML: content
     });
   };
@@ -2383,7 +2404,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Contact Window ---
   window.openContactWindow = function() {
     const data = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : {});
-    const email = (data.personal && data.personal.email) ? data.personal.email : "khushalchhabra08@gmail.com";
+    const email = (data.personal && data.personal.email) ? data.personal.email : "khushalworkmail08@gmail.com";
     const gmailUrl = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(email)}&su=${encodeURIComponent("Project Inquiry — Casey Portfolio")}`;
     const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent("Project Inquiry — Casey Portfolio")}`;
 
@@ -2475,3 +2496,4 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+

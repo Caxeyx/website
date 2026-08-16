@@ -6,7 +6,7 @@ const PORTFOLIO_DATA = {
     name: "Khushal Chhabra",
     title: "Graphic Designer & Content Strategist",
     subtitle: "Graphic Design · Content Strategy · 3D Art · Video Editing",
-    email: "khushalchhabra08@gmail.com",
+    email: "khushalworkmail08@gmail.com",
     instagram: "https://www.instagram.com/caseyxlive/",
     behance: "https://www.behance.net/Casey08",
     youtube: "https://www.youtube.com/@Caseyxlive",
@@ -365,8 +365,9 @@ const PORTFOLIO_DATA = {
     }
   ],
 
-  // Photos for Gallery Modal
+  // Photos & Art Showcase for Gallery Modal
   gallery: [
+    // Behance Projects & Case Studies (Featured First)
     {
       title: "Clove // 3D Y2K Poster",
       category: "3D & Y2K Art",
@@ -398,6 +399,80 @@ const PORTFOLIO_DATA = {
       behanceUrl: "https://www.behance.net/gallery/230778569/Visuals-for-ELVT-Cristobal-Pesce",
       year: "2024",
       isBehance: true
+    },
+
+    // Instagram Artworks & Visuals
+    {
+      title: "Clove // Valorant 3D Agent Art",
+      category: "3D & Fan Art",
+      image: "assets/images/gallery/clove_valorant.jpg",
+      url: "https://www.instagram.com/p/DQ6Pd5fE8Kq/?img_index=1",
+      year: "2025",
+      isInstagram: true
+    },
+    {
+      title: "Calm (Seedhe Maut) // Tour Visuals",
+      category: "DHH & Mixed Media",
+      image: "assets/images/gallery/seedhe_maut_calm.jpg",
+      url: "https://www.instagram.com/p/DT4HDh2k4Z-/?img_index=1",
+      year: "2026",
+      isInstagram: true
+    },
+    {
+      title: "AGSY // Red Flag Mixed Media",
+      category: "Rap & Mixed Media",
+      image: "assets/images/gallery/agsy_red_flag.jpg",
+      url: "https://www.instagram.com/p/DUCQyFYk7yw/?img_index=1",
+      year: "2026",
+      isInstagram: true
+    },
+    {
+      title: "Bandzo3rd x Seedhe Maut // Exotic Poster",
+      category: "Hip-Hop Poster Art",
+      image: "assets/images/gallery/bandzo_seedhe_maut.jpg",
+      url: "https://www.instagram.com/p/DUt97BPE6r1/?img_index=1",
+      year: "2026",
+      isInstagram: true
+    },
+    {
+      title: "Red Cup // Seedhe Maut x DL91",
+      category: "Mixed Media & DHH",
+      image: "assets/images/gallery/red_cup_seedhe_maut.jpg",
+      url: "https://www.instagram.com/p/DU-38lTkyZA/?img_index=1",
+      year: "2026",
+      isInstagram: true
+    },
+    {
+      title: "Kanye West // Tour Art & Key Visual",
+      category: "Concert & Mixed Media",
+      image: "assets/images/gallery/kanye_west_tour.jpg",
+      url: "https://www.instagram.com/p/DV6_pj5ExQL/?img_index=1",
+      year: "2026",
+      isInstagram: true
+    },
+    {
+      title: "Sunflower // Mixed Media Poster Experiment",
+      category: "Photoshop & Poster Art",
+      image: "assets/images/gallery/mixed_media_poster.jpg",
+      url: "https://www.instagram.com/p/DYgBoSskyPH/?img_index=1",
+      year: "2026",
+      isInstagram: true
+    },
+    {
+      title: "Spidermon // Brand New Day MCU Fan Art",
+      category: "Concept & Marvel Fan Art",
+      image: "assets/images/gallery/spiderman_brand_new_day.jpg",
+      url: "https://www.instagram.com/p/Db1SfIAE2AQ/?img_index=1",
+      year: "2026",
+      isInstagram: true
+    },
+    {
+      title: "Erling Haaland // World Cup 2026 Poster",
+      category: "Sports & Poster Design",
+      image: "assets/images/gallery/haaland_worldcup.jpg",
+      url: "https://www.instagram.com/p/DZnLo4lEwt2/?img_index=1",
+      year: "2026",
+      isInstagram: true
     },
     { title: "Stage Lighting Grid", category: "Stage", image: "https://framerusercontent.com/images/XiO6GJp2jWnohMsvZvpVErzzfPA.png" },
     { title: "Backstage Photo Shoot", category: "Portrait", image: "https://framerusercontent.com/images/2Dyzpv30QU8q8UALM8Nq6rMor5A.jpg" },

@@ -8,6 +8,14 @@
   <meta name="theme-color" content="#0b0c10">
   <title>CASEY — Art Director & Graphic Designer</title>
   <meta name="description" content="Portfolio of Casey (Khushal Chhabra) — Art Director, Graphic Designer, Photographer, and Content Strategist. Specializing in album artwork, key visuals, stage motion, and merch.">
+  
+  <!-- CaseyX Signature Favicons -->
+  <link rel="icon" type="image/x-icon" href="assets/images/redketchup/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/images/redketchup/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/images/redketchup/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/images/redketchup/apple-touch-icon.png">
+  <link rel="manifest" href="assets/images/redketchup/site.webmanifest">
+
   <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -294,8 +302,12 @@
           </div>
         </div>
 
-        <div class="widget-music-cover" onclick="openSpotifyWindow()" style="cursor: pointer;" title="Open Spotify Playlist">
-          <img id="widget-song-cover" src="https://framerusercontent.com/images/vs3eHHOnNIgYRpCxqrlx6kGu7ZE.png?scale-down-to=2048" alt="Now Playing Artwork">
+        <!-- Widget Vinyl & Album Cover Stage -->
+        <div class="widget-music-stage">
+          <div class="widget-art-wrapper" id="widget-art-wrapper" onclick="window.spotifyTogglePlay && window.spotifyTogglePlay()" ondblclick="window.openSpotifyWindow && window.openSpotifyWindow()" title="Click to Play/Pause, Double-Click to Expand">
+            <img id="widget-song-cover" class="widget-art-img" src="https://framerusercontent.com/images/vs3eHHOnNIgYRpCxqrlx6kGu7ZE.png?scale-down-to=2048" alt="Now Playing Artwork">
+            <div class="widget-vinyl-disc" id="widget-vinyl-disc"></div>
+          </div>
         </div>
 
         <div class="widget-music-info">
