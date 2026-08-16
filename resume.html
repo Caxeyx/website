@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Khushal Chhabra — Protected Resume</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0a0c10; font-family: 'Inter', sans-serif; min-height: 100vh; }
+    
+    /* Password Protection Screen */
+    .pwd-overlay {
+      position: fixed; inset: 0; background: rgba(10, 12, 16, 0.95); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+      display: flex; align-items: center; justify-content: center; z-index: 99999; color: #fff;
+    }
+    .pwd-card {
+      background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 20px;
+      padding: 36px 28px; width: 90%; max-width: 360px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    }
+    .pwd-icon { font-size: 42px; margin-bottom: 12px; }
+    .pwd-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .pwd-sub { font-size: 12px; color: rgba(255, 255, 255, 0.65); margin-bottom: 20px; line-height: 1.4; }
+    .pwd-input {
+      width: 100%; padding: 12px 16px; border-radius: 12px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2);
+      color: #fff; font-size: 14px; font-family: inherit; outline: none; text-align: center; margin-bottom: 12px;
+      letter-spacing: 2px; transition: all 0.2s ease;
+    }
+    .pwd-input:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3); }
+    .pwd-btn {
+      width: 100%; padding: 12px; background: #10b981; color: #fff; border: none; border-radius: 12px; font-size: 13px; font-weight: 700;
+      cursor: pointer; transition: background 0.2s ease;
+    }
+    .pwd-btn:hover { background: #059669; }
+    .pwd-error { color: #f87171; font-size: 12px; margin-top: 10px; display: none; font-weight: 600; }
+    
+    /* Resume Content */
+    .resume-wrapper { display: none; padding: 24px 0 40px; }
+    .print-btn { display: block; margin: 0 auto 16px; padding: 10px 28px; background: #10b981; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-family: 'Inter', sans-serif; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; }
+    .print-btn:hover { background: #059669; }
+    .page { width: 210mm; min-height: 297mm; margin: 0 auto; background: #fff; padding: 14mm 14mm 12mm 14mm; font-family: 'EB Garamond', serif; color: #111; box-shadow: 0 10px 40px rgba(0,0,0,0.6); border-radius: 4px; }
+    .header { border-bottom: 1.5px solid #111; padding-bottom: 8px; margin-bottom: 10px; }
+    .name { font-size: 22pt; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; font-family: 'Inter', sans-serif; }
+    .tagline { font-size: 8pt; letter-spacing: 2px; text-transform: uppercase; color: #555; margin-top: 2px; font-family: 'Inter', sans-serif; }
+    .contact { font-size: 8pt; color: #444; margin-top: 5px; display: flex; flex-wrap: wrap; gap: 3px 14px; font-family: 'Inter', sans-serif; }
+    .two-col { display: grid; grid-template-columns: 148px 1fr; gap: 14px; margin-top: 10px; }
+    .sec-title { font-size: 7pt; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #555; border-bottom: 0.5px solid #aaa; padding-bottom: 3px; margin-bottom: 6px; font-family: 'Inter', sans-serif; }
+    .left-sec { margin-bottom: 12px; }
+    .skill-label { font-size: 8pt; font-weight: 500; color: #111; margin-bottom: 1px; margin-top: 6px; font-family: 'Inter', sans-serif; }
+    .skill-label:first-child { margin-top: 0; }
+    .skill-val { font-size: 8.5pt; color: #444; line-height: 1.5; }
+    .ach { font-size: 8.5pt; color: #333; line-height: 1.6; display: flex; gap: 5px; margin-bottom: 2px; }
+    .ach::before { content: "▸"; font-size: 7pt; color: #888; margin-top: 1px; flex-shrink: 0; }
+    .edu-item { margin-bottom: 7px; }
+    .edu-deg { font-size: 8.5pt; font-weight: 500; }
+    .edu-school { font-size: 8pt; color: #555; }
+    .edu-yr { font-size: 7.5pt; color: #888; }
+    .summary { font-size: 9pt; color: #333; line-height: 1.7; margin-bottom: 10px; font-style: italic; }
+    .job { margin-bottom: 9px; }
+    .job-top { display: flex; justify-content: space-between; align-items: baseline; }
+    .job-title { font-size: 9.5pt; font-weight: 600; font-family: 'Inter', sans-serif; }
+    .job-date { font-size: 7.5pt; color: #666; font-family: 'Inter', sans-serif; white-space: nowrap; }
+    .job-co { font-size: 8.5pt; color: #555; font-style: italic; margin-bottom: 3px; }
+    .job-pts { list-style: none; padding: 0; }
+    .job-pts li { font-size: 8.5pt; color: #333; line-height: 1.55; display: flex; gap: 6px; margin-bottom: 1px; }
+    .job-pts li::before { content: "–"; color: #999; flex-shrink: 0; }
+    .lang { font-size: 8.5pt; color: #444; line-height: 1.7; }
+    @media print {
+      body { background: #fff; }
+      .pwd-overlay { display: none !important; }
+      .resume-wrapper { display: block !important; padding: 0; }
+      .print-btn { display: none; }
+      .page { margin: 0; padding: 14mm 14mm 12mm 14mm; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Password Overlay -->
+  <div id="password-overlay" class="pwd-overlay">
+    <div class="pwd-card">
+      <div class="pwd-icon">🔒</div>
+      <h2 class="pwd-title">Protected Resume</h2>
+      <p class="pwd-sub">Enter passcode to view and download Khushal Chhabra's full resume.</p>
+      <form onsubmit="event.preventDefault(); unlockResume();">
+        <input id="passcode-input" class="pwd-input" type="password" placeholder="Enter Passcode" autofocus>
+        <button type="submit" class="pwd-btn">Unlock Resume</button>
+      </form>
+      <div id="pwd-error" class="pwd-error">Incorrect passcode. Please try again.</div>
+    </div>
+  </div>
+
+  <!-- Resume Content -->
+  <div id="resume-content" class="resume-wrapper">
+    <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+
+    <div class="page">
+      <div class="header">
+        <div class="name">Khushal Chhabra</div>
+        <div class="tagline">Graphic Designer &nbsp;·&nbsp; Content Strategist &nbsp;·&nbsp; 3D Artist &nbsp;·&nbsp; Video Editor</div>
+        <div class="contact">
+          <span>Jaipur, India</span>
+          <span>khushalchhabra08@gmail.com</span>
+          <span>linkedin.com/in/khushal-chhabra</span>
+          <span>bento.me/caseyx</span>
+        </div>
+      </div>
+
+      <p class="summary">Creative graphic designer and content strategist with 3+ years delivering high-impact visual content across digital platforms. Proven results: 123K+ YouTube views, 200K+ Instagram impressions, and 500K+ cumulative platform views. Experienced with international clients and high-profile artists in the electronic music industry.</p>
+
+      <div class="two-col">
+        <div class="left">
+
+          <div class="left-sec">
+            <div class="sec-title">Skills</div>
+            <div class="skill-label">Design</div>
+            <div class="skill-val">Illustrator, Photoshop, After Effects, Premiere Pro, Final Cut Pro</div>
+            <div class="skill-label">3D & Motion</div>
+            <div class="skill-val">Blender, Cinema 4D, Motion Graphics, Color Grading, VFX</div>
+            <div class="skill-label">Strategy</div>
+            <div class="skill-val">Social Media, Brand Identity, Campaign Dev, Content Planning</div>
+          </div>
+
+          <div class="left-sec">
+            <div class="sec-title">Education</div>
+            <div class="edu-item">
+              <div class="edu-deg">B.A. Graphic Design</div>
+              <div class="edu-school">JECRC University, Jaipur</div>
+              <div class="edu-yr">2020 – 2024</div>
+            </div>
+            <div class="edu-item">
+              <div class="edu-deg">Diploma, Animation & Film</div>
+              <div class="edu-school">Reliance Education</div>
+            </div>
+            <div class="edu-item">
+              <div class="edu-deg">Cert. Desktop Publishing</div>
+              <div class="edu-school">Pro Creative</div>
+            </div>
+          </div>
+
+          <div class="left-sec">
+            <div class="sec-title">Achievements</div>
+            <div class="ach">123K+ YouTube views & 200K+ Instagram impressions</div>
+            <div class="ach">500K+ cumulative platform views</div>
+            <div class="ach">25% audience retention improvement</div>
+            <div class="ach">Employee of the Month — NECMERconsult</div>
+            <div class="ach">30% client engagement increase</div>
+          </div>
+
+          <div class="left-sec">
+            <div class="sec-title">Languages</div>
+            <div class="lang">English — Professional</div>
+            <div class="lang">Hindi — Native</div>
+          </div>
+
+        </div>
+
+        <div class="right">
+          <div class="sec-title">Experience</div>
+
+          <div class="job">
+            <div class="job-top"><div class="job-title">Creative Designer</div><div class="job-date">Mar 2025 – Present</div></div>
+            <div class="job-co">ELVT.live · London, UK (Remote, Project-Based)</div>
+            <ul class="job-pts">
+              <li>Design social media graphics and carousel content for electronic music events featuring artists Cristobal Pesce and Cristoph</li>
+              <li>Deliver brand-aligned visual assets targeting London's electronic music audience across multiple campaigns</li>
+            </ul>
+          </div>
+
+          <div class="job">
+            <div class="job-top"><div class="job-title">Content Strategist</div><div class="job-date">Nov 2024 – Jan 2025</div></div>
+            <div class="job-co">Aceternity · Remote</div>
+            <ul class="job-pts">
+              <li>Drove 123K+ YouTube views, 200K+ Instagram impressions, and 4.3K hours watch time through strategic video content</li>
+              <li>Improved audience retention by 25% using data-driven content optimization and platform analytics</li>
+            </ul>
+          </div>
+
+          <div class="job">
+            <div class="job-top"><div class="job-title">Production Artist</div><div class="job-date">Mar 2024 – Present</div></div>
+            <div class="job-co">NECMERconsult · Bengaluru, India (Project-Based)</div>
+            <ul class="job-pts">
+              <li>Produce 30+ monthly videos, animations, and graphics contributing to 500K+ cumulative platform views</li>
+              <li>Recognized as Employee of the Month for exceptional output quality under tight deadlines</li>
+            </ul>
+          </div>
+
+          <div class="job">
+            <div class="job-top"><div class="job-title">Video Editor & Designer</div><div class="job-date">May 2023 – Present</div></div>
+            <div class="job-co">Freelance · Remote</div>
+            <ul class="job-pts">
+              <li>Deliver custom video editing, color grading, motion graphics, and sound design for diverse clients</li>
+              <li>Improved client engagement metrics by 30% through platform-specific content strategies</li>
+            </ul>
+          </div>
+
+          <div class="job">
+            <div class="job-top"><div class="job-title">Video Editor</div><div class="job-date">Sep 2022</div></div>
+            <div class="job-co">Bausch + Lomb · Remote (Freelance)</div>
+            <ul class="job-pts">
+              <li>Edited promotional and product launch videos for global healthcare brand, delivered ahead of schedule</li>
+            </ul>
+          </div>
+
+          <div class="job">
+            <div class="job-top"><div class="job-title">Social Media Marketing Intern</div><div class="job-date">Mar – Dec 2022</div></div>
+            <div class="job-co">JECRC University · Jaipur, India</div>
+            <ul class="job-pts">
+              <li>Executed social media content campaigns resulting in 15% increase in follower engagement</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Passcodes: Khushal2000, casey0612, caseyxresu
+    const validPasscodes = ['Khushal2000', 'khushal2000', 'casey0612', 'CASEY0612', 'caseyxresu'];
+    const UNLOCK_TOKEN = 'caseyx2025';
+
+    function showResume() {
+      document.getElementById('password-overlay').style.display = 'none';
+      document.getElementById('resume-content').style.display = 'block';
+      // Store in sessionStorage so refresh within this tab also works
+      sessionStorage.setItem('resume_unlocked', 'true');
+    }
+
+    // Check URL hash first (passed from parent tab after password check)
+    if (window.location.hash && window.location.hash.includes('unlocked=' + UNLOCK_TOKEN)) {
+      showResume();
+      // Clean up hash from URL bar without reloading
+      history.replaceState(null, '', window.location.pathname);
+    }
+    // Fallback: check sessionStorage (within-tab navigation)
+    else if (sessionStorage.getItem('resume_unlocked') === 'true') {
+      showResume();
+    }
+
+    function unlockResume() {
+      const input = document.getElementById('passcode-input');
+      const error = document.getElementById('pwd-error');
+      const val = input.value.trim();
+
+      if (validPasscodes.includes(val) || validPasscodes.map(p => p.toLowerCase()).includes(val.toLowerCase())) {
+        showResume();
+      } else {
+        error.style.display = 'block';
+        input.style.borderColor = '#ef4444';
+        input.value = '';
+        input.focus();
+      }
+    }
+  </script>
+</body>
+</html>
