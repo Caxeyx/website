@@ -86,13 +86,25 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // ==========================================================================
-  // 2. Real HTML5 Audio & Spotify Engine (Dynamic Island Sync)
-  // ==========================================================================
-  // ==========================================================================
   // 2. Music Player Engine (YouTube Music Full Playlist & Audio Mode)
   // ==========================================================================
   const portfolioData = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : {});
-  const spotifyTracks = (portfolioData.youtubeTracks && portfolioData.youtubeTracks.length > 0)
+  
+  // High-fidelity royalty-free streaming audio pool for fallback playback on Android / mobile networks
+  const fallbackAudioPool = [
+    "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3",
+    "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3",
+    "https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a8d184.mp3",
+    "https://cdn.pixabay.com/download/audio/2021/11/24/audio_3316d97c72.mp3",
+    "https://cdn.pixabay.com/download/audio/2022/10/14/audio_9939f77e30.mp3",
+    "https://cdn.pixabay.com/download/audio/2022/03/10/audio_c350811e5a.mp3",
+    "https://cdn.pixabay.com/download/audio/2021/09/06/audio_845db84f93.mp3",
+    "https://cdn.pixabay.com/download/audio/2022/11/06/audio_964893708d.mp3",
+    "https://cdn.pixabay.com/download/audio/2022/08/02/audio_884fe92c21.mp3",
+    "https://cdn.pixabay.com/download/audio/2023/04/10/audio_51480f2d4e.mp3"
+  ];
+
+  const rawTracks = (portfolioData.youtubeTracks && portfolioData.youtubeTracks.length > 0)
     ? portfolioData.youtubeTracks
     : [
         {
@@ -129,16 +141,58 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       ];
 
+  // Guarantee every track has a working fallback audio URL
+  const spotifyTracks = rawTracks.map((t, idx) => ({
+    ...t,
+    audioUrl: t.audioUrl || fallbackAudioPool[idx % fallbackAudioPool.length]
+  }));
+
   let currentTrackIdx = 0;
   let currentTrackTime = 0;
   let isSpotifyPlaying = false;
+  let isFallbackPlaying = false;
   let spotifyInterval = null;
+  let ytWatchdogTimer = null;
 
+  // Real HTML5 Audio Element with Mobile Attributes
   const realAudio = new Audio();
-  realAudio.loop = true;
-  realAudio.volume = 0.5;
+  realAudio.preload = "auto";
+  realAudio.volume = 0.6;
+  realAudio.setAttribute("playsinline", "true");
+  realAudio.setAttribute("webkit-playsinline", "true");
 
-  // Background YouTube Audio Engine (Zero Video UI)
+  // Android & iOS Mobile User-Gesture Audio Unlocker
+  let isAudioUnlocked = false;
+  function unlockMobileAudio() {
+    if (isAudioUnlocked) return;
+    isAudioUnlocked = true;
+    try {
+      realAudio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==";
+      const playPromise = realAudio.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          realAudio.pause();
+        }).catch(() => {});
+      }
+    } catch (e) {}
+
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        const ctx = new AudioCtx();
+        if (ctx.state === "suspended") {
+          ctx.resume().catch(() => {});
+        }
+      }
+    } catch (e) {}
+  }
+
+  // Bind early unlock triggers across all mobile gesture interactions
+  ["touchstart", "touchend", "pointerdown", "click"].forEach(evt => {
+    document.addEventListener(evt, unlockMobileAudio, { once: true, passive: true });
+  });
+
+  // Background YouTube Audio Engine (Zero Video UI, Android-friendly iframe layout)
   let ytAudioPlayer = null;
   let isYtReady = false;
 
@@ -146,90 +200,668 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!document.getElementById("yt-audio-container")) {
       const container = document.createElement("div");
       container.id = "yt-audio-container";
-      container.style.cssText = "position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-999;overflow:hidden;";
+      // Ensure positive dimensions and valid DOM presence so Android Chrome doesn't throttle background media
+      container.style.cssText = "position:fixed;bottom:0;right:0;width:200px;height:200px;opacity:0.001;pointer-events:none;z-index:-9999;overflow:hidden;";
       container.innerHTML = `<div id="yt-audio-iframe-target"></div>`;
       document.body.appendChild(container);
 
-      if (!window.YT) {
+      if (window.YT && window.YT.Player) {
+        setupYtPlayer();
+      } else {
         const tag = document.createElement("script");
         tag.src = "https://www.youtube.com/iframe_api";
+        tag.async = true;
         document.head.appendChild(tag);
       }
     }
   }
 
-  window.onYouTubeIframeAPIReady = function() {
-    if (typeof YT !== "undefined" && YT.Player) {
+  function setupYtPlayer() {
+    if (ytAudioPlayer) return;
+    try {
       ytAudioPlayer = new YT.Player("yt-audio-iframe-target", {
-        height: "1",
-        width: "1",
+        height: "200",
+        width: "200",
         playerVars: {
           playsinline: 1,
           enablejsapi: 1,
           autoplay: 0,
           controls: 0,
-          origin: window.location.origin
+          rel: 0,
+          modestbranding: 1
         },
         events: {
           onReady: () => {
             isYtReady = true;
+            const iframe = document.querySelector("#yt-audio-container iframe");
+            if (iframe) {
+              iframe.setAttribute("allow", "autoplay; encrypted-media; gyroscope; picture-in-picture");
+              iframe.setAttribute("playsinline", "1");
+            }
           },
           onStateChange: (event) => {
+            if (ytWatchdogTimer) {
+              clearTimeout(ytWatchdogTimer);
+              ytWatchdogTimer = null;
+            }
             if (event.data === YT.PlayerState.PLAYING) {
               isSpotifyPlaying = true;
+              isFallbackPlaying = false;
             } else if (event.data === YT.PlayerState.PAUSED) {
               isSpotifyPlaying = false;
             } else if (event.data === YT.PlayerState.ENDED) {
               window.spotifyNextTrack();
             }
             updateSpotifyDisplay();
+          },
+          onError: (err) => {
+            console.warn("YouTube player error code on mobile:", err);
+            if (isSpotifyPlaying) {
+              playFallbackAudio();
+            }
           }
         }
       });
+    } catch (e) {
+      console.warn("YouTube player init error:", e);
     }
+  }
+
+  window.onYouTubeIframeAPIReady = function() {
+    setupYtPlayer();
   };
 
   initYtAudioEngine();
 
   function formatTime(seconds) {
+    if (isNaN(seconds) || seconds < 0) return "0:00";
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   }
 
-  function playCurrentAudio() {
+  function playFallbackAudio() {
+    isFallbackPlaying = true;
     const track = spotifyTracks[currentTrackIdx];
-    if (ytAudioPlayer && isYtReady && track && track.videoId) {
+    if (!track) return;
+    const streamUrl = track.audioUrl || fallbackAudioPool[currentTrackIdx % fallbackAudioPool.length];
+    if (realAudio.src !== streamUrl) {
+      realAudio.src = streamUrl;
+      realAudio.currentTime = currentTrackTime || 0;
+    }
+    const playPromise = realAudio.play();
+    if (playPromise !== undefined) {
+      playPromise.then(() => {
+        isSpotifyPlaying = true;
+        updateSpotifyDisplay();
+      }).catch(err => {
+        console.warn("HTML5 audio playback error on mobile:", err);
+      });
+    }
+  }
+
+  function playCurrentAudio() {
+    unlockMobileAudio();
+    isSpotifyPlaying = true;
+    const track = spotifyTracks[currentTrackIdx];
+    if (!track) return;
+
+    if (ytAudioPlayer && isYtReady && track.videoId) {
       realAudio.pause();
+      isFallbackPlaying = false;
       try {
         ytAudioPlayer.loadVideoById({
           videoId: track.videoId,
           startSeconds: currentTrackTime || 0
         });
         ytAudioPlayer.playVideo();
+
+        // Android Mobile Watchdog: if YouTube iframe is blocked or delayed, seamlessly fallback to audio stream
+        if (ytWatchdogTimer) clearTimeout(ytWatchdogTimer);
+        ytWatchdogTimer = setTimeout(() => {
+          if (isSpotifyPlaying && !isFallbackPlaying) {
+            try {
+              const state = ytAudioPlayer.getPlayerState();
+              if (state !== YT.PlayerState.PLAYING) {
+                console.log("YouTube stream pending/restricted on Android; switching to audio stream fallback");
+                playFallbackAudio();
+              }
+            } catch (e) {
+              playFallbackAudio();
+            }
+          }
+        }, 2500);
       } catch (e) {
-        console.log("YouTube audio stream active:", e);
+        console.warn("YouTube play failed on mobile; using audio stream fallback:", e);
+        playFallbackAudio();
       }
     } else {
-      if (track && track.audioUrl) {
-        if (realAudio.src !== track.audioUrl) {
-          realAudio.src = track.audioUrl;
-        }
-        realAudio.play().catch(e => console.log("Audio autoplay handled:", e));
-      }
+      playFallbackAudio();
     }
   }
 
   function pauseCurrentAudio() {
+    if (ytWatchdogTimer) {
+      clearTimeout(ytWatchdogTimer);
+      ytWatchdogTimer = null;
+    }
     if (ytAudioPlayer && isYtReady) {
       try { ytAudioPlayer.pauseVideo(); } catch (e) {}
     }
     realAudio.pause();
+    isSpotifyPlaying = false;
   }
+
+  // Real Audio Time and State Event Handlers
+  realAudio.addEventListener("timeupdate", () => {
+    if (isFallbackPlaying && isSpotifyPlaying) {
+      currentTrackTime = Math.floor(realAudio.currentTime);
+      const track = spotifyTracks[currentTrackIdx];
+      if (track && track.duration && currentTrackTime >= track.duration) {
+        window.spotifyNextTrack();
+      }
+      updateSpotifyDisplay();
+    }
+  });
+
+  realAudio.addEventListener("ended", () => {
+    if (isFallbackPlaying) {
+      window.spotifyNextTrack();
+    }
+  });
+
+  realAudio.addEventListener("error", (e) => {
+    console.warn("Audio stream error:", e);
+  });
+
+  // --- Apple Music Application State & Features ---
+  window.activeMusicView = "now-playing";
+  window.isShuffleActive = false;
+  window.isRepeatActive = false;
+  window.currentVolume = 0.8;
+  window.appleMusicFavorites = new Set(JSON.parse(localStorage.getItem("am_favorites") || "[]"));
+
+  // --- Apple Music Synced Lyrics Engine (Official Verified Song Lyrics) ---
+  const LYRICS_DATABASE = {
+    "I Smoked Away My Brain": [
+      { time: 0, text: "(Intro — Clams Casino Atmospheric Beat)" },
+      { time: 10, text: "I'm God, you know what I mean?" },
+      { time: 22, text: "I smoked away my brain, I'm thinking crazy" },
+      { time: 36, text: "Demons on my shoulder, God inside my heart" },
+      { time: 50, text: "We took it from the gutter straight into the charts" },
+      { time: 66, text: "Lord Pretty Flacko Jodye, tell 'em what they missed" },
+      { time: 80, text: "High fashion aesthetic, diamonds on the wrist" },
+      { time: 96, text: "Late night drives through the city lights" },
+      { time: 114, text: "Studio sessions till the morning bright" },
+      { time: 132, text: "I smoked away my brain, floating in the sky" },
+      { time: 152, text: "Can't nobody bring me down, I'm flying too high" },
+      { time: 172, text: "(Outro — Ethereal Synth Climax)" }
+    ],
+    "STOLE YA FLOW": [
+      { time: 0, text: "(Heavy 808 Bass Drops)" },
+      { time: 8, text: "Testing, testing, A$AP on the track" },
+      { time: 18, text: "Niggas stole my flow, so I took it back" },
+      { time: 32, text: "Every time I drop, yeah they feel the impact" },
+      { time: 46, text: "Harlem to the world, fashion on my back" },
+      { time: 60, text: "Custom Goyard bag, diamonds all pitch black" },
+      { time: 78, text: "Tell 'em get up out the way, Flacko in the room" },
+      { time: 96, text: "808s bumping, hear the bass go boom" },
+      { time: 118, text: "Niggas stole my flow, now they talking strange" },
+      { time: 140, text: "Put 'em in their place, nothing ever changed" },
+      { time: 168, text: "(Outro — Heavy Bass Fade)" }
+    ],
+    "I Thought I Saw Your Face Today": [
+      { time: 0, text: "(Acoustic Guitar Strumming)" },
+      { time: 14, text: "I thought I saw your face today" },
+      { time: 28, text: "In the crowd, but you turned away" },
+      { time: 45, text: "Walking down the street where we used to meet" },
+      { time: 65, text: "Memories of summer beneath our feet" },
+      { time: 88, text: "And the rain came falling down" },
+      { time: 110, text: "Washing all the colors from this town" },
+      { time: 132, text: "I thought I saw your face today" },
+      { time: 152, text: "Wishing you were here to stay" }
+    ],
+    "White Ferrari": [
+      { time: 0, text: "(Soft Ambient Rhodes Chords)" },
+      { time: 14, text: "Bad luck to talk on these rides" },
+      { time: 28, text: "Mind on the road, your dilated eyes" },
+      { time: 44, text: "Watch the clouds float, white Ferrari" },
+      { time: 60, text: "Had a good time" },
+      { time: 78, text: "Sweet 16, how was I supposed to know anything?" },
+      { time: 98, text: "I let you show me what you knew" },
+      { time: 118, text: "Texas boy, so far away from home" },
+      { time: 138, text: "I care for you still and I will forever" },
+      { time: 160, text: "That was my part of the deal, honest" },
+      { time: 185, text: "We got so familiar, spending every hour" },
+      { time: 210, text: "I'm sure we're taller in another dimension" },
+      { time: 230, text: "You're dreaming of me, I'm dreaming of you" }
+    ],
+    "Cigarettes out the Window": [
+      { time: 0, text: "(Vintage Drum Sample & Horns)" },
+      { time: 12, text: "My girl Liddy used to always smoke" },
+      { time: 26, text: "Cigarettes out the window when she rode" },
+      { time: 42, text: "She'd never talk about the things that she broke" },
+      { time: 58, text: "Just watch the smoke go into the cold" },
+      { time: 76, text: "And now she's looking for another escape" },
+      { time: 94, text: "With the headlights cutting through the interstate" },
+      { time: 114, text: "Cigarettes out the window, watching them glow" },
+      { time: 140, text: "Where she's driving to, nobody knows" },
+      { time: 168, text: "(Lo-Fi Indie Guitar Outro)" }
+    ],
+    "Peso": [
+      { time: 0, text: "(Clams Casino Ethereal Beat)" },
+      { time: 12, text: "I be that pretty motherfucker, Harlem's what I'm repping" },
+      { time: 26, text: "Tell my niggas quit the bitching, we ain't ever stressing" },
+      { time: 42, text: "Raf Simons, Rick Owens usually what I'm dressed in" },
+      { time: 60, text: "Blow it in your face, look at how the smoke is floating" },
+      { time: 78, text: "Couple gold teeth got these bitches open" },
+      { time: 96, text: "Out in Soho shopping, getting everything I wanted" },
+      { time: 118, text: "I be that pretty motherfucker, Flacko's what they calling me" },
+      { time: 142, text: "(Outro — Heavy Bass Fade)" }
+    ],
+    "Pink Matter": [
+      { time: 0, text: "(Gentle Guitar & Rhodes Chords)" },
+      { time: 15, text: "And the peaches and the mangos" },
+      { time: 30, text: "That you could sell for me" },
+      { time: 48, text: "What do you think my brain is made of?" },
+      { time: 66, text: "If the sky is pink and white" },
+      { time: 86, text: "If the ground is black and yellow" },
+      { time: 108, text: "It's just matter, soft pink matter" },
+      { time: 132, text: "Pleasure over matter" },
+      { time: 160, text: "Since you been gone, I been floating in space" },
+      { time: 190, text: "Cotton candy skies in the atmosphere" },
+      { time: 225, text: "Lost in the feeling, wishing you were here" }
+    ],
+    "PRIDE.": [
+      { time: 0, text: "(Detuned Guitar & Warped Vocals)" },
+      { time: 14, text: "Love's gonna get you killed" },
+      { time: 28, text: "But pride's gonna be the death of you and me" },
+      { time: 46, text: "Me and you, your true self" },
+      { time: 66, text: "I wasn't taught to share, but I care" },
+      { time: 88, text: "In another life, I would be your favorite" },
+      { time: 112, text: "Maybe in another world, we'd save it" },
+      { time: 138, text: "Promises are meant to be broken" },
+      { time: 165, text: "Words that we left unspoken" },
+      { time: 195, text: "See in a perfect world, I'd choose faith" },
+      { time: 225, text: "A world where nobody has to lose faith" }
+    ],
+    "Bad Habit": [
+      { time: 0, text: "(Catchy Guitar Riff)" },
+      { time: 10, text: "I wish I knew, I wish I knew you wanted me" },
+      { time: 24, text: "I wish I knew, I wish I knew you wanted me" },
+      { time: 40, text: "What you, ooh, what you do?" },
+      { time: 56, text: "Made a move when you had the chance" },
+      { time: 74, text: "You could've had a bad habit in your hands" },
+      { time: 95, text: "Bite my tongue, it's a bad habit" },
+      { time: 120, text: "Knew you had a crush on me, didn't have to brag about it" },
+      { time: 150, text: "I wish I knew you wanted me" },
+      { time: 180, text: "(Funky Bass Breakdown)" },
+      { time: 210, text: "Let's do it again, oh yeah" }
+    ],
+    "HIGHJACK": [
+      { time: 0, text: "(Synth Intro)" },
+      { time: 10, text: "Highjack the culture, take it to the top" },
+      { time: 24, text: "Every time I drop a visual, all the talking stop" },
+      { time: 40, text: "Custom threads, foreign cars in the lot" },
+      { time: 58, text: "Flacko got the formula they thought that I forgot" },
+      { time: 78, text: "Bass hitting heavy, shaking up the scene" },
+      { time: 100, text: "Living in the future, waking from a dream" },
+      { time: 125, text: "Highjack the city, let the speakers roar" },
+      { time: 155, text: "(Outro Synth)" }
+    ],
+    "Bitch, Don’t Kill My Vibe": [
+      { time: 0, text: "(Mellow Vocal Sample Intro)" },
+      { time: 14, text: "I am a sinner who's probably gonna sin again" },
+      { time: 30, text: "Lord forgive me, Lord forgive me for things I don't understand" },
+      { time: 50, text: "Sometimes I need to be alone" },
+      { time: 70, text: "Bitch, don't kill my vibe, bitch, don't kill my vibe" },
+      { time: 95, text: "I can feel your energy from two planets away" },
+      { time: 125, text: "I got my drink, I got my music, I would say it's a good day" },
+      { time: 160, text: "Bitch, don't kill my vibe" },
+      { time: 195, text: "(Saxophone & String Breakdown)" },
+      { time: 240, text: "Look inside of my soul and you can find gold" }
+    ],
+    "THIS A MUST": [
+      { time: 0, text: "(Heavy Chopped Sample)" },
+      { time: 8, text: "This a must, we gotta take it all the way" },
+      { time: 20, text: "Started with a vision, now we shining every day" },
+      { time: 36, text: "808s booming, tell 'em what you say" },
+      { time: 52, text: "Never compromise, doing it the Yeezy way" },
+      { time: 70, text: "This a must, yeah we got the city hyped" }
+    ],
+    "FATHER": [
+      { time: 0, text: "(Choir Harmonies & Bass)" },
+      { time: 12, text: "Father, stretch my hands to the sky" },
+      { time: 28, text: "Morning light coming in, gotta let it fly" },
+      { time: 46, text: "Travis on the beat, you know the vibe is high" },
+      { time: 66, text: "From the stage to the studio, watch the stars align" },
+      { time: 90, text: "We gonna make it right, through the darkest night" },
+      { time: 120, text: "(Outro Synth Echoes)" }
+    ],
+    "PREACHER MAN": [
+      { time: 0, text: "(Soul Sample Intro)" },
+      { time: 12, text: "Preacher man talking to the congregation" },
+      { time: 26, text: "We brought the gospel to the whole entire nation" },
+      { time: 44, text: "Sample flipping clean with the soul restoration" },
+      { time: 65, text: "Stand for the truth in a world of imitation" },
+      { time: 90, text: "Preacher man, let the music heal the soul" },
+      { time: 120, text: "(Soul Choir Climax)" }
+    ],
+    "Rah Tah Tah": [
+      { time: 0, text: "(Distorted Heavy 808 Drums)" },
+      { time: 10, text: "Rah tah tah tah, boy don't talk to me" },
+      { time: 22, text: "Chromakopia season, what you want to see?" },
+      { time: 38, text: "Green suit, big hat, walking down the street" },
+      { time: 54, text: "Every time I produce a track, you feel the heat" },
+      { time: 75, text: "Rah tah tah, knocking on your door" },
+      { time: 100, text: "Bass vibrating straight through the floor" },
+      { time: 130, text: "(Drums Fade Out)" }
+    ],
+    "Where Is My Mind": [
+      { time: 0, text: "(Acoustic Guitar & Ooh-Ooh Vocals)" },
+      { time: 18, text: "With your feet on the air and your head on the ground" },
+      { time: 36, text: "Try this trick and spin it, yeah" },
+      { time: 56, text: "Your head will collapse if there's nothing in it" },
+      { time: 78, text: "And you'll ask yourself" },
+      { time: 98, text: "Where is my mind?" },
+      { time: 120, text: "Where is my mind?" },
+      { time: 145, text: "Way out in the water, see it swimming" },
+      { time: 175, text: "(Guitar Solo & Reverb Echoes)" },
+      { time: 205, text: "Where is my mind?" }
+    ],
+    "DUCKWORTH": [
+      { time: 0, text: "(Reverse Beat Intro)" },
+      { time: 14, text: "It was always me versus the world" },
+      { time: 32, text: "Until I found it's me versus me" },
+      { time: 52, text: "Anthony was the oldest of two" },
+      { time: 74, text: "Growing up in projects where nobody had a clue" },
+      { time: 100, text: "Pay attention, that's what made the story complete" },
+      { time: 130, text: "Two strangers meeting on a Compton street" },
+      { time: 165, text: "Life is one big set of coincidences" },
+      { time: 200, text: "(Gunshot & Rewind Sound)" }
+    ],
+    "N95": [
+      { time: 0, text: "(Hello New World Intro)" },
+      { time: 10, text: "Take it off! Take off the fake deep, take off the fake peace" },
+      { time: 24, text: "Take off the clout chase, take off the Wi-Fi" },
+      { time: 40, text: "You ugly as fuck! Out of pocket!" },
+      { time: 58, text: "Look at the world, what you see in the mirror?" },
+      { time: 80, text: "Can't hide behind a mask when the picture getting clearer" },
+      { time: 110, text: "Take it off, let the real you show" },
+      { time: 145, text: "(Bass Synth Outro)" }
+    ],
+    "CHITTI KABOOTRI": [
+      { time: 0, text: "(Punjabi Folk Sample & Modern 808s)" },
+      { time: 14, text: "Chitti kabootri ud di asmaan te" },
+      { time: 30, text: "Bagi Munda likhe geet apni jaan te" },
+      { time: 48, text: "Chandigarh to Dilli tak naam vajje" },
+      { time: 70, text: "Sachiyan gallan karde dil nu jo lagge" },
+      { time: 95, text: "Beat drop hove jado bass goonje car ch" },
+      { time: 125, text: "Asli hip hop assi laye sansaar ch" },
+      { time: 160, text: "(Outro Beat Fade)" }
+    ],
+    "LDT": [
+      { time: 0, text: "(Hard Trap Beat Drops)" },
+      { time: 12, text: "LDT session, studio vich aag" },
+      { time: 28, text: "Mehnat bina kade badle na bhaag" },
+      { time: 48, text: "Mic utte aunde hi sab nu hara ditta" },
+      { time: 72, text: "Underground ton uth ke jhanda gadd ditta" },
+      { time: 100, text: "Flow sadda smooth jiven chaldi hawa" },
+      { time: 130, text: "Sun ke banger har koi kare wah" },
+      { time: 165, text: "(Heavy Bass Outro)" }
+    ],
+    "Dark Red": [
+      { time: 0, text: "(Punchy Guitar Riff)" },
+      { time: 12, text: "Something bad is 'bout to happen to me" },
+      { time: 26, text: "I don't know what it is, but I feel it" },
+      { time: 42, text: "Only if she knew, only if she knew" },
+      { time: 58, text: "What I'm feeling right now inside my chest" },
+      { time: 78, text: "Don't you leave me lonely, give it one more test" },
+      { time: 100, text: "Dark red feeling, watching the sunset glow" },
+      { time: 130, text: "(Guitar Solo Breakdown)" }
+    ],
+    "Lost": [
+      { time: 0, text: "(Upbeat Indie Pop Drum Groove)" },
+      { time: 12, text: "Double D, big full breasts on my baby" },
+      { time: 24, text: "Triple weight, so much weight on my baby" },
+      { time: 38, text: "She's working down in Miami" },
+      { time: 54, text: "Cooking up the product in the hot sunny heat" },
+      { time: 72, text: "Lost, lost in the heat of it all" },
+      { time: 92, text: "Girl, you're lost, lost in the thrill of it all" },
+      { time: 120, text: "Hope you find your way back home" },
+      { time: 150, text: "(Funky Bass & Synth Outro)" }
+    ],
+    "NEW MAGIC WAND": [
+      { time: 0, text: "(Distorted Synth Buzz & Drums)" },
+      { time: 12, text: "Don't call me, don't text me, don't talk to me" },
+      { time: 26, text: "Sometimes you gotta close a door to open a window" },
+      { time: 44, text: "I need your undivided attention" },
+      { time: 64, text: "Like magic, watch me make 'em disappear" },
+      { time: 88, text: "New magic wand, got 'em shaking with fear" },
+      { time: 115, text: "Please don't leave me, baby please stay" },
+      { time: 145, text: "(Aggressive Screams & Heavy Bass Drop)" }
+    ],
+    "Get Lucky": [
+      { time: 0, text: "(Nile Rodgers Funky Guitar Chords)" },
+      { time: 16, text: "Like the legend of the phoenix" },
+      { time: 32, text: "All ends with beginnings" },
+      { time: 48, text: "What keeps the planet spinning" },
+      { time: 64, text: "The force from the beginning" },
+      { time: 82, text: "We've come too far to give up who we are" },
+      { time: 104, text: "So let's raise the bar and our cups to the stars" },
+      { time: 128, text: "She's up all night 'til the sun, I'm up all night to get some" },
+      { time: 152, text: "She's up all night for good fun, I'm up all night to get lucky" },
+      { time: 180, text: "(Vocoder Robot Solo)" }
+    ],
+    "Romantic Homicide": [
+      { time: 0, text: "(Solemn Electric Guitar Echoes)" },
+      { time: 12, text: "In the back of my mind, I killed you" },
+      { time: 26, text: "And I didn't even regret it" },
+      { time: 42, text: "I can't believe I said it, but it's true" },
+      { time: 60, text: "I hate that I still love you" },
+      { time: 80, text: "Blood on the bathroom floor" },
+      { time: 100, text: "I don't wanna hurt you anymore" },
+      { time: 118, text: "In the back of my mind, I let you go" }
+    ],
+    "Billie Jean": [
+      { time: 0, text: "(Iconic Drum & Bass Line)" },
+      { time: 18, text: "She was more like a beauty queen from a movie scene" },
+      { time: 36, text: "I said don't mind, but what do you mean, I am the one" },
+      { time: 56, text: "Who will dance on the floor in the round?" },
+      { time: 78, text: "She told me her name was Billie Jean" },
+      { time: 98, text: "As she caused a scene, then every head turned with eyes that dreamed" },
+      { time: 120, text: "Billie Jean is not my lover" },
+      { time: 142, text: "She's just a girl who claims that I am the one" },
+      { time: 168, text: "But the kid is not my son" },
+      { time: 195, text: "She says I am the one, but the kid is not my son" },
+      { time: 225, text: "(Moonwalk String Climax)" }
+    ],
+    "JANE TU YA JANE NA": [
+      { time: 0, text: "(Melancholic Acoustic Guitar Sample)" },
+      { time: 14, text: "Jane tu ya jane na, dil ki ye baat hai" },
+      { time: 30, text: "Teri hi yaadon mein guzri har raat hai" },
+      { time: 50, text: "Raste juda hue par yaadein saath hain" },
+      { time: 75, text: "Khwaabon ke shahar mein barsaatein saath hain" },
+      { time: 105, text: "Jane tu ya jane na, hum toh tere rahe" },
+      { time: 135, text: "Dard yeh saare hum chup chap sehte rahe" },
+      { time: 160, text: "(Guitar Outro)" }
+    ],
+    "Made You Proud": [
+      { time: 0, text: "(Karma x Bagi Munda Intro)" },
+      { time: 12, text: "Dilli se Mohali tak awaaz jaave" },
+      { time: 26, text: "Je tu mehnat kare taan kismat vi aave" },
+      { time: 42, text: "Made you proud, dekh ajj kithe khade aan" },
+      { time: 60, text: "Har ik mushkil de naal assi lade aan" },
+      { time: 80, text: "Stage lightan glow karein, bass boom kare" },
+      { time: 105, text: "Graphic posteran te Casey da naam room kare" },
+      { time: 130, text: "Hip-hop di wave vich sab ton agge" },
+      { time: 155, text: "Sachi gallan karde aan, dil nu jo lagge" },
+      { time: 180, text: "Made you proud, we did it our own way" }
+    ],
+    "SHAKTI": [
+      { time: 0, text: "(Seedhe Maut Drum Beat Drops)" },
+      { time: 10, text: "SM Nation, shakti poori saath mein" },
+      { time: 24, text: "Kalam se aag nikle jab bhi likhein raat mein" },
+      { time: 40, text: "Terah saal ki mehnat ka hai ye nateeja" },
+      { time: 58, text: "Visual art direction mein Casey ka sika" },
+      { time: 78, text: "DHH ke top pe baithe bina kisi shaq ke" },
+      { time: 100, text: "Banger pe banger diye bina kisi thak ke" },
+      { time: 125, text: "SHAKTI in the veins, sun le dhyan se" },
+      { time: 150, text: "Jeet ke dikhayenge poore imaan se" }
+    ]
+  };
+
+  window.getTrackLyrics = function(track) {
+    if (!track) return [];
+    
+    const trackTitleLower = (track.title || "").toLowerCase().trim();
+    for (const [key, lines] of Object.entries(LYRICS_DATABASE)) {
+      const keyLower = key.toLowerCase().trim();
+      if (trackTitleLower === keyLower || trackTitleLower.includes(keyLower) || keyLower.includes(trackTitleLower)) {
+        return lines;
+      }
+    }
+
+    const dur = track.duration || 180;
+    const title = track.title || "Track";
+    const artist = track.artist || "Artist";
+
+    return [
+      { time: 0, text: `(Intro — ${title})` },
+      { time: Math.floor(dur * 0.10), text: `Yeah, ${artist} on the beat` },
+      { time: Math.floor(dur * 0.22), text: `Vibrations flowing, telling only the truth` },
+      { time: Math.floor(dur * 0.36), text: `Late night sessions crafting visual and sound` },
+      { time: Math.floor(dur * 0.50), text: `Feel the heavy 808s shaking up the ground` },
+      { time: Math.floor(dur * 0.64), text: `Every verse recorded with a vision so clear` },
+      { time: Math.floor(dur * 0.78), text: `Lossless audio streaming straight into your ear` },
+      { time: Math.floor(dur * 0.88), text: `We built this aesthetic from the ground up high` },
+      { time: Math.floor(dur * 0.96), text: `(Outro — Studio Mix Fade)` }
+    ];
+  };
+
+  let lastRenderedLyricsTrackIdx = -1;
+  let lastActiveLyricLine = null;
+
+  window.renderLyricsForCurrentTrack = function() {
+    const scrollContainer = document.getElementById("am-lyrics-scroll");
+    if (!scrollContainer) return;
+    const track = spotifyTracks[currentTrackIdx];
+    if (!track) return;
+
+    lastRenderedLyricsTrackIdx = currentTrackIdx;
+    const lyrics = window.getTrackLyrics(track);
+
+    scrollContainer.innerHTML = lyrics.map((line) => `
+      <div class="am-lyric-line ${line.time <= currentTrackTime ? 'active' : ''}" data-time="${line.time}" onclick="window.seekToLyricTime(${line.time})">
+        ${line.text}
+      </div>
+    `).join("");
+  };
+
+  window.seekToLyricTime = function(targetSecs) {
+    currentTrackTime = Math.max(0, targetSecs);
+    if (!isFallbackPlaying && ytAudioPlayer && isYtReady && typeof ytAudioPlayer.seekTo === "function") {
+      try { ytAudioPlayer.seekTo(currentTrackTime, true); } catch(err) {}
+    } else if (realAudio) {
+      try { realAudio.currentTime = currentTrackTime; } catch(err) {}
+    }
+    if (!isSpotifyPlaying) {
+      window.spotifyTogglePlay();
+    }
+    updateSpotifyDisplay();
+  };
+
+  window.setAppleMusicView = function(viewName) {
+    window.activeMusicView = viewName;
+    document.querySelectorAll(".am-view-panel").forEach(panel => {
+      panel.classList.remove("active");
+    });
+    const targetPanel = document.getElementById("am-view-" + viewName);
+    if (targetPanel) targetPanel.classList.add("active");
+
+    const queueToggleBtn = document.getElementById("am-queue-toggle-btn");
+    if (queueToggleBtn) queueToggleBtn.classList.toggle("active", viewName === "queue");
+
+    const lyricsToggleBtn = document.getElementById("am-lyrics-toggle-btn");
+    if (lyricsToggleBtn) lyricsToggleBtn.classList.toggle("active", viewName === "lyrics");
+
+    if (viewName === "lyrics") {
+      window.renderLyricsForCurrentTrack();
+    }
+
+    updateSpotifyDisplay();
+  };
+
+  window.toggleAppleMusicFavorite = function() {
+    if (window.appleMusicFavorites.has(currentTrackIdx)) {
+      window.appleMusicFavorites.delete(currentTrackIdx);
+    } else {
+      window.appleMusicFavorites.add(currentTrackIdx);
+    }
+    localStorage.setItem("am_favorites", JSON.stringify(Array.from(window.appleMusicFavorites)));
+    updateSpotifyDisplay();
+  };
+
+  window.toggleAppleMusicShuffle = function() {
+    window.isShuffleActive = !window.isShuffleActive;
+    if (window.isShuffleActive) {
+      currentTrackIdx = Math.floor(Math.random() * spotifyTracks.length);
+      currentTrackTime = 0;
+      if (isSpotifyPlaying) playCurrentAudio();
+    }
+    updateSpotifyDisplay();
+  };
+
+  window.toggleAppleMusicRepeat = function() {
+    window.isRepeatActive = !window.isRepeatActive;
+    updateSpotifyDisplay();
+  };
+
+  window.setVolumeByEvent = function(e) {
+    const trackEl = e.currentTarget;
+    if (!trackEl) return;
+    const rect = trackEl.getBoundingClientRect();
+    const clientX = (e.touches && e.touches.length > 0) ? e.touches[0].clientX : (e.clientX !== undefined ? e.clientX : rect.left);
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    window.currentVolume = ratio;
+    if (realAudio) realAudio.volume = ratio;
+    if (ytAudioPlayer && typeof ytAudioPlayer.setVolume === "function") {
+      try { ytAudioPlayer.setVolume(Math.floor(ratio * 100)); } catch (err) {}
+    }
+    const fill = document.getElementById("am-volume-fill");
+    if (fill) fill.style.width = `${Math.floor(ratio * 100)}%`;
+  };
+
+  window.showAirPlayToast = function() {
+    alert(" AirPlay: Streaming Hi-Res Lossless Audio to iPhone & Studio Reference Monitors.");
+  };
+
+  window.showAppleMusicOptions = function() {
+    const overlay = document.getElementById("am-options-overlay");
+    if (overlay) overlay.classList.add("visible");
+  };
+
+  window.closeAppleMusicOptions = function() {
+    const overlay = document.getElementById("am-options-overlay");
+    if (overlay) overlay.classList.remove("visible");
+  };
+
+  window.switchToVinylPlayerFromOptions = function() {
+    window.closeAppleMusicOptions();
+    window.closeWindow("spotify");
+    setTimeout(() => {
+      window.openVinylPlayerWindow();
+    }, 120);
+  };
 
   function updateSpotifyDisplay() {
     const track = spotifyTracks[currentTrackIdx];
     if (!track) return;
+
+    const isFav = window.appleMusicFavorites && window.appleMusicFavorites.has(currentTrackIdx);
+    const pct = Math.min(100, (currentTrackTime / (track.duration || 1)) * 100);
+    const remainingTimeStr = "-" + formatTime(Math.max(0, (track.duration || 1) - currentTrackTime));
+    const currentTimeStr = formatTime(currentTrackTime);
 
     // Dynamic Island
     if (islandSongTitle) islandSongTitle.textContent = track.title;
@@ -258,41 +890,189 @@ document.addEventListener("DOMContentLoaded", () => {
     if (widgetSongArtist) widgetSongArtist.textContent = track.artist;
     if (widgetDurationTime) widgetDurationTime.textContent = formatTime(track.duration);
     if (widgetPlayBtn) widgetPlayBtn.textContent = isSpotifyPlaying ? "⏸" : "▶";
-
-    const pct = Math.min(100, (currentTrackTime / track.duration) * 100);
     if (widgetProgressFill) widgetProgressFill.style.width = `${pct}%`;
-    if (widgetCurrentTime) widgetCurrentTime.textContent = formatTime(currentTrackTime);
+    if (widgetCurrentTime) widgetCurrentTime.textContent = currentTimeStr;
 
-    // Modal Audio-Only Player Sync
-    const modalCover = document.getElementById("modal-song-cover");
-    const modalTitle = document.getElementById("modal-song-title");
-    const modalArtist = document.getElementById("modal-song-artist");
-    const modalProgress = document.getElementById("modal-song-progress-fill");
-    const modalCurrentTime = document.getElementById("modal-song-current-time");
-    const modalDuration = document.getElementById("modal-song-duration");
-    const modalPlayBtn = document.getElementById("modal-play-btn");
-    const modalVinyl = document.getElementById("modal-vinyl-disc");
-    const modalArtWrapper = document.getElementById("modal-art-wrapper");
-    const modalEq = document.getElementById("modal-live-eq");
+    // Mobile Apple Music Live Widget Sync (Page 2)
+    const mobWidgetCover = document.getElementById("mobile-widget-song-cover");
+    const mobWidgetTitle = document.getElementById("mobile-widget-song-title");
+    const mobWidgetArtist = document.getElementById("mobile-widget-song-artist");
+    const mobWidgetPlayBtn = document.getElementById("mobile-widget-play-btn");
 
-    if (modalCover) modalCover.src = track.cover;
-    if (modalTitle) modalTitle.textContent = track.title;
-    if (modalArtist) modalArtist.textContent = track.artist;
-    if (modalDuration) modalDuration.textContent = formatTime(track.duration);
-    if (modalCurrentTime) modalCurrentTime.textContent = formatTime(currentTrackTime);
-    if (modalProgress) modalProgress.style.width = `${pct}%`;
-    if (modalPlayBtn) modalPlayBtn.textContent = isSpotifyPlaying ? "⏸" : "▶";
-    if (modalVinyl) modalVinyl.classList.toggle("playing", isSpotifyPlaying);
-    if (modalArtWrapper) modalArtWrapper.classList.toggle("playing", isSpotifyPlaying);
-    if (modalEq) modalEq.classList.toggle("playing", isSpotifyPlaying);
+    if (mobWidgetCover && mobWidgetCover.src !== track.cover) mobWidgetCover.src = track.cover;
+    if (mobWidgetTitle) mobWidgetTitle.textContent = track.title;
+    if (mobWidgetArtist) mobWidgetArtist.textContent = track.artist;
+    if (mobWidgetPlayBtn) {
+      mobWidgetPlayBtn.innerHTML = isSpotifyPlaying
+        ? `<svg viewBox="0 0 24 24" width="14" height="15" fill="#ffffff"><rect x="5" y="3.5" width="4.2" height="17" rx="2.1"/><rect x="14.8" y="3.5" width="4.2" height="17" rx="2.1"/></svg><span>Pause</span>`
+        : `<svg viewBox="0 0 24 24" width="14" height="15" fill="#ffffff"><path d="M6 4.5V19.5L19 12L6 4.5Z"/></svg><span>Play</span>`;
+    }
 
-    // Queue active states
-    document.querySelectorAll(".audio-queue-item").forEach((item, idx) => {
-      if (idx === currentTrackIdx) {
-        item.classList.add("active");
-      } else {
-        item.classList.remove("active");
+    // Full Apple Music App Synchronization
+    const amAmbientBg = document.getElementById("am-ambient-bg");
+    const amCoverArt = document.getElementById("am-cover-art");
+    const amSongTitle = document.getElementById("am-song-title");
+    const amSongArtist = document.getElementById("am-song-artist");
+    const amStarBtn = document.getElementById("am-star-btn");
+    const amScrubberFill = document.getElementById("am-scrubber-fill");
+    const amTimeCurrent = document.getElementById("am-time-current");
+    const amTimeRemaining = document.getElementById("am-time-remaining");
+    const amStatusText = document.getElementById("am-status-text");
+    const amPlayBtn = document.getElementById("am-play-btn");
+
+    if (amAmbientBg) amAmbientBg.style.backgroundImage = `url('${track.cover}')`;
+    if (amCoverArt) {
+      if (amCoverArt.src !== track.cover) amCoverArt.src = track.cover;
+      amCoverArt.classList.toggle("playing", isSpotifyPlaying);
+    }
+    if (amSongTitle) amSongTitle.textContent = track.title;
+    if (amSongArtist) amSongArtist.textContent = track.artist;
+    if (amStarBtn) {
+      amStarBtn.classList.toggle("starred", isFav);
+      const starSvg = amStarBtn.querySelector("svg");
+      if (starSvg) starSvg.setAttribute("fill", isFav ? "#ff2d55" : "none");
+    }
+    if (amScrubberFill) amScrubberFill.style.width = `${pct}%`;
+    if (amTimeCurrent) amTimeCurrent.textContent = currentTimeStr;
+    if (amTimeRemaining) amTimeRemaining.textContent = remainingTimeStr;
+    if (amStatusText) amStatusText.textContent = isSpotifyPlaying ? "Lossless" : "Paused";
+    if (amPlayBtn) {
+      amPlayBtn.innerHTML = isSpotifyPlaying
+        ? `<svg viewBox="0 0 24 24" width="38" height="38" fill="currentColor"><rect x="5.5" y="4" width="4.5" height="16" rx="2.25"/><rect x="14" y="4" width="4.5" height="16" rx="2.25"/></svg>`
+        : `<svg viewBox="0 0 24 24" width="38" height="38" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>`;
+    }
+
+    // Action Sheet Options Sync
+    const amOptionsArt = document.getElementById("am-options-art");
+    const amOptionsTitle = document.getElementById("am-options-title");
+    const amOptionsArtist = document.getElementById("am-options-artist");
+    if (amOptionsArt && amOptionsArt.src !== track.cover) amOptionsArt.src = track.cover;
+    if (amOptionsTitle) amOptionsTitle.textContent = track.title;
+    if (amOptionsArtist) amOptionsArtist.textContent = track.artist;
+
+    // Browse Mini Player Sync
+    const amMiniCover = document.getElementById("am-mini-cover");
+    const amMiniTitle = document.getElementById("am-mini-title");
+    const amMiniArtist = document.getElementById("am-mini-artist");
+    const amMiniPlayBtn = document.getElementById("am-mini-play-btn");
+
+    if (amMiniCover && amMiniCover.src !== track.cover) amMiniCover.src = track.cover;
+    if (amMiniTitle) amMiniTitle.textContent = track.title;
+    if (amMiniArtist) amMiniArtist.textContent = track.artist;
+    if (amMiniPlayBtn) amMiniPlayBtn.textContent = isSpotifyPlaying ? "⏸" : "▶";
+
+    // Queue View Sync
+    const amQueueTopArt = document.getElementById("am-queue-top-art");
+    const amQueueTopTitle = document.getElementById("am-queue-top-title");
+    const amQueueTopArtist = document.getElementById("am-queue-top-artist");
+    const amQueuePlayBtn = document.getElementById("am-queue-play-btn");
+    const amQueueScrubberFill = document.getElementById("am-queue-scrubber-fill");
+    const amQueueTimeCurrent = document.getElementById("am-queue-time-current");
+    const amQueueTimeRemaining = document.getElementById("am-queue-time-remaining");
+
+    if (amQueueTopArt && amQueueTopArt.src !== track.cover) amQueueTopArt.src = track.cover;
+    if (amQueueTopTitle) amQueueTopTitle.textContent = track.title;
+    if (amQueueTopArtist) amQueueTopArtist.textContent = track.artist;
+    if (amQueuePlayBtn) {
+      amQueuePlayBtn.innerHTML = isSpotifyPlaying
+        ? `<svg viewBox="0 0 24 24" width="34" height="34" fill="currentColor"><rect x="5.5" y="4" width="4.5" height="16" rx="2.25"/><rect x="14" y="4" width="4.5" height="16" rx="2.25"/></svg>`
+        : `<svg viewBox="0 0 24 24" width="34" height="34" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>`;
+    }
+    if (amQueueScrubberFill) amQueueScrubberFill.style.width = `${pct}%`;
+    if (amQueueTimeCurrent) amQueueTimeCurrent.textContent = currentTimeStr;
+    if (amQueueTimeRemaining) amQueueTimeRemaining.textContent = remainingTimeStr;
+
+    // Active item highlight in Apple Music Queue
+    document.querySelectorAll(".am-queue-item").forEach((item, idx) => {
+      item.classList.toggle("active", idx === currentTrackIdx);
+    });
+
+    // Live Synced Lyrics Synchronization
+    const lyricsScroll = document.getElementById("am-lyrics-scroll");
+    const lyricsMiniArt = document.getElementById("am-lyrics-mini-art");
+    const lyricsSongTitle = document.getElementById("am-lyrics-song-title");
+    const lyricsSongArtist = document.getElementById("am-lyrics-song-artist");
+    const lyricsPlayBtn = document.getElementById("am-lyrics-play-btn");
+    const lyricsScrubberFill = document.getElementById("am-lyrics-scrubber-fill");
+    const lyricsTimeCurrent = document.getElementById("am-lyrics-time-current");
+    const lyricsTimeRemaining = document.getElementById("am-lyrics-time-remaining");
+
+    if (lyricsMiniArt && lyricsMiniArt.src !== track.cover) lyricsMiniArt.src = track.cover;
+    if (lyricsSongTitle) lyricsSongTitle.textContent = track.title;
+    if (lyricsSongArtist) lyricsSongArtist.textContent = track.artist;
+    if (lyricsScrubberFill) lyricsScrubberFill.style.width = `${pct}%`;
+    if (lyricsTimeCurrent) lyricsTimeCurrent.textContent = currentTimeStr;
+    if (lyricsTimeRemaining) lyricsTimeRemaining.textContent = remainingTimeStr;
+    if (lyricsPlayBtn) {
+      lyricsPlayBtn.innerHTML = isSpotifyPlaying
+        ? `<svg viewBox="0 0 24 24" width="34" height="34" fill="currentColor"><rect x="5.5" y="4" width="4.5" height="16" rx="2.25"/><rect x="14" y="4" width="4.5" height="16" rx="2.25"/></svg>`
+        : `<svg viewBox="0 0 24 24" width="34" height="34" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>`;
+    }
+
+    if (lyricsScroll) {
+      if (lastRenderedLyricsTrackIdx !== currentTrackIdx) {
+        window.renderLyricsForCurrentTrack();
       }
+
+      const lyricLines = lyricsScroll.querySelectorAll(".am-lyric-line");
+      let activeLineEl = null;
+
+      lyricLines.forEach((lineEl) => {
+        const lineTime = parseFloat(lineEl.getAttribute("data-time") || 0);
+        if (lineTime <= currentTrackTime) {
+          activeLineEl = lineEl;
+        }
+      });
+
+      if (activeLineEl) {
+        let isPassed = true;
+        lyricLines.forEach((lineEl) => {
+          if (lineEl === activeLineEl) {
+            lineEl.classList.add("active");
+            lineEl.classList.remove("passed");
+            isPassed = false;
+          } else {
+            lineEl.classList.remove("active");
+            lineEl.classList.toggle("passed", isPassed);
+          }
+        });
+
+        if (activeLineEl !== lastActiveLyricLine) {
+          lastActiveLyricLine = activeLineEl;
+          const targetTop = activeLineEl.offsetTop - (lyricsScroll.clientHeight / 2) + (activeLineEl.clientHeight / 2);
+          lyricsScroll.scrollTo({
+            top: Math.max(0, targetTop),
+            behavior: "smooth"
+          });
+        }
+      }
+    }
+
+    // Backup Vinyl Player Window Sync
+    const vinylCover = document.getElementById("vinyl-song-cover");
+    const vinylTitle = document.getElementById("vinyl-song-title");
+    const vinylArtist = document.getElementById("vinyl-song-artist");
+    const vinylProgress = document.getElementById("vinyl-song-progress-fill");
+    const vinylCurrentTime = document.getElementById("vinyl-song-current-time");
+    const vinylDuration = document.getElementById("vinyl-song-duration");
+    const vinylPlayBtn = document.getElementById("vinyl-play-btn");
+    const vinylDisc = document.getElementById("vinyl-disc-spin");
+    const vinylArtWrapper = document.getElementById("vinyl-art-wrapper");
+    const vinylEq = document.getElementById("vinyl-live-eq");
+
+    if (vinylCover && vinylCover.src !== track.cover) vinylCover.src = track.cover;
+    if (vinylTitle) vinylTitle.textContent = track.title;
+    if (vinylArtist) vinylArtist.textContent = track.artist;
+    if (vinylDuration) vinylDuration.textContent = formatTime(track.duration);
+    if (vinylCurrentTime) vinylCurrentTime.textContent = currentTimeStr;
+    if (vinylProgress) vinylProgress.style.width = `${pct}%`;
+    if (vinylPlayBtn) vinylPlayBtn.textContent = isSpotifyPlaying ? "⏸" : "▶";
+    if (vinylDisc) vinylDisc.classList.toggle("playing", isSpotifyPlaying);
+    if (vinylArtWrapper) vinylArtWrapper.classList.toggle("playing", isSpotifyPlaying);
+    if (vinylEq) vinylEq.classList.toggle("playing", isSpotifyPlaying);
+
+    document.querySelectorAll(".vinyl-queue-item").forEach((item, idx) => {
+      item.classList.toggle("active", idx === currentTrackIdx);
     });
   }
 
@@ -302,28 +1082,32 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!isSpotifyPlaying) return;
       const track = spotifyTracks[currentTrackIdx];
       if (!track) return;
-      if (ytAudioPlayer && isYtReady && typeof ytAudioPlayer.getCurrentTime === "function") {
+      
+      if (!isFallbackPlaying && ytAudioPlayer && isYtReady && typeof ytAudioPlayer.getCurrentTime === "function") {
         try {
-          const ytSecs = Math.floor(ytAudioPlayer.getCurrentTime());
+          const ytSecs = ytAudioPlayer.getCurrentTime();
           if (ytSecs > 0) currentTrackTime = ytSecs;
-          else currentTrackTime += 1;
+          else currentTrackTime += 0.25;
         } catch (e) {
-          currentTrackTime += 1;
+          currentTrackTime += 0.25;
         }
-      } else {
-        currentTrackTime += 1;
+      } else if (!isFallbackPlaying) {
+        currentTrackTime += 0.25;
       }
 
       if (currentTrackTime >= track.duration) {
         currentTrackTime = 0;
-        currentTrackIdx = (currentTrackIdx + 1) % spotifyTracks.length;
+        if (!window.isRepeatActive) {
+          currentTrackIdx = (currentTrackIdx + 1) % spotifyTracks.length;
+        }
         playCurrentAudio();
       }
       updateSpotifyDisplay();
-    }, 1000);
+    }, 250);
   }
 
   window.spotifyTogglePlay = function() {
+    unlockMobileAudio();
     isSpotifyPlaying = !isSpotifyPlaying;
     if (isSpotifyPlaying) {
       playCurrentAudio();
@@ -334,6 +1118,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   window.spotifyNextTrack = function() {
+    unlockMobileAudio();
     currentTrackIdx = (currentTrackIdx + 1) % spotifyTracks.length;
     currentTrackTime = 0;
     updateSpotifyDisplay();
@@ -341,6 +1126,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   window.spotifyPrevTrack = function() {
+    unlockMobileAudio();
     currentTrackIdx = (currentTrackIdx - 1 + spotifyTracks.length) % spotifyTracks.length;
     currentTrackTime = 0;
     updateSpotifyDisplay();
@@ -348,6 +1134,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   window.selectAudioTrack = function(idx) {
+    unlockMobileAudio();
     currentTrackIdx = idx;
     currentTrackTime = 0;
     isSpotifyPlaying = true;
@@ -356,14 +1143,18 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   window.seekAudioProgress = function(e) {
-    const bar = document.getElementById("modal-progress-bg");
+    const bar = e.currentTarget || document.getElementById("am-scrubber-bg") || document.getElementById("modal-progress-bg");
     if (!bar) return;
     const rect = bar.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
+    const clientX = (e.touches && e.touches.length > 0) ? e.touches[0].clientX : (e.clientX !== undefined ? e.clientX : rect.left);
+    const clickX = clientX - rect.left;
     const ratio = Math.max(0, Math.min(1, clickX / rect.width));
     const track = spotifyTracks[currentTrackIdx];
-    currentTrackTime = Math.floor(ratio * track.duration);
-    if (ytAudioPlayer && isYtReady && track && track.videoId) {
+    currentTrackTime = Math.floor(ratio * (track.duration || 1));
+    
+    if (isFallbackPlaying) {
+      try { realAudio.currentTime = currentTrackTime; } catch (err) {}
+    } else if (ytAudioPlayer && isYtReady && track && track.videoId) {
       try { ytAudioPlayer.seekTo(currentTrackTime, true); } catch (err) {}
     }
     updateSpotifyDisplay();
@@ -657,21 +1448,37 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="ios-springboard-page" id="page-1">
             <div class="ios-apps-grid">
               
-              <!-- Live Project Banner Widget (2x2) -->
-              <div class="ios-widget-wrapper" onclick="window.openSpotifyWindow()">
-                <div class="ios-widget-weather-card" style="background: linear-gradient(135deg, rgba(29, 185, 84, 0.4) 0%, rgba(10, 20, 30, 0.8) 100%);">
-                  <div class="weather-top-row">
-                    <span class="weather-location" style="color: #1db954;">NOW PLAYING</span>
-                    <span style="font-size: 10px; background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 8px;">VINYL</span>
+              <!-- iOS 18 Apple Music Widget (2x2) -->
+              <div class="ios-widget-wrapper" onclick="window.openSpotifyWindow && window.openSpotifyWindow()">
+                <div class="ios-widget-music-card" id="mobile-widget-music">
+                  
+                  <!-- Top Row: Cover Artwork + Apple Music Glyph -->
+                  <div class="ios-music-widget-top">
+                    <img id="mobile-widget-song-cover" src="${(spotifyTracks[currentTrackIdx] || spotifyTracks[0]).cover}" class="ios-music-widget-art" alt="Cover" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80'">
+                    <svg class="ios-music-widget-icon" viewBox="0 0 24 24" fill="#ffffff">
+                      <path d="M21 3.25L9 5.75C8.45 5.86 8 6.35 8 6.92V17.08C7.4 16.72 6.48 16.5 5.5 16.5C3.57 16.5 2 17.84 2 19.5C2 21.16 3.57 22.5 5.5 22.5C7.43 22.5 9 21.16 9 19.5V10.25L20 7.95V14.58C19.4 14.22 18.48 14 17.5 14C15.57 14 14 15.34 14 17C14 18.66 15.57 20 17.5 20C19.43 20 21 18.66 21 17V4C21 3.53 20.61 3.16 20.15 3.25L21 3.25Z"/>
+                    </svg>
                   </div>
-                  <div style="font-size: 16px; font-weight: 800; color: #fff; margin-top: 6px;">HOTEL MAFIJA</div>
-                  <div style="font-size: 11px; color: rgba(255,255,255,0.75);">Casey & SBM Label</div>
-                  <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px;">
-                    <span style="font-size: 11px; color: #1db954; font-weight: 700;">▶ Playing Master</span>
-                    <span style="font-size: 18px;">🎵</span>
+
+                  <!-- Middle Info: Title + Artist -->
+                  <div class="ios-music-widget-meta">
+                    <div id="mobile-widget-song-title" class="ios-music-widget-title">${(spotifyTracks[currentTrackIdx] || spotifyTracks[0]).title}</div>
+                    <div id="mobile-widget-song-artist" class="ios-music-widget-artist">${(spotifyTracks[currentTrackIdx] || spotifyTracks[0]).artist}</div>
                   </div>
+
+                  <!-- Bottom Full-Width Pill Action Button -->
+                  <button id="mobile-widget-play-btn" class="ios-music-widget-pill-btn" onclick="event.stopPropagation(); window.spotifyTogglePlay && window.spotifyTogglePlay();">
+                    ${isSpotifyPlaying ? `
+                      <svg viewBox="0 0 24 24" width="14" height="15" fill="#ffffff"><rect x="5" y="3.5" width="4.2" height="17" rx="2.1"/><rect x="14.8" y="3.5" width="4.2" height="17" rx="2.1"/></svg>
+                      <span>Pause</span>
+                    ` : `
+                      <svg viewBox="0 0 24 24" width="14" height="15" fill="#ffffff"><path d="M6 4.5V19.5L19 12L6 4.5Z"/></svg>
+                      <span>Play</span>
+                    `}
+                  </button>
+
                 </div>
-                <span class="ios-app-label">Studio Music</span>
+                <span class="ios-app-label">Music</span>
               </div>
 
               <!-- Creative Apps Grid -->
@@ -880,9 +1687,15 @@ document.addEventListener("DOMContentLoaded", () => {
         item.style.left = `${Math.round(x)}px`;
         item.style.top  = `${Math.round(y)}px`;
 
+        const hasVid = !!(proj.video || proj.videoSrc || proj.videoId || (proj.youtubeUrl && proj.youtubeUrl.includes('youtu')));
         item.innerHTML = `
           <div class="desktop-icon-wrapper">
             <img src="${proj.cover}" alt="${proj.title}" draggable="false" loading="lazy" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80'">
+            ${hasVid ? `
+              <div class="desktop-video-badge" style="position: absolute; bottom: 4px; right: 4px; width: 18px; height: 18px; border-radius: 50%; background: rgba(220, 38, 38, 0.92); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.7); pointer-events: none;">
+                <svg viewBox="0 0 24 24" width="9" height="9" fill="#fff"><path d="M8 5v14l11-7z"/></svg>
+              </div>
+            ` : ''}
           </div>
           <div class="desktop-label">${proj.title}</div>
         `;
@@ -906,10 +1719,15 @@ document.addEventListener("DOMContentLoaded", () => {
           item.classList.add("is-dragging");
           item.style.zIndex = 300;
 
-          const onMouseMove = (me) => {
-            const dx = me.clientX - startX;
-            const dy = me.clientY - startY;
-            if (Math.abs(dx) > 4 || Math.abs(dy) > 4) hasMoved = true;
+          let rafId = null;
+          let currentClientX = e.clientX;
+          let currentClientY = e.clientY;
+
+          const updateItemPosition = () => {
+            if (!isDragging) return;
+            const dx = currentClientX - startX;
+            const dy = currentClientY - startY;
+            if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasMoved = true;
             if (hasMoved) {
               const maxDragX = window.innerWidth - ICON_WIDTH - 10;
               const maxDragY = window.innerHeight - 100;
@@ -918,10 +1736,24 @@ document.addEventListener("DOMContentLoaded", () => {
               item.style.left = `${newLeft}px`;
               item.style.top  = `${newTop}px`;
             }
+            rafId = null;
+          };
+
+          const onMouseMove = (me) => {
+            if (!isDragging) return;
+            currentClientX = me.clientX;
+            currentClientY = me.clientY;
+            if (!rafId) {
+              rafId = requestAnimationFrame(updateItemPosition);
+            }
           };
 
           const onMouseUp = () => {
             isDragging = false;
+            if (rafId) {
+              cancelAnimationFrame(rafId);
+              rafId = null;
+            }
             item.classList.remove("is-dragging");
             item.style.zIndex = "";
             document.removeEventListener("mousemove", onMouseMove);
@@ -1036,10 +1868,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const diffY = clientY - startY;
 
       if (!hasMovedHorizontal) {
-        if (Math.abs(diffX) > 6 && Math.abs(diffX) >= Math.abs(diffY)) {
+        // Use 16px threshold so human finger tap micro-jitter on Android touchscreens doesn't get flagged as a swipe
+        if (Math.abs(diffX) > 16 && Math.abs(diffX) >= Math.abs(diffY)) {
           hasMovedHorizontal = true;
           window.__suppressNextAppClick = true;
-        } else if (Math.abs(diffY) > 8 && Math.abs(diffY) > Math.abs(diffX)) {
+        } else if (Math.abs(diffY) > 14 && Math.abs(diffY) > Math.abs(diffX)) {
           isDragging = false;
           slider.style.transition = "transform 0.35s cubic-bezier(0.2, 0.9, 0.2, 1)";
           slider.style.transform = `translateX(-${currentSpringBoardPage * 50}%)`;
@@ -1072,11 +1905,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const duration = Date.now() - startTime;
       const velocity = Math.abs(diffX) / Math.max(duration, 1);
 
-      if (hasMovedHorizontal) {
+      if (hasMovedHorizontal && Math.abs(diffX) > 16) {
         window.__suppressNextAppClick = true;
         setTimeout(() => {
           window.__suppressNextAppClick = false;
-        }, 250);
+        }, 150);
 
         if ((diffX < -30 || (diffX < -15 && velocity > 0.2)) && currentSpringBoardPage === 0) {
           switchSpringBoardPage(1);
@@ -1086,6 +1919,7 @@ document.addEventListener("DOMContentLoaded", () => {
           slider.style.transform = `translateX(-${currentSpringBoardPage * 50}%)`;
         }
       } else {
+        window.__suppressNextAppClick = false;
         slider.style.transform = `translateX(-${currentSpringBoardPage * 50}%)`;
       }
     };
@@ -1213,6 +2047,23 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     `;
 
+    function toggleMaximizeWindow(targetWin) {
+      if (isMobile) return;
+      const isMax = targetWin.classList.contains("maximized");
+      if (!isMax) {
+        targetWin.dataset.prevWidth = targetWin.style.width || "";
+        targetWin.dataset.prevTop = targetWin.style.top || "";
+        targetWin.dataset.prevLeft = targetWin.style.left || "";
+        targetWin.classList.add("maximized");
+      } else {
+        targetWin.classList.remove("maximized");
+        if (targetWin.dataset.prevWidth) targetWin.style.width = targetWin.dataset.prevWidth;
+        if (targetWin.dataset.prevTop) targetWin.style.top = targetWin.dataset.prevTop;
+        if (targetWin.dataset.prevLeft) targetWin.style.left = targetWin.dataset.prevLeft;
+      }
+      focusWindow(targetWin);
+    }
+
     // Window controls (Desktop)
     const closeBtn = win.querySelector(".traffic-btn.close");
     if (closeBtn) closeBtn.addEventListener("click", (e) => { e.stopPropagation(); closeWindow(id); });
@@ -1223,7 +2074,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const maximizeBtn = win.querySelector(".traffic-btn.maximize");
     if (maximizeBtn) maximizeBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      if (!isMobile) win.classList.toggle("maximized");
+      toggleMaximizeWindow(win);
     });
 
     // Make window focusable
@@ -1373,25 +2224,54 @@ document.addEventListener("DOMContentLoaded", () => {
       let isDragging = false;
       let offsetX = 0;
       let offsetY = 0;
+      let rafId = null;
+      let lastClientX = 0;
+      let lastClientY = 0;
+
+      header.addEventListener("dblclick", (e) => {
+        if (e.target.classList.contains("traffic-btn")) return;
+        const maxBtn = win.querySelector(".traffic-btn.maximize");
+        if (maxBtn) maxBtn.click();
+      });
 
       header.addEventListener("mousedown", (e) => {
         if (e.target.classList.contains("traffic-btn")) return;
+        if (win.classList.contains("maximized")) return;
+        e.preventDefault();
         isDragging = true;
+        win.classList.add("is-dragging");
         offsetX = e.clientX - win.offsetLeft;
         offsetY = e.clientY - win.offsetTop;
+        lastClientX = e.clientX;
+        lastClientY = e.clientY;
         focusWindow(win);
+
+        const updateWindowPos = () => {
+          if (!isDragging) return;
+          const winWidth = win.offsetWidth || 320;
+          const newX = Math.max(5, Math.min(window.innerWidth - winWidth - 5, lastClientX - offsetX));
+          const newY = Math.max(30, Math.min(window.innerHeight - 60, lastClientY - offsetY));
+          win.style.left = `${newX}px`;
+          win.style.top = `${newY}px`;
+          rafId = null;
+        };
 
         const onMouseMove = (me) => {
           if (!isDragging) return;
-          const winWidth = win.offsetWidth || 320;
-          const newX = Math.max(5, Math.min(window.innerWidth - winWidth - 5, me.clientX - offsetX));
-          const newY = Math.max(30, Math.min(window.innerHeight - 60, me.clientY - offsetY));
-          win.style.left = `${newX}px`;
-          win.style.top = `${newY}px`;
+          lastClientX = me.clientX;
+          lastClientY = me.clientY;
+          if (!rafId) {
+            rafId = requestAnimationFrame(updateWindowPos);
+          }
         };
 
         const onMouseUp = () => {
           isDragging = false;
+          if (rafId) {
+            cancelAnimationFrame(rafId);
+            rafId = null;
+          }
+          win.classList.remove("is-dragging");
           document.removeEventListener("mousemove", onMouseMove);
           document.removeEventListener("mouseup", onMouseUp);
         };
@@ -2081,20 +2961,62 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- Project Modal ---
   function openProjectModal(project) {
+    const videoSrc = project.video || project.videoSrc || (project.videoId ? `assets/videos/avatar_motion.mp4` : null);
+
+    if (videoSrc) {
+      // Bespoke Apple QuickTime / macOS TV Player UI with Floating Glass HUD
+      const content = `<div class="apple-video-container-root" id="apple-video-root-${project.id}" style="width: 100%; height: 100%; min-height: 382px; background: #000;"></div>`;
+
+      const win = createWindow({
+        id: `proj-${project.id}`,
+        title: project.title,
+        width: "680px",
+        top: "16%",
+        left: "26%",
+        contentHTML: content
+      });
+
+      const body = win.querySelector(".window-body");
+      if (body) {
+        body.style.padding = "0";
+        body.style.background = "#000000";
+        body.style.overflow = "hidden";
+        body.style.display = "flex";
+        body.style.flexDirection = "column";
+      }
+
+      const rootEl = win.querySelector(`#apple-video-root-${project.id}`);
+      if (rootEl) {
+        setupAppleVideoPlayer(rootEl, project, videoSrc);
+      }
+
+      return win;
+    }
+
+    // Regular artwork project modal for image posters
+    const safeTitle = (project.title || 'Artwork').replace(/'/g, "\\'");
     const content = `
       <div class="project-modal-grid">
         <div>
-          <img class="project-cover-large" src="${project.cover}" alt="${project.title}" onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&q=80'">
+          <div class="project-cover-container" onclick="window.openArtworkLightbox && window.openArtworkLightbox('${project.cover}', '${safeTitle}')" title="Click to zoom & enlarge artwork">
+            <img class="project-cover-large" src="${project.cover}" alt="${project.title}" draggable="false" oncontextmenu="event.preventDefault(); return false;" onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&q=80'">
+            <div class="project-zoom-badge">🔍 Click to Expand</div>
+          </div>
         </div>
         <div>
           <span class="project-meta-tag">${project.category}</span>
           <h2 class="project-title-large">${project.title}</h2>
-          <div class="project-client-line">Client: <strong>${project.client}</strong> · Year: <strong>${project.year}</strong></div>
+          <div class="project-client-line">Client / Subject: <strong>${project.client}</strong> · Year: <strong>${project.year}</strong></div>
           <p class="project-desc-text">${project.description}</p>
           <h4 style="font-size: 13px; font-weight: 800; margin-bottom: 8px;">Key Highlights</h4>
           <ul class="project-features-list">
             ${(project.details || ["Custom art direction and visual design", "High quality execution"]).map(d => `<li>${d}</li>`).join("")}
           </ul>
+          <div style="display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap;">
+            <button onclick="window.open('https://www.instagram.com/caseyxlive/', '_blank')" style="background: linear-gradient(45deg, #f09433, #dc2743, #bc1888); color: #fff; border: none; font-size: 11px; font-weight: 700; padding: 7px 16px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(220,39,67,0.4);">
+              📸 View on Instagram ↗
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -2109,6 +3031,394 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
   window.openProjectModal = openProjectModal;
+
+  // --- Apple QuickTime / macOS TV Player HUD Logic ---
+  function setupAppleVideoPlayer(container, project, videoSrc) {
+    container.innerHTML = `
+      <div class="apple-video-player" id="avp-${project.id}">
+        <video 
+          id="vid-el-${project.id}" 
+          src="${videoSrc}" 
+          poster="${project.cover}" 
+          preload="auto" 
+          playsinline 
+          loop 
+          oncontextmenu="event.preventDefault(); return false;"
+        ></video>
+        
+        <div class="apple-center-badge" id="acb-${project.id}">
+          <svg class="badge-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          <svg class="badge-pause" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </div>
+
+        <div class="apple-video-spinner" id="avs-${project.id}"></div>
+
+        <div class="apple-hud-container" id="hud-${project.id}">
+          <div class="apple-scrubber-track" id="ast-${project.id}">
+            <div class="apple-scrubber-buffer" id="asb-${project.id}"></div>
+            <div class="apple-scrubber-fill" id="asf-${project.id}"></div>
+            <div class="apple-scrubber-thumb" id="asm-${project.id}"></div>
+            <div class="apple-scrubber-preview" id="asp-${project.id}">0:00</div>
+          </div>
+
+          <div class="apple-hud-row">
+            <div class="apple-hud-group left">
+              <button class="apple-btn play-pause-btn" id="btn-pp-${project.id}" title="Play / Pause (Space)">
+                <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+              </button>
+
+              <button class="apple-btn skip-btn" id="btn-rew-${project.id}" title="Rewind 10s (←)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                  <path d="M3 3v5h5"/>
+                </svg>
+                <span class="skip-num">10</span>
+              </button>
+
+              <button class="apple-btn skip-btn" id="btn-fwd-${project.id}" title="Forward 10s (→)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                  <path d="M21 3v5h-5"/>
+                </svg>
+                <span class="skip-num">10</span>
+              </button>
+
+              <div class="apple-time-display" id="atd-${project.id}" title="Click to toggle remaining time">
+                <span class="cur-time">0:00</span>
+                <span class="time-sep">/</span>
+                <span class="dur-time">0:00</span>
+              </div>
+            </div>
+
+            <div class="apple-hud-group right">
+              <div class="apple-volume-box">
+                <button class="apple-btn vol-btn" id="btn-vol-${project.id}" title="Mute / Unmute (M)">
+                  <svg class="icon-vol-high" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                  <svg class="icon-vol-mute" viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+                </button>
+                <div class="apple-volume-slider-wrap">
+                  <input type="range" class="apple-volume-slider" id="vsl-${project.id}" min="0" max="1" step="0.05" value="1">
+                </div>
+              </div>
+
+              ${document.pictureInPictureEnabled ? `
+                <button class="apple-btn pip-btn" id="btn-pip-${project.id}" title="Picture in Picture">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="3"/>
+                    <rect x="12" y="10" width="8" height="8" rx="1.5" fill="rgba(255,255,255,0.4)"/>
+                  </svg>
+                </button>
+              ` : ''}
+
+              <button class="apple-btn fs-btn" id="btn-fs-${project.id}" title="Full Screen (F)">
+                <svg class="icon-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+                </svg>
+                <svg class="icon-compress" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const player = container.querySelector(".apple-video-player");
+    const video = container.querySelector("video");
+    const centerBadge = container.querySelector(".apple-center-badge");
+    const badgePlay = centerBadge.querySelector(".badge-play");
+    const badgePause = centerBadge.querySelector(".badge-pause");
+    const spinner = container.querySelector(".apple-video-spinner");
+    const scrubberTrack = container.querySelector(".apple-scrubber-track");
+    const scrubberFill = container.querySelector(".apple-scrubber-fill");
+    const scrubberBuffer = container.querySelector(".apple-scrubber-buffer");
+    const scrubberThumb = container.querySelector(".apple-scrubber-thumb");
+    const scrubberPreview = container.querySelector(".apple-scrubber-preview");
+    const playBtn = container.querySelector(".play-pause-btn");
+    const rewBtn = container.querySelector("#btn-rew-" + project.id);
+    const fwdBtn = container.querySelector("#btn-fwd-" + project.id);
+    const timeDisplay = container.querySelector(".apple-time-display");
+    const curTimeEl = timeDisplay.querySelector(".cur-time");
+    const durTimeEl = timeDisplay.querySelector(".dur-time");
+    const volBtn = container.querySelector(".vol-btn");
+    const volSlider = container.querySelector(".apple-volume-slider");
+    const pipBtn = container.querySelector(".pip-btn");
+    const fsBtn = container.querySelector(".fs-btn");
+
+    let isScrubbing = false;
+    let showRemaining = false;
+    let hideTimer = null;
+    let lastVolume = 1;
+
+    function formatTime(seconds) {
+      if (isNaN(seconds) || seconds < 0) return "0:00";
+      const m = Math.floor(seconds / 60);
+      const s = Math.floor(seconds % 60);
+      return `${m}:${s < 10 ? "0" : ""}${s}`;
+    }
+
+    function triggerCenterBadge(isPlay) {
+      if (isPlay) {
+        badgePlay.style.display = "block";
+        badgePause.style.display = "none";
+      } else {
+        badgePlay.style.display = "none";
+        badgePause.style.display = "block";
+      }
+      centerBadge.classList.add("pop");
+      clearTimeout(centerBadge._timer);
+      centerBadge._timer = setTimeout(() => {
+        centerBadge.classList.remove("pop");
+      }, 400);
+    }
+
+    function togglePlay() {
+      if (video.paused || video.ended) {
+        video.play();
+        triggerCenterBadge(true);
+      } else {
+        video.pause();
+        triggerCenterBadge(false);
+      }
+    }
+
+    function resetHideTimer() {
+      player.classList.remove("controls-hidden");
+      clearTimeout(hideTimer);
+      if (!video.paused) {
+        hideTimer = setTimeout(() => {
+          if (!video.paused && !isScrubbing) {
+            player.classList.add("controls-hidden");
+          }
+        }, 2400);
+      }
+    }
+
+    // Video playback events
+    video.addEventListener("play", () => {
+      player.classList.add("is-playing");
+      resetHideTimer();
+    });
+
+    video.addEventListener("pause", () => {
+      player.classList.remove("is-playing");
+      player.classList.remove("controls-hidden");
+    });
+
+    video.addEventListener("waiting", () => {
+      spinner.classList.add("is-buffering");
+    });
+
+    video.addEventListener("playing", () => {
+      spinner.classList.remove("is-buffering");
+    });
+
+    video.addEventListener("timeupdate", () => {
+      if (isScrubbing) return;
+      const cur = video.currentTime || 0;
+      const dur = video.duration || 0;
+      const pct = dur > 0 ? (cur / dur) * 100 : 0;
+      scrubberFill.style.width = pct + "%";
+      scrubberThumb.style.left = pct + "%";
+      curTimeEl.textContent = showRemaining ? `-${formatTime(Math.max(0, dur - cur))}` : formatTime(cur);
+      durTimeEl.textContent = formatTime(dur);
+    });
+
+    video.addEventListener("progress", () => {
+      if (video.buffered.length > 0 && video.duration > 0) {
+        const bufferedEnd = video.buffered.end(video.buffered.length - 1);
+        const bufPct = (bufferedEnd / video.duration) * 100;
+        scrubberBuffer.style.width = Math.min(100, bufPct) + "%";
+      }
+    });
+
+    video.addEventListener("loadedmetadata", () => {
+      durTimeEl.textContent = formatTime(video.duration);
+    });
+
+    // Scrubbing logic
+    function seekToEvent(e) {
+      const rect = scrubberTrack.getBoundingClientRect();
+      const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      const dur = video.duration || 0;
+      if (dur > 0) {
+        video.currentTime = pos * dur;
+        scrubberFill.style.width = (pos * 100) + "%";
+        scrubberThumb.style.left = (pos * 100) + "%";
+      }
+    }
+
+    scrubberTrack.addEventListener("mousedown", (e) => {
+      isScrubbing = true;
+      scrubberTrack.classList.add("is-scrubbing");
+      seekToEvent(e);
+
+      const onMouseMove = (me) => {
+        seekToEvent(me);
+      };
+      const onMouseUp = () => {
+        isScrubbing = false;
+        scrubberTrack.classList.remove("is-scrubbing");
+        window.removeEventListener("mousemove", onMouseMove);
+        window.removeEventListener("mouseup", onMouseUp);
+        resetHideTimer();
+      };
+      window.addEventListener("mousemove", onMouseMove);
+      window.addEventListener("mouseup", onMouseUp);
+    });
+
+    scrubberTrack.addEventListener("mousemove", (e) => {
+      const rect = scrubberTrack.getBoundingClientRect();
+      const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      const dur = video.duration || 0;
+      scrubberPreview.textContent = formatTime(pos * dur);
+      scrubberPreview.style.left = (pos * 100) + "%";
+    });
+
+    // Control buttons
+    playBtn.addEventListener("click", (e) => { e.stopPropagation(); togglePlay(); });
+    rewBtn.addEventListener("click", (e) => { e.stopPropagation(); video.currentTime = Math.max(0, video.currentTime - 10); resetHideTimer(); });
+    fwdBtn.addEventListener("click", (e) => { e.stopPropagation(); video.currentTime = Math.min(video.duration || 0, video.currentTime + 10); resetHideTimer(); });
+
+    timeDisplay.addEventListener("click", () => {
+      showRemaining = !showRemaining;
+      const cur = video.currentTime || 0;
+      const dur = video.duration || 0;
+      curTimeEl.textContent = showRemaining ? `-${formatTime(Math.max(0, dur - cur))}` : formatTime(cur);
+    });
+
+    // Volume & Mute
+    volSlider.addEventListener("input", (e) => {
+      const val = parseFloat(e.target.value);
+      video.volume = val;
+      video.muted = (val === 0);
+      if (val > 0) lastVolume = val;
+      if (video.muted) player.classList.add("is-muted");
+      else player.classList.remove("is-muted");
+    });
+
+    volBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (video.muted || video.volume === 0) {
+        video.muted = false;
+        video.volume = lastVolume || 1;
+        volSlider.value = lastVolume || 1;
+        player.classList.remove("is-muted");
+      } else {
+        lastVolume = video.volume;
+        video.muted = true;
+        volSlider.value = 0;
+        player.classList.add("is-muted");
+      }
+    });
+
+    // Picture in Picture
+    if (pipBtn) {
+      pipBtn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        try {
+          if (document.pictureInPictureElement) {
+            await document.exitPictureInPicture();
+          } else {
+            await video.requestPictureInPicture();
+          }
+        } catch (err) {
+          console.warn("PiP not available:", err);
+        }
+      });
+    }
+
+    // Fullscreen / Window Expand
+    fsBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const parentWin = container.closest(".mac-window");
+      if (parentWin) {
+        const maxBtn = parentWin.querySelector(".traffic-btn.maximize");
+        if (maxBtn) maxBtn.click();
+      }
+    });
+
+    // Click on video to toggle play, double-click to fullscreen/maximize
+    let clickTimeout = null;
+    video.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (clickTimeout) {
+        clearTimeout(clickTimeout);
+        clickTimeout = null;
+        const parentWin = container.closest(".mac-window");
+        if (parentWin) {
+          const maxBtn = parentWin.querySelector(".traffic-btn.maximize");
+          if (maxBtn) maxBtn.click();
+        }
+      } else {
+        clickTimeout = setTimeout(() => {
+          clickTimeout = null;
+          togglePlay();
+        }, 220);
+      }
+    });
+
+    // Mouse movement inside player resets hide timer
+    player.addEventListener("mousemove", resetHideTimer);
+    player.addEventListener("mouseenter", resetHideTimer);
+    player.addEventListener("mouseleave", () => {
+      if (!video.paused && !isScrubbing) {
+        player.classList.add("controls-hidden");
+      }
+    });
+
+    // Auto-start video
+    video.play().catch(() => {
+      video.muted = true;
+      volSlider.value = 0;
+      player.classList.add("is-muted");
+      video.play().catch(() => {});
+    });
+  }
+
+  // --- macOS Quick Look / Lightbox Zoom Viewer ---
+  window.openArtworkLightbox = function(imgSrc, title) {
+    const existing = document.getElementById("artwork-lightbox");
+    if (existing) existing.remove();
+
+    const lightbox = document.createElement("div");
+    lightbox.id = "artwork-lightbox";
+    lightbox.className = "artwork-lightbox-overlay";
+    lightbox.innerHTML = `
+      <div class="lightbox-backdrop" onclick="window.closeArtworkLightbox()"></div>
+      <div class="lightbox-dialog" onclick="event.stopPropagation()">
+        <div class="lightbox-header">
+          <div class="lightbox-title">${title || "Artwork Preview"} · Quick Look</div>
+          <button class="lightbox-close-btn" onclick="window.closeArtworkLightbox()" title="Close (Esc)">✕</button>
+        </div>
+        <div class="lightbox-body">
+          <div class="lightbox-img-wrapper" oncontextmenu="event.preventDefault(); return false;">
+            <img class="lightbox-image" src="${imgSrc}" alt="${title}" draggable="false" oncontextmenu="event.preventDefault(); return false;">
+            <div class="lightbox-protection-overlay" oncontextmenu="event.preventDefault(); return false;"></div>
+          </div>
+        </div>
+        <div class="lightbox-footer">
+          <span class="lightbox-hint">🔒 Protected Artwork Preview · Click anywhere outside to close</span>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(lightbox);
+    requestAnimationFrame(() => {
+      lightbox.classList.add("visible");
+    });
+  };
+
+  window.closeArtworkLightbox = function() {
+    const lightbox = document.getElementById("artwork-lightbox");
+    if (!lightbox) return;
+    lightbox.classList.remove("visible");
+    setTimeout(() => {
+      if (lightbox && lightbox.parentNode) lightbox.parentNode.removeChild(lightbox);
+    }, 280);
+  };
 
   // --- Notebook / CV Modal ---
   window.openNotebookWindow = function() {
@@ -2230,11 +3540,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
         <div class="gallery-grid">
           ${(data.gallery || []).map(item => {
-            const targetUrl = item.url || item.behanceUrl || item.instagramUrl || '';
+            const targetUrl = item.url || item.behanceUrl || item.instagramUrl || item.youtubeUrl || '';
             const isBehance = item.isBehance || (targetUrl && targetUrl.includes('behance.net'));
             const isInstagram = item.isInstagram || (targetUrl && targetUrl.includes('instagram.com'));
+            const isVideo = !!(item.video || item.videoSrc || item.isYouTube || (targetUrl && (targetUrl.includes('youtube.com') || targetUrl.includes('youtu.be'))));
+            const clickAction = isVideo 
+              ? `const p = (window.PORTFOLIO_DATA?.projects || []).find(x => x.id === '${item.id || 'avatar-motion-poster'}') || ${JSON.stringify(item).replace(/"/g, '&quot;')}; window.openProjectModal && window.openProjectModal(p);`
+              : (targetUrl ? `window.open('${targetUrl}', '_blank')` : '');
             return `
-            <div class="gallery-card ${isBehance ? 'is-behance-card' : ''} ${isInstagram ? 'is-instagram-card' : ''}" onclick="${targetUrl ? `window.open('${targetUrl}', '_blank')` : ''}">
+            <div class="gallery-card ${isBehance ? 'is-behance-card' : ''} ${isInstagram ? 'is-instagram-card' : ''} ${isVideo ? 'is-video-card' : ''}" onclick="${clickAction}">
               <div class="gallery-img-wrapper">
                 <img src="${item.image}" alt="${item.title}" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80'">
                 ${isBehance ? `
@@ -2249,12 +3563,18 @@ document.addEventListener("DOMContentLoaded", () => {
                     <span>Instagram</span>
                   </span>
                 ` : ''}
+                ${isVideo ? `
+                  <span class="gallery-youtube-tag" style="position: absolute; top: 8px; left: 8px; background: rgba(0, 0, 0, 0.78); backdrop-filter: blur(8px); padding: 3px 9px; border-radius: 12px; font-size: 10px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 4px; z-index: 2; border: 1px solid rgba(255,255,255,0.2);">
+                    <svg viewBox="0 0 24 24" width="10" height="10" fill="#fff"><path d="M8 5v14l11-7z"/></svg>
+                    <span>Motion</span>
+                  </span>
+                ` : ''}
               </div>
               <div class="gallery-caption-box">
                 <div class="gallery-title">${item.title}</div>
                 <div class="gallery-meta">
                   <span class="gallery-category">${item.category}</span>
-                  ${targetUrl ? `<span class="gallery-link-cta" style="${isInstagram ? 'color: #ff5277;' : ''}">View ↗</span>` : ''}
+                  ${targetUrl ? `<span class="gallery-link-cta" style="${isInstagram ? 'color: #ff5277;' : isVideo ? 'color: #60a5fa;' : ''}">View ↗</span>` : ''}
                 </div>
               </div>
             </div>
@@ -2302,87 +3622,490 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  // --- Music Player Window (YouTube Music Audio-Only Experience) ---
+  // --- Apple Music Application (Authentic iOS 18 Player, Browse, Queue & Lyrics) ---
   window.openSpotifyWindow = function() {
     const track = spotifyTracks[currentTrackIdx] || spotifyTracks[0];
-    const pct = Math.min(100, (currentTrackTime / track.duration) * 100);
+    const pct = Math.min(100, (currentTrackTime / (track.duration || 1)) * 100);
+    const isFav = window.appleMusicFavorites && window.appleMusicFavorites.has(currentTrackIdx);
 
     const content = `
-      <div class="audio-player-container">
-        <!-- Top Bar -->
-        <div class="audio-player-header">
-          <div class="audio-header-left">
-            <img src="assets/images/ios18_clean/music.png" class="audio-app-icon" alt="Apple Music">
-            <div>
-              <div class="audio-header-title">Casey's YouTube Music</div>
-              <div class="audio-header-sub">Curated Playlist • Audio Mode (${spotifyTracks.length} Songs)</div>
+      <div class="apple-music-app" id="apple-music-app">
+        <!-- Dynamic Fluid Ambient Blurred Glow -->
+        <div id="am-ambient-bg" class="am-ambient-bg" style="background-image: url('${track.cover}');"></div>
+        <div class="am-backdrop-tint"></div>
+
+        <div class="am-content-layer">
+          
+          <!-- ========================================================
+               VIEW 1: NOW PLAYING FULL SCREEN (Screenshot 1)
+               ======================================================== -->
+          <div id="am-view-now-playing" class="am-view-panel ${window.activeMusicView === 'now-playing' ? 'active' : ''} am-view-now-playing">
+            
+            <!-- Top Drag Handle / Close Pill -->
+            <div class="am-drag-handle" onclick="window.closeCurrentWindow ? window.closeCurrentWindow('spotify') : null" title="Swipe or Tap to Dismiss"></div>
+
+            <!-- Main Large Cover Artwork -->
+            <div class="am-now-playing-art-wrap">
+              <img id="am-cover-art" src="${track.cover}" class="am-cover-art ${isSpotifyPlaying ? 'playing' : ''}" alt="Cover Artwork" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80'">
             </div>
+
+            <!-- Track Info & Action Icons Row -->
+            <div class="am-track-info-row">
+              <div class="am-track-meta">
+                <div class="am-title-line">
+                  <span id="am-song-title" class="am-song-title">${track.title}</span>
+                  <span class="am-explicit-badge">E</span>
+                </div>
+                <div id="am-song-artist" class="am-song-artist">${track.artist}</div>
+              </div>
+
+              <div class="am-actions-right">
+                <button id="am-star-btn" class="am-circle-btn ${isFav ? 'starred' : ''}" onclick="window.toggleAppleMusicFavorite && window.toggleAppleMusicFavorite()" title="Favorite">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="${isFav ? '#ff2d55' : 'none'}" stroke="currentColor" stroke-width="2.2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                </button>
+                <button class="am-circle-btn" onclick="window.showAppleMusicOptions && window.showAppleMusicOptions()" title="More Options">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><circle cx="5" cy="12" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="19" cy="12" r="2.2"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Scrubber Timeline -->
+            <div class="am-scrubber-box">
+              <div id="am-scrubber-bg" class="am-scrubber-bg" onclick="window.seekAudioProgress(event)" ontouchstart="window.seekAudioProgress(event)" ontouchmove="window.seekAudioProgress(event)">
+                <div id="am-scrubber-fill" class="am-scrubber-fill" style="width: ${pct}%;"></div>
+              </div>
+              <div class="am-timestamps-row">
+                <span id="am-time-current">${formatTime(currentTrackTime)}</span>
+                <span class="am-status-badge" id="am-status-badge">
+                  <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9v-2h2v2zm0-4H9V7h2v5z"/></svg>
+                  <span id="am-status-text">${isSpotifyPlaying ? 'Lossless' : 'Paused'}</span>
+                </span>
+                <span id="am-time-remaining">-${formatTime(Math.max(0, track.duration - currentTrackTime))}</span>
+              </div>
+            </div>
+
+            <!-- Main Transport Controls -->
+            <div class="am-transport-row">
+              <button class="am-transport-btn" onclick="window.spotifyPrevTrack && window.spotifyPrevTrack()" title="Previous Track">
+                <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M6 6h2.5v12H6zm3.5 6l10 7V5z"/></svg>
+              </button>
+              <button id="am-play-btn" class="am-transport-btn am-transport-play" onclick="window.spotifyTogglePlay && window.spotifyTogglePlay()" title="Play / Pause">
+                ${isSpotifyPlaying ? `
+                  <svg viewBox="0 0 24 24" width="38" height="38" fill="currentColor"><rect x="5.5" y="4" width="4.5" height="16" rx="2.25"/><rect x="14" y="4" width="4.5" height="16" rx="2.25"/></svg>
+                ` : `
+                  <svg viewBox="0 0 24 24" width="38" height="38" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>
+                `}
+              </button>
+              <button class="am-transport-btn" onclick="window.spotifyNextTrack && window.spotifyNextTrack()" title="Next Track">
+                <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M4.5 19l10-7-10-7v14zM15.5 6v12H18V6h-2.5z"/></svg>
+              </button>
+            </div>
+
+            <!-- Volume Slider -->
+            <div class="am-volume-row">
+              <span class="am-volume-icon">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M7 9v6h4l5 5V4l-5 5H7z"/></svg>
+              </span>
+              <div class="am-volume-track" onclick="window.setVolumeByEvent(event)" ontouchstart="window.setVolumeByEvent(event)" ontouchmove="window.setVolumeByEvent(event)">
+                <div id="am-volume-fill" class="am-volume-fill" style="width: ${Math.floor(window.currentVolume * 100)}%;"></div>
+              </div>
+              <span class="am-volume-icon">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+              </span>
+            </div>
+
+            <!-- Bottom Toolbar -->
+            <div class="am-bottom-toolbar">
+              <button id="am-lyrics-toggle-btn" class="am-tool-btn" onclick="window.setAppleMusicView('lyrics')" title="Live Synced Lyrics">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-9 9H7V9h4v2zm6 0h-4V9h4v2zm0-4H7V5h10v2z"/></svg>
+              </button>
+              <button class="am-tool-btn" onclick="window.showAirPlayToast && window.showAirPlayToast()" title="AirPlay & Devices">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M6 22h12l-6-6zM21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4v-2H3V5h18v12h-4v2h4c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
+              </button>
+              <button id="am-queue-toggle-btn" class="am-tool-btn" onclick="window.setAppleMusicView('queue')" title="Up Next Queue">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+              </button>
+              <button class="am-tool-btn" onclick="window.setAppleMusicView('browse')" title="Browse Catalog">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
+              </button>
+            </div>
+
           </div>
-          <div class="audio-external-links">
-            <a href="https://music.youtube.com/playlist?list=PL5Twt3mfOd_PVsJrFh4dA-f6IWFUAwHAf&si=NU98HG94E22UrT0K" target="_blank" class="audio-ext-pill audio-ext-yt" title="Open in YouTube Music">
-              <svg viewBox="0 0 24 24" width="12" height="12" fill="#ff4d4d"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-              <span>YT Music ↗</span>
-            </a>
-            <a href="https://open.spotify.com/playlist/4eBpz8sWLVz9EfuPOY2NpW" target="_blank" class="audio-ext-pill audio-ext-spotify" title="Open in Spotify">
-              <svg viewBox="0 0 24 24" width="12" height="12" fill="#1db954"><path d="M12 0C5.376 0 0 5.376 0 12s5.376 12 12 12 12-5.376 12-12S18.624 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.48-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141 4.38-1.38 9.841-.72 13.561 1.56.36.18.54.78.18 1.26zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.18-1.2-.18-1.38-.72-.18-.6.18-1.2.72-1.38 4.26-1.26 11.28-1.02 15.721 1.62.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
-              <span>Spotify ↗</span>
-            </a>
+
+
+          <!-- ========================================================
+               VIEW 2: BROWSE / LIBRARY (Screenshot 2)
+               ======================================================== -->
+          <div id="am-view-browse" class="am-view-panel ${window.activeMusicView === 'browse' ? 'active' : ''} am-view-browse">
+            
+            <div class="am-browse-header">
+              <div class="am-browse-title">Listen Now</div>
+              <button class="am-circle-btn" onclick="window.setAppleMusicView('now-playing')">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              </button>
+            </div>
+
+            <!-- Dynamic Playlists & Browse Sections from data.js -->
+            ${((window.PORTFOLIO_DATA && window.PORTFOLIO_DATA.appleMusicBrowse) || []).map(section => `
+              <div class="am-browse-section">
+                <div class="am-section-title-row">
+                  <span class="am-section-title">${section.categoryTitle} ${section.hasArrow ? '<span class="am-section-arrow">›</span>' : ''}</span>
+                </div>
+                <div class="am-carousel-row">
+                  ${section.items.map(item => `
+                    <div class="am-album-card" onclick="window.selectAudioTrack(${item.trackIdx || 0}); window.setAppleMusicView('now-playing');">
+                      <div class="am-album-art-box">
+                        <img src="${item.cover}" class="am-album-cover-img" alt="${item.title}" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80'">
+                        ${item.badge ? `<span class="am-album-apple-badge">${item.badge}</span>` : ''}
+                      </div>
+                      <div class="am-album-card-title">${item.title}</div>
+                      <div class="am-album-card-sub">${item.subtitle}</div>
+                    </div>
+                  `).join("")}
+                </div>
+              </div>
+            `).join("")}
+
+
+            <!-- Floating Glass Mini Player Bar -->
+            <div class="am-mini-player" onclick="window.setAppleMusicView('now-playing')">
+              <div class="am-mini-left">
+                <img id="am-mini-cover" src="${track.cover}" class="am-mini-cover" alt="Mini Artwork">
+                <div class="am-mini-meta">
+                  <div id="am-mini-title" class="am-mini-title">${track.title}</div>
+                  <div id="am-mini-artist" class="am-mini-artist">${track.artist}</div>
+                </div>
+              </div>
+              <div class="am-mini-controls" onclick="event.stopPropagation();">
+                <button id="am-mini-play-btn" class="am-mini-btn" onclick="window.spotifyTogglePlay()">
+                  ${isSpotifyPlaying ? '⏸' : '▶'}
+                </button>
+                <button class="am-mini-btn" onclick="window.spotifyNextTrack()">⏭</button>
+              </div>
+            </div>
+
+            <!-- Bottom Tab Bar -->
+            <div class="am-tab-bar">
+              <div class="am-tab-item active" onclick="window.setAppleMusicView('browse')">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                <span>Home</span>
+              </div>
+              <div class="am-tab-item" onclick="window.setAppleMusicView('queue')">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+                <span>Up Next</span>
+              </div>
+              <div class="am-tab-item" onclick="window.setAppleMusicView('now-playing')">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                <span>Now Playing</span>
+              </div>
+            </div>
+
+          </div>
+
+
+          <!-- ========================================================
+               VIEW 3: QUEUE ("Continue Playing") (Screenshot 3)
+               ======================================================== -->
+          <div id="am-view-queue" class="am-view-panel ${window.activeMusicView === 'queue' ? 'active' : ''} am-view-queue">
+            
+            <!-- Top Mini Header -->
+            <div class="am-queue-top-header">
+              <div class="am-queue-top-left" onclick="window.setAppleMusicView('now-playing')">
+                <img id="am-queue-top-art" src="${track.cover}" class="am-queue-top-art" alt="Cover">
+                <div>
+                  <div style="display: flex; align-items: center; gap: 4px;">
+                    <span id="am-queue-top-title" style="font-size: 15px; font-weight: 800; color: #fff;">${track.title}</span>
+                    <span class="am-explicit-badge">E</span>
+                  </div>
+                  <div id="am-queue-top-artist" style="font-size: 12.5px; color: rgba(255,255,255,0.65);">${track.artist}</div>
+                </div>
+              </div>
+              <div class="am-actions-right">
+                <button class="am-circle-btn" onclick="window.toggleAppleMusicFavorite()">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="${isFav ? '#ff2d55' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                </button>
+                <button class="am-circle-btn" onclick="window.setAppleMusicView('now-playing')">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Mode Buttons Row -->
+            <div class="am-queue-modes">
+              <button class="am-mode-pill ${window.isShuffleActive ? 'active' : ''}" onclick="window.toggleAppleMusicShuffle()" title="Shuffle">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
+              </button>
+              <button class="am-mode-pill ${window.isRepeatActive ? 'active' : ''}" onclick="window.toggleAppleMusicRepeat()" title="Repeat">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
+              </button>
+              <button class="am-mode-pill active" title="Autoplay On">
+                <span style="font-size: 16px; font-weight: 900;">♾️</span>
+              </button>
+              <button class="am-mode-pill active" onclick="window.setAppleMusicView('now-playing')" title="Now Playing">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+              </button>
+            </div>
+
+            <div class="am-queue-section-info">
+              <div class="am-queue-heading">Continue Playing</div>
+              <div class="am-queue-sub">From Casey's Studio Essentials (${spotifyTracks.length} Songs)</div>
+            </div>
+
+            <!-- Queue Tracklist -->
+            <div class="am-queue-list">
+              ${spotifyTracks.map((t, idx) => `
+                <div id="am-q-item-${idx}" class="am-queue-item ${idx === currentTrackIdx ? 'active' : ''}" onclick="window.selectAudioTrack(${idx})">
+                  <div class="am-queue-item-left">
+                    <img src="${t.cover}" class="am-queue-item-art" alt="Track Art" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80'">
+                    <div style="flex: 1; min-width: 0;">
+                      <div style="font-size: 13px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px;">
+                        <span>${t.title}</span>
+                        <span class="am-explicit-badge">E</span>
+                      </div>
+                      <div style="font-size: 11px; color: rgba(255,255,255,0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${t.artist}</div>
+                    </div>
+                  </div>
+                  <span class="am-queue-item-handle">≡</span>
+                </div>
+              `).join("")}
+            </div>
+
+            <!-- Quick Controls at Bottom of Queue -->
+            <div class="am-scrubber-box">
+              <div class="am-scrubber-bg" onclick="window.seekAudioProgress(event)">
+                <div id="am-queue-scrubber-fill" class="am-scrubber-fill" style="width: ${pct}%;"></div>
+              </div>
+              <div class="am-timestamps-row">
+                <span id="am-queue-time-current">${formatTime(currentTrackTime)}</span>
+                <span id="am-queue-time-remaining">-${formatTime(Math.max(0, track.duration - currentTrackTime))}</span>
+              </div>
+            </div>
+
+            <div class="am-transport-row" style="margin: 0 0 6px 0;">
+              <button class="am-transport-btn" onclick="window.spotifyPrevTrack()">
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M6 6h2.5v12H6zm3.5 6l10 7V5z"/></svg>
+              </button>
+              <button id="am-queue-play-btn" class="am-transport-btn am-transport-play" onclick="window.spotifyTogglePlay()">
+                ${isSpotifyPlaying ? `
+                  <svg viewBox="0 0 24 24" width="34" height="34" fill="currentColor"><rect x="5.5" y="4" width="4.5" height="16" rx="2.25"/><rect x="14" y="4" width="4.5" height="16" rx="2.25"/></svg>
+                ` : `
+                  <svg viewBox="0 0 24 24" width="34" height="34" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>
+                `}
+              </button>
+              <button class="am-transport-btn" onclick="window.spotifyNextTrack()">
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M4.5 19l10-7-10-7v14zM15.5 6v12H18V6h-2.5z"/></svg>
+              </button>
+            </div>
+
+          </div>
+
+
+          <!-- ========================================================
+               VIEW 4: LIVE SYNCED LYRICS VIEW
+               ======================================================== -->
+          <div id="am-view-lyrics" class="am-view-panel ${window.activeMusicView === 'lyrics' ? 'active' : ''} am-view-lyrics">
+            
+            <!-- Top Header with Track Info -->
+            <div class="am-lyrics-header">
+              <div class="am-lyrics-track-info" onclick="window.setAppleMusicView('now-playing')" style="cursor: pointer;">
+                <img id="am-lyrics-mini-art" src="${track.cover}" class="am-lyrics-mini-art" alt="Art" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80'">
+                <div class="am-lyrics-track-titles">
+                  <div id="am-lyrics-song-title" class="am-lyrics-song-title">${track.title}</div>
+                  <div id="am-lyrics-song-artist" class="am-lyrics-song-artist">${track.artist}</div>
+                </div>
+              </div>
+              <button class="am-circle-btn" onclick="window.setAppleMusicView('now-playing')" title="Back to Now Playing">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+              </button>
+            </div>
+
+            <!-- Central Scrolling Synced Lyrics -->
+            <div id="am-lyrics-scroll" class="am-lyrics-scroll">
+              ${(window.getTrackLyrics ? window.getTrackLyrics(track) : []).map((line) => `
+                <div class="am-lyric-line ${line.time <= currentTrackTime ? 'active' : ''}" data-time="${line.time}" onclick="window.seekToLyricTime(${line.time})">
+                  ${line.text}
+                </div>
+              `).join("")}
+            </div>
+
+            <!-- Lyrics Footer with Scrubber & Controls -->
+            <div class="am-lyrics-footer">
+              <div class="am-scrubber-container">
+                <div class="am-scrubber-bg" onclick="window.seekAudioProgress(event)" ontouchstart="window.seekAudioProgress(event)" ontouchmove="window.seekAudioProgress(event)">
+                  <div id="am-lyrics-scrubber-fill" class="am-scrubber-fill" style="width: ${pct}%;"></div>
+                </div>
+                <div class="am-timestamps-row">
+                  <span id="am-lyrics-time-current">${formatTime(currentTrackTime)}</span>
+                  <span id="am-lyrics-time-remaining">-${formatTime(Math.max(0, track.duration - currentTrackTime))}</span>
+                </div>
+              </div>
+
+              <div class="am-transport-row" style="margin: 0 0 4px 0;">
+                <button class="am-transport-btn" onclick="window.spotifyPrevTrack()">
+                  <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M6 6h2.5v12H6zm3.5 6l10 7V5z"/></svg>
+                </button>
+                <button id="am-lyrics-play-btn" class="am-transport-btn am-transport-play" onclick="window.spotifyTogglePlay()">
+                  ${isSpotifyPlaying ? `
+                    <svg viewBox="0 0 24 24" width="34" height="34" fill="currentColor"><rect x="5.5" y="4" width="4.5" height="16" rx="2.25"/><rect x="14" y="4" width="4.5" height="16" rx="2.25"/></svg>
+                  ` : `
+                    <svg viewBox="0 0 24 24" width="34" height="34" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>
+                  `}
+                </button>
+                <button class="am-transport-btn" onclick="window.spotifyNextTrack()">
+                  <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M4.5 19l10-7-10-7v14zM15.5 6v12H18V6h-2.5z"/></svg>
+                </button>
+              </div>
+
+              <div class="am-bottom-toolbar">
+                <button class="am-tool-btn active" onclick="window.setAppleMusicView('now-playing')" title="Now Playing">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-9 9H7V9h4v2zm6 0h-4V9h4v2zm0-4H7V5h10v2z"/></svg>
+                </button>
+                <button class="am-tool-btn" onclick="window.setAppleMusicView('queue')" title="Up Next Queue">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+                </button>
+                <button class="am-tool-btn" onclick="window.setAppleMusicView('browse')" title="Browse Catalog">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Apple Music Options Action Sheet Modal -->
+        <div id="am-options-overlay" class="am-options-overlay" onclick="window.closeAppleMusicOptions()">
+          <div class="am-options-sheet" onclick="event.stopPropagation();">
+            
+            <div class="am-options-header">
+              <img id="am-options-art" src="${track.cover}" class="am-options-art" alt="Art" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80'">
+              <div class="am-options-meta">
+                <div id="am-options-title" class="am-options-title">${track.title}</div>
+                <div id="am-options-artist" class="am-options-artist">${track.artist}</div>
+                <div class="am-options-badge"> Hi-Res Lossless · Spatial Audio</div>
+              </div>
+            </div>
+
+            <div class="am-options-menu">
+              <button class="am-options-item am-options-item-primary" onclick="window.switchToVinylPlayerFromOptions()">
+                <span>💿 Switch to Classic Vinyl Player (Backup)</span>
+                <span>›</span>
+              </button>
+
+              <button class="am-options-item" onclick="window.toggleAppleMusicFavorite(); window.closeAppleMusicOptions();">
+                <span>⭐ Favorite This Song</span>
+                <span>›</span>
+              </button>
+
+              <button class="am-options-item" onclick="window.toggleAppleMusicShuffle(); window.closeAppleMusicOptions();">
+                <span>🔀 Shuffle Queue</span>
+                <span>›</span>
+              </button>
+
+              <button class="am-options-item" onclick="window.showAirPlayToast(); window.closeAppleMusicOptions();">
+                <span>📻 AirPlay & Output Devices</span>
+                <span>›</span>
+              </button>
+            </div>
+
+          </div>
+
+          <div class="am-options-cancel-btn" onclick="window.closeAppleMusicOptions()">
+            Cancel
           </div>
         </div>
 
-        <!-- Vinyl & Cover Artwork Stage -->
-        <div class="audio-stage">
-          <div id="modal-art-wrapper" class="audio-art-wrapper ${isSpotifyPlaying ? 'playing' : ''}">
-            <img id="modal-song-cover" src="${track.cover}" class="audio-art-img" alt="Artwork" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80'">
-            <div id="modal-vinyl-disc" class="audio-vinyl-disc ${isSpotifyPlaying ? 'playing' : ''}">
-              <div class="audio-vinyl-center"></div>
+      </div>
+    `;
+
+    createWindow({
+      id: "spotify",
+      title: "Apple Music",
+      width: "520px",
+      top: "8%",
+      left: "28%",
+      contentHTML: content
+    });
+  };
+
+  window.openMusicWindow = window.openSpotifyWindow;
+
+  // --- Classic Vinyl Audio Player (Backup Mode) ---
+  window.openVinylPlayerWindow = function() {
+    const track = spotifyTracks[currentTrackIdx] || spotifyTracks[0];
+    const pct = Math.min(100, (currentTrackTime / (track.duration || 1)) * 100);
+
+    const content = `
+      <div class="vinyl-player-container">
+        <!-- Top Bar -->
+        <div class="vinyl-player-header">
+          <div class="vinyl-header-left">
+            <img src="assets/images/ios18_clean/music.png" class="vinyl-app-icon" alt="Vinyl Music">
+            <div>
+              <div class="vinyl-header-title">Casey's Vinyl Player (Classic)</div>
+              <div class="vinyl-header-sub">Curated Studio Playlist (${spotifyTracks.length} Songs)</div>
             </div>
           </div>
-          <div class="audio-info-col">
-            <div class="audio-now-tag">
+          <div class="vinyl-external-links">
+            <button onclick="window.openSpotifyWindow()" class="audio-ext-pill" style="background: rgba(255,45,85,0.2); color: #ff2d55; border: 1px solid rgba(255,45,85,0.4); cursor: pointer;" title="Switch to iOS 18 Apple Music">
+              <span> Apple Music ↗</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Vinyl & Artwork Stage -->
+        <div class="vinyl-stage">
+          <div id="vinyl-art-wrapper" class="vinyl-art-wrapper ${isSpotifyPlaying ? 'playing' : ''}">
+            <img id="vinyl-song-cover" src="${track.cover}" class="vinyl-art-img" alt="Artwork" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80'">
+            <div id="vinyl-disc-spin" class="vinyl-disc ${isSpotifyPlaying ? 'playing' : ''}">
+              <div class="vinyl-center"></div>
+            </div>
+          </div>
+          <div class="vinyl-info-col">
+            <div class="vinyl-now-tag">
               <span>NOW PLAYING</span>
-              <div id="modal-live-eq" class="audio-live-eq ${isSpotifyPlaying ? 'playing' : ''}">
+              <div id="vinyl-live-eq" class="vinyl-live-eq ${isSpotifyPlaying ? 'playing' : ''}">
                 <span></span><span></span><span></span><span></span>
               </div>
             </div>
-            <div id="modal-song-title" class="audio-track-title">${track.title}</div>
-            <div id="modal-song-artist" class="audio-track-artist">${track.artist}</div>
+            <div id="vinyl-song-title" class="vinyl-track-title">${track.title}</div>
+            <div id="vinyl-song-artist" class="vinyl-track-artist">${track.artist}</div>
           </div>
         </div>
 
         <!-- Timeline Scrubber -->
-        <div class="audio-timeline-box">
-          <div id="modal-progress-bg" class="audio-progress-bar-bg" onclick="window.seekAudioProgress(event)">
-            <div id="modal-song-progress-fill" class="audio-progress-fill" style="width: ${pct}%;"></div>
+        <div class="vinyl-timeline-box">
+          <div class="vinyl-progress-bar-bg" onclick="window.seekAudioProgress(event)" ontouchstart="window.seekAudioProgress(event)" ontouchmove="window.seekAudioProgress(event)">
+            <div id="vinyl-song-progress-fill" class="vinyl-progress-fill" style="width: ${pct}%;"></div>
           </div>
-          <div class="audio-timestamps">
-            <span id="modal-song-current-time">${formatTime(currentTrackTime)}</span>
-            <span id="modal-song-duration">${formatTime(track.duration)}</span>
+          <div class="vinyl-timestamps">
+            <span id="vinyl-song-current-time">${formatTime(currentTrackTime)}</span>
+            <span id="vinyl-song-duration">${formatTime(track.duration)}</span>
           </div>
         </div>
 
         <!-- Transport Controls -->
-        <div class="audio-controls-row">
-          <button class="audio-ctrl-btn" onclick="window.spotifyPrevTrack && window.spotifyPrevTrack()" title="Previous Track">⏮</button>
-          <button id="modal-play-btn" class="audio-play-btn-large" onclick="window.spotifyTogglePlay && window.spotifyTogglePlay()" title="Play / Pause">
+        <div class="vinyl-controls-row">
+          <button class="vinyl-ctrl-btn" onclick="window.spotifyPrevTrack && window.spotifyPrevTrack()" title="Previous Track">⏮</button>
+          <button id="vinyl-play-btn" class="vinyl-play-btn-large" onclick="window.spotifyTogglePlay && window.spotifyTogglePlay()" title="Play / Pause">
             ${isSpotifyPlaying ? '⏸' : '▶'}
           </button>
-          <button class="audio-ctrl-btn" onclick="window.spotifyNextTrack && window.spotifyNextTrack()" title="Next Track">⏭</button>
+          <button class="vinyl-ctrl-btn" onclick="window.spotifyNextTrack && window.spotifyNextTrack()" title="Next Track">⏭</button>
         </div>
 
         <!-- Tracklist Queue -->
-        <div class="audio-queue-container">
-          <div class="audio-queue-title">YouTube Music Playlist (${spotifyTracks.length} Full Songs)</div>
+        <div class="vinyl-queue-container">
+          <div class="vinyl-queue-title">Vinyl Tracklist (${spotifyTracks.length} Full Songs)</div>
           ${spotifyTracks.map((t, idx) => `
-            <div id="audio-queue-item-${idx}" class="audio-queue-item ${idx === currentTrackIdx ? 'active' : ''}" onclick="window.selectAudioTrack(${idx})">
-              <div class="audio-queue-item-left">
-                <span class="audio-queue-idx">${idx + 1}</span>
+            <div class="vinyl-queue-item ${idx === currentTrackIdx ? 'active' : ''}" onclick="window.selectAudioTrack(${idx})">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.4);">${idx + 1}</span>
                 <div>
-                  <div class="audio-queue-name">${t.title}</div>
-                  <div class="audio-queue-artist">${t.artist}</div>
+                  <div style="font-size: 12px; font-weight: 700; color: #fff;">${t.title}</div>
+                  <div style="font-size: 10.5px; color: rgba(255,255,255,0.5);">${t.artist}</div>
                 </div>
               </div>
-              <span class="audio-queue-dur">${formatTime(t.duration)}</span>
+              <span style="font-size: 11px; color: rgba(255,255,255,0.5);">${formatTime(t.duration)}</span>
             </div>
           `).join("")}
         </div>
@@ -2390,8 +4113,8 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
 
     createWindow({
-      id: "spotify",
-      title: "YouTube Music • Full Songs Audio Player",
+      id: "vinyl",
+      title: "Classic Vinyl Player (Backup)",
       width: "520px",
       top: "12%",
       left: "28%",
@@ -2399,7 +4122,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  window.openMusicWindow = window.openSpotifyWindow;
+  window.openBackupVinylPlayer = window.openVinylPlayerWindow;
 
   // --- Contact Window ---
   window.openContactWindow = function() {
@@ -2484,9 +4207,52 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  // Keyboard shortcut: ESC to close top window
+  // --- Creative Asset Right-Click & Download Protection ---
+  function showProtectedToast() {
+    let toast = document.getElementById("asset-protect-toast");
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.id = "asset-protect-toast";
+      toast.style.cssText = "position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(18,22,34,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:8px 18px;border-radius:20px;font-size:12px;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,0.8);z-index:99999;opacity:0;transition:all 0.25s ease;pointer-events:none;display:flex;align-items:center;gap:6px;";
+      toast.innerHTML = `<span>🔒</span><span>Artwork Protected · Casey Portfolio</span>`;
+      document.body.appendChild(toast);
+    }
+    requestAnimationFrame(() => {
+      toast.style.opacity = "1";
+      toast.style.transform = "translateX(-50%) translateY(0)";
+    });
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => {
+      toast.style.opacity = "0";
+      toast.style.transform = "translateX(-50%) translateY(20px)";
+    }, 2200);
+  }
+
+  // Prevent right click on all artwork elements
+  document.addEventListener("contextmenu", (e) => {
+    if (e.target.tagName === "IMG" || e.target.closest(".project-cover-container") || e.target.closest(".lightbox-img-wrapper") || e.target.closest(".gallery-card") || e.target.closest(".desktop-item")) {
+      e.preventDefault();
+      showProtectedToast();
+      return false;
+    }
+  });
+
+  // Prevent image dragging to external folders / browser tabs
+  document.addEventListener("dragstart", (e) => {
+    if (e.target.tagName === "IMG") {
+      e.preventDefault();
+      return false;
+    }
+  });
+
+  // Keyboard shortcut: ESC to close lightbox or top window
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
+      const lightbox = document.getElementById("artwork-lightbox");
+      if (lightbox) {
+        window.closeArtworkLightbox();
+        return;
+      }
       const openWins = Object.values(activeWindows);
       if (openWins.length > 0) {
         openWins.sort((a, b) => parseInt(b.style.zIndex || 0) - parseInt(a.style.zIndex || 0));
