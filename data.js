@@ -634,23 +634,41 @@ const PORTFOLIO_DATA = {
           ]
       },
       {
-          "id": "avatar-motion-poster",
-          "title": "AVATAR // MOTION",
-          "category": "Motion Poster & VFX",
-          "client": "James Cameron / Avatar",
+          "id": "casey-stream-intro",
+          "title": "CASEYX // INTRO",
+          "category": "Motion & Stream Visuals",
+          "client": "CaseyX Live / Stream Identity",
           "year": "2026",
-          "cover": "assets/images/projects/avatar_motion.jpg",
-          "video": "assets/videos/avatar_motion.mp4",
-          "videoSrc": "assets/videos/avatar_motion.mp4",
+          "cover": "assets/images/projects/casey_intro.jpg",
+          "video": "assets/videos/casey_intro.mp4",
+          "videoSrc": "assets/videos/casey_intro.mp4",
           "pos": {
               "x": 48,
               "y": 14
           },
-          "description": "Avatar Motion Poster: A Visual Spectacle Unleashed! Dynamic ocean wave cinematography and kinetic 3D typography for James Cameron's Avatar.",
+          "description": "Setting the tone. Official stream intro and dark aesthetic motion identity for Caseyxlive with kinetic X-ray visuals and audio score.",
           "details": [
-              "Cinematic fluid dynamics and high-speed ocean wave composite",
-              "Bespoke 3D Avatar emblem animation & metallic typography",
-              "Official CaseyX motion visualizer"
+              "Dark grunge aesthetic X-ray kinetic visuals",
+              "Bespoke sound design & cinematic atmospheric score",
+              "Official stream & broadcast motion identity by Casey"
+          ]
+      },
+      {
+          "id": "sunflower-ivy",
+          "title": "SUNFLOWER // IVY",
+          "category": "Mixed Media & Poster Art",
+          "client": "Editorial & Personal Art",
+          "year": "2026",
+          "cover": "assets/images/projects/sunflower_eye.jpg",
+          "pos": {
+              "x": 62,
+              "y": 15
+          },
+          "description": "Sunflower Iris Mixed Media: Halftone portrait composition featuring bespoke sunflower iris typography, analogue scan textures, and sparkle highlights.",
+          "details": [
+              "Bespoke sunflower iris visual composition & optical illusion",
+              "Photoshop analogue halftone rasterization & grain textures",
+              "Glitter sparkle highlights & personal signature artwork"
           ]
       }
   ],
@@ -659,13 +677,22 @@ const PORTFOLIO_DATA = {
   // Photos & Art Showcase for Gallery Modal
   gallery: [
       {
-          "id": "avatar-motion-poster",
-          "title": "Avatar // Motion Poster Spectacle",
-          "category": "Motion Poster & VFX",
-          "image": "assets/images/projects/avatar_motion.jpg",
-          "video": "assets/videos/avatar_motion.mp4",
-          "videoSrc": "assets/videos/avatar_motion.mp4",
+          "id": "casey-stream-intro",
+          "title": "CaseyX // Official Stream Intro",
+          "category": "Motion & Stream Visuals",
+          "image": "assets/images/projects/casey_intro.jpg",
+          "video": "assets/videos/casey_intro.mp4",
+          "videoSrc": "assets/videos/casey_intro.mp4",
           "year": "2026"
+      },
+      {
+          "id": "sunflower-eye",
+          "title": "Sunflower // Eye Mixed Media",
+          "category": "Mixed Media & Poster Art",
+          "image": "assets/images/projects/sunflower_eye.jpg",
+          "instagramUrl": "https://www.instagram.com/caseyxlive/",
+          "year": "2026",
+          "isInstagram": true
       },
       {
           "title": "Clove // 3D Y2K Poster",

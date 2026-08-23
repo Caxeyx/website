@@ -2283,76 +2283,361 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ==========================================================================
-  // 6. Interactive iOS 18 Modals & Core Application Windows
+  // 6. Interactive iOS 18 / macOS Weather Engine & Applications
   // ==========================================================================
 
-  // --- Weather App ---
-  window.openWeatherApp = function() {
-    const content = `
-      <div style="text-align: center; padding: 10px 0 20px 0;">
-        <div style="font-size: 24px; font-weight: 700; color: #fff;">New Delhi</div>
-        <div style="font-size: 64px; font-weight: 200; color: #fff; line-height: 1; margin: 6px 0;">29°</div>
-        <div style="font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.85);">Cloudy</div>
-        <div style="font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.65); margin-top: 2px;">H:32°  L:27°</div>
-      </div>
+  // --- Real-time Weather Engine (Open-Meteo Public API) ---
+  const WEATHER_CITIES = {
+    "New Delhi": { name: "New Delhi", country: "India", lat: 28.6139, lon: 77.2090, isStudio: true },
+    "Mumbai": { name: "Mumbai", country: "India", lat: 19.0760, lon: 72.8777 },
+    "Los Angeles": { name: "Los Angeles", country: "US", lat: 34.0522, lon: -118.2437 },
+    "London": { name: "London", country: "UK", lat: 51.5074, lon: -0.1278 },
+    "Tokyo": { name: "Tokyo", country: "Japan", lat: 35.6762, lon: 139.6503 },
+    "New York": { name: "New York", country: "US", lat: 40.7128, lon: -74.0060 }
+  };
 
-      <div class="ios-modal-section">
-        <div style="font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase; margin-bottom: 12px;">Cloudy conditions will continue for the rest of the day.</div>
-        <div style="display: flex; gap: 18px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none;">
-          ${[
-            { t: "Now", i: "☁️", temp: "29°" },
-            { t: "7 PM", i: "☁️", temp: "28°" },
-            { t: "8 PM", i: "🌧️", temp: "27°" },
-            { t: "9 PM", i: "🌧️", temp: "27°" },
-            { t: "10 PM", i: "☁️", temp: "26°" },
-            { t: "11 PM", i: "🌙", temp: "25°" },
-            { t: "12 AM", i: "🌙", temp: "24°" },
-          ].map(h => `
-            <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 44px;">
-              <span style="font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.85);">${h.t}</span>
-              <span style="font-size: 18px;">${h.i}</span>
-              <span style="font-size: 14px; font-weight: 700; color: #fff;">${h.temp}</span>
-            </div>
-          `).join("")}
-        </div>
-      </div>
+  let currentWeatherCity = "New Delhi";
+  let weatherIsCelsius = true;
+  const weatherCache = {};
 
-      <div class="ios-modal-section">
-        <div style="font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase; margin-bottom: 10px;">10-DAY FORECAST</div>
-        ${[
-          { d: "Today", i: "☁️", min: 27, max: 32 },
-          { d: "Sun", i: "🌧️", min: 26, max: 31 },
-          { d: "Mon", i: "⛈️", min: 25, max: 30 },
-          { d: "Tue", i: "⛅", min: 26, max: 33 },
-          { d: "Wed", i: "☀️", min: 27, max: 34 },
-          { d: "Thu", i: "☀️", min: 28, max: 35 }
-        ].map(f => `
-          <div class="ios-modal-row">
-            <span style="font-size: 14px; font-weight: 700; width: 60px;">${f.d}</span>
-            <span style="font-size: 18px;">${f.i}</span>
-            <div style="display: flex; align-items: center; gap: 8px; flex: 1; justify-content: flex-end;">
-              <span style="font-size: 13px; color: rgba(255,255,255,0.6);">${f.min}°</span>
-              <div style="width: 80px; height: 4px; background: linear-gradient(90deg, #60a5fa 0%, #f59e0b 100%); border-radius: 2px;"></div>
-              <span style="font-size: 13px; font-weight: 700;">${f.max}°</span>
+  const WMO_WEATHER_MAP = {
+    0: { label: "Clear Sky", icon: "☀️", theme: "theme-sunny" },
+    1: { label: "Mainly Clear", icon: "🌤️", theme: "theme-sunny" },
+    2: { label: "Partly Cloudy", icon: "⛅", theme: "theme-cloudy" },
+    3: { label: "Overcast", icon: "☁️", theme: "theme-cloudy" },
+    45: { label: "Fog", icon: "🌫️", theme: "theme-cloudy" },
+    48: { label: "Icy Fog", icon: "🌫️", theme: "theme-cloudy" },
+    51: { label: "Light Drizzle", icon: "🌦️", theme: "theme-rainy" },
+    53: { label: "Drizzle", icon: "🌦️", theme: "theme-rainy" },
+    55: { label: "Dense Drizzle", icon: "🌧️", theme: "theme-rainy" },
+    61: { label: "Slight Rain", icon: "🌧️", theme: "theme-rainy" },
+    63: { label: "Moderate Rain", icon: "🌧️", theme: "theme-rainy" },
+    65: { label: "Heavy Rain", icon: "🌧️", theme: "theme-rainy" },
+    71: { label: "Light Snow", icon: "❄️", theme: "theme-cloudy" },
+    73: { label: "Snow", icon: "❄️", theme: "theme-cloudy" },
+    75: { label: "Heavy Snow", icon: "❄️", theme: "theme-cloudy" },
+    80: { label: "Light Showers", icon: "🌧️", theme: "theme-rainy" },
+    81: { label: "Rain Showers", icon: "🌧️", theme: "theme-rainy" },
+    82: { label: "Violent Showers", icon: "⛈️", theme: "theme-rainy" },
+    95: { label: "Thunderstorm", icon: "⛈️", theme: "theme-rainy" },
+    96: { label: "Thunderstorm w/ Hail", icon: "⛈️", theme: "theme-rainy" },
+    99: { label: "Severe Thunderstorm", icon: "⛈️", theme: "theme-rainy" }
+  };
+
+  function getWeatherInfo(code, isDay = 1) {
+    const item = WMO_WEATHER_MAP[code] || { label: "Partly Cloudy", icon: isDay ? "🌤️" : "🌙", theme: "theme-cloudy" };
+    if (!isDay && code <= 1) {
+      return { label: item.label, icon: "🌙", theme: "theme-night" };
+    }
+    return item;
+  }
+
+  function convertTemp(celsius) {
+    if (isNaN(celsius)) return "--";
+    if (weatherIsCelsius) {
+      return Math.round(celsius) + "°";
+    }
+    return Math.round((celsius * 9) / 5 + 32) + "°";
+  }
+
+  async function fetchWeatherData(cityName = "New Delhi") {
+    const city = WEATHER_CITIES[cityName] || WEATHER_CITIES["New Delhi"];
+    const cacheKey = `${city.lat}_${city.lon}`;
+    const now = Date.now();
+
+    if (weatherCache[cacheKey] && (now - weatherCache[cacheKey].timestamp < 10 * 60 * 1000)) {
+      return weatherCache[cacheKey].data;
+    }
+
+    try {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,surface_pressure&hourly=temperature_2m,weather_code,relative_humidity_2m&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max&timezone=auto`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Weather fetch failed");
+      const data = await res.json();
+      weatherCache[cacheKey] = { data, timestamp: now };
+      return data;
+    } catch (err) {
+      console.warn("Using fallback weather data for", cityName, err);
+      return null;
+    }
+  }
+
+  // Update Desktop & Mobile Widget with real live weather
+  async function updateLiveWeatherWidgets() {
+    const data = await fetchWeatherData(currentWeatherCity);
+    const widgetEl = document.getElementById("widget-weather");
+    
+    if (widgetEl) {
+      widgetEl.onclick = () => window.openWeatherApp(currentWeatherCity);
+      widgetEl.title = "Click to open full Apple Weather";
+      
+      if (data && data.current) {
+        const cur = data.current;
+        const daily = data.daily;
+        const wInfo = getWeatherInfo(cur.weather_code, cur.is_day);
+        const tempEl = widgetEl.querySelector(".widget-temp");
+        const condEl = widgetEl.querySelector(".widget-condition");
+        const rangeEl = widgetEl.querySelector(".widget-temp-range");
+        const iconEl = widgetEl.querySelector(".widget-icon");
+        const labelEl = widgetEl.querySelector(".widget-label");
+
+        if (labelEl) labelEl.textContent = `STUDIO WEATHER · ${currentWeatherCity.toUpperCase()}`;
+        if (tempEl) tempEl.textContent = convertTemp(cur.temperature_2m);
+        if (condEl) condEl.textContent = wInfo.label;
+        if (iconEl) iconEl.textContent = wInfo.icon;
+        if (rangeEl && daily) {
+          rangeEl.textContent = `H: ${convertTemp(daily.temperature_2m_max[0])}  L: ${convertTemp(daily.temperature_2m_min[0])}`;
+        }
+      }
+    }
+
+    // Update Mobile Weather Widget Card if present
+    const mobileCard = document.querySelector(".ios-widget-weather-card");
+    if (mobileCard && data && data.current) {
+      const cur = data.current;
+      const daily = data.daily;
+      const wInfo = getWeatherInfo(cur.weather_code, cur.is_day);
+      const locEl = mobileCard.querySelector(".weather-location");
+      const tempMain = mobileCard.querySelector(".weather-temp-main");
+      const condText = mobileCard.querySelector(".weather-condition-text");
+      const range = mobileCard.querySelector(".weather-range");
+
+      if (locEl) locEl.innerHTML = `${currentWeatherCity} <span class="weather-arrow">↗</span>`;
+      if (tempMain) tempMain.textContent = convertTemp(cur.temperature_2m);
+      if (condText) condText.textContent = wInfo.label;
+      if (range && daily) {
+        range.textContent = `H:${convertTemp(daily.temperature_2m_max[0])} L:${convertTemp(daily.temperature_2m_min[0])}`;
+      }
+    }
+  }
+
+  // --- Apple Weather App Window ---
+  window.openWeatherApp = async function(targetCity = currentWeatherCity) {
+    currentWeatherCity = targetCity;
+    const city = WEATHER_CITIES[currentWeatherCity] || WEATHER_CITIES["New Delhi"];
+    const data = await fetchWeatherData(currentWeatherCity);
+
+    const cur = data ? data.current : { temperature_2m: 30, weather_code: 1, is_day: 1, relative_humidity_2m: 65, wind_speed_10m: 12, surface_pressure: 1008 };
+    const daily = data ? data.daily : {
+      temperature_2m_max: [33, 34, 32, 31, 33, 34, 35],
+      temperature_2m_min: [26, 27, 26, 25, 26, 27, 27],
+      weather_code: [1, 2, 61, 80, 0, 1, 1],
+      uv_index_max: [7.2, 8.1, 5.4, 4.2, 7.8, 8.0, 8.2],
+      sunrise: ["2026-08-20T05:52"],
+      sunset: ["2026-08-20T18:56"]
+    };
+    const hourly = data ? data.hourly : null;
+
+    const curInfo = getWeatherInfo(cur.weather_code, cur.is_day);
+
+    // Build 24-hour hourly forecast
+    const currentHourIndex = hourly ? new Date().getHours() : 0;
+    const hourlyItems = [];
+    if (hourly && hourly.time) {
+      for (let i = currentHourIndex; i < Math.min(hourly.time.length, currentHourIndex + 24); i++) {
+        const timeStr = hourly.time[i];
+        const dateObj = new Date(timeStr);
+        const hour = dateObj.getHours();
+        const displayTime = (i === currentHourIndex) ? "Now" : `${hour % 12 === 0 ? 12 : hour % 12} ${hour >= 12 ? "PM" : "AM"}`;
+        const isDayH = (hour >= 6 && hour < 19) ? 1 : 0;
+        const hInfo = getWeatherInfo(hourly.weather_code[i], isDayH);
+        const hTemp = convertTemp(hourly.temperature_2m[i]);
+
+        hourlyItems.push(`
+          <div class="weather-hourly-item">
+            <span class="weather-hourly-time">${displayTime}</span>
+            <span class="weather-hourly-icon">${hInfo.icon}</span>
+            <span class="weather-hourly-temp">${hTemp}</span>
+          </div>
+        `);
+      }
+    } else {
+      hourlyItems.push(`
+        <div class="weather-hourly-item"><span class="weather-hourly-time">Now</span><span class="weather-hourly-icon">🌤️</span><span class="weather-hourly-temp">30°</span></div>
+        <div class="weather-hourly-item"><span class="weather-hourly-time">9 PM</span><span class="weather-hourly-icon">🌙</span><span class="weather-hourly-temp">28°</span></div>
+        <div class="weather-hourly-item"><span class="weather-hourly-time">10 PM</span><span class="weather-hourly-icon">🌙</span><span class="weather-hourly-temp">27°</span></div>
+        <div class="weather-hourly-item"><span class="weather-hourly-time">11 PM</span><span class="weather-hourly-icon">☁️</span><span class="weather-hourly-temp">26°</span></div>
+      `);
+    }
+
+    // Build 7-day daily forecast
+    const dayNames = ["Today", "Fri", "Sat", "Sun", "Mon", "Tue", "Wed"];
+    const forecastRows = [];
+    if (daily && daily.weather_code) {
+      const today = new Date();
+      for (let i = 0; i < Math.min(daily.weather_code.length, 7); i++) {
+        let dayLabel = "Today";
+        if (i > 0) {
+          const d = new Date();
+          d.setDate(today.getDate() + i);
+          dayLabel = d.toLocaleDateString("en-US", { weekday: "short" });
+        }
+        const dInfo = getWeatherInfo(daily.weather_code[i], 1);
+        const minT = daily.temperature_2m_min[i];
+        const maxT = daily.temperature_2m_max[i];
+
+        forecastRows.push(`
+          <div class="weather-forecast-row">
+            <span class="weather-forecast-day">${dayLabel}</span>
+            <span class="weather-forecast-icon">${dInfo.icon}</span>
+            <div class="weather-forecast-bar-wrap">
+              <span class="weather-forecast-min">${convertTemp(minT)}</span>
+              <div class="weather-thermal-bar">
+                <div class="weather-thermal-fill" style="left: 15%; width: 70%;"></div>
+              </div>
+              <span class="weather-forecast-max">${convertTemp(maxT)}</span>
             </div>
           </div>
-        `).join("")}
-      </div>
+        `);
+      }
+    }
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-        <div class="ios-modal-section">
-          <div style="font-size: 10px; font-weight: 800; color: rgba(255,255,255,0.6);">AIR QUALITY</div>
-          <div style="font-size: 22px; font-weight: 800; margin: 4px 0;">42 - Good</div>
-          <div style="font-size: 11px; color: rgba(255,255,255,0.7);">Air quality is ideal for outdoor creative shoots.</div>
+    // Format Sunrise / Sunset
+    let sunriseTime = "5:52 AM";
+    let sunsetTime = "6:56 PM";
+    if (daily && daily.sunrise && daily.sunrise[0]) {
+      try {
+        sunriseTime = new Date(daily.sunrise[0]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        sunsetTime = new Date(daily.sunset[0]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      } catch (e) {}
+    }
+
+    const uvVal = (daily && daily.uv_index_max) ? daily.uv_index_max[0] : 6;
+    let uvDesc = "Moderate";
+    if (uvVal < 3) uvDesc = "Low";
+    else if (uvVal < 6) uvDesc = "Moderate";
+    else if (uvVal < 8) uvDesc = "High";
+    else uvDesc = "Very High";
+
+    const content = `
+      <div class="weather-app-container">
+        <!-- City Quick Selector -->
+        <div class="weather-city-bar">
+          ${Object.keys(WEATHER_CITIES).map(cName => `
+            <button class="weather-city-pill ${cName === currentWeatherCity ? 'active' : ''}" onclick="window.openWeatherApp('${cName}')">
+              ${WEATHER_CITIES[cName].isStudio ? '📍 Studio (' + cName + ')' : cName}
+            </button>
+          `).join("")}
         </div>
-        <div class="ios-modal-section">
-          <div style="font-size: 10px; font-weight: 800; color: rgba(255,255,255,0.6);">UV INDEX</div>
-          <div style="font-size: 22px; font-weight: 800; margin: 4px 0;">6 - Moderate</div>
-          <div style="font-size: 11px; color: rgba(255,255,255,0.7);">Use protection until 5:00 PM.</div>
+
+        <!-- Hero Section -->
+        <div class="weather-hero-section">
+          <div class="weather-hero-location">
+            ${city.name}
+            <span class="weather-hero-badge">${city.country}</span>
+          </div>
+
+          <div class="weather-hero-temp-row">
+            <div class="weather-hero-temp">${convertTemp(cur.temperature_2m)}</div>
+            <button class="weather-unit-toggle" onclick="window.toggleWeatherUnit('${currentWeatherCity}')" title="Toggle °C / °F">
+              ${weatherIsCelsius ? '°C · Switch to °F' : '°F · Switch to °C'}
+            </button>
+          </div>
+
+          <div class="weather-hero-condition">
+            <span>${curInfo.icon}</span>
+            <span>${curInfo.label}</span>
+          </div>
+
+          <div class="weather-hero-highlow">
+            H: ${convertTemp(daily.temperature_2m_max[0])} · L: ${convertTemp(daily.temperature_2m_min[0])}
+          </div>
+        </div>
+
+        <!-- Hourly Forecast Card -->
+        <div class="weather-card">
+          <div class="weather-card-header">
+            <span>🕒 24-HOUR HOURLY FORECAST</span>
+            <span class="weather-live-indicator"><span class="weather-live-dot"></span> LIVE DATA</span>
+          </div>
+          <div class="weather-hourly-strip">
+            ${hourlyItems.join("")}
+          </div>
+        </div>
+
+        <!-- 7-Day Forecast Card -->
+        <div class="weather-card">
+          <div class="weather-card-header">
+            <span>📅 7-DAY EXTENDED FORECAST</span>
+          </div>
+          <div>
+            ${forecastRows.join("")}
+          </div>
+        </div>
+
+        <!-- Live Metrics Grid -->
+        <div class="weather-metrics-grid">
+          <div class="weather-metric-card">
+            <div class="weather-metric-title">☀️ UV INDEX</div>
+            <div class="weather-metric-val">${Math.round(uvVal)} · ${uvDesc}</div>
+            <div class="weather-metric-desc">Peak radiation from 11:00 AM to 3:30 PM.</div>
+          </div>
+
+          <div class="weather-metric-card">
+            <div class="weather-metric-title">💧 HUMIDITY</div>
+            <div class="weather-metric-val">${cur.relative_humidity_2m || 65}%</div>
+            <div class="weather-metric-desc">The dew point is ${convertTemp(cur.temperature_2m - 4)} right now.</div>
+          </div>
+
+          <div class="weather-metric-card">
+            <div class="weather-metric-title">💨 WIND SPEED</div>
+            <div class="weather-metric-val">${Math.round(cur.wind_speed_10m || 10)} km/h</div>
+            <div class="weather-metric-desc">Gentle breeze from the Northwest.</div>
+          </div>
+
+          <div class="weather-metric-card">
+            <div class="weather-metric-title">🌅 SUNRISE & SUNSET</div>
+            <div class="weather-metric-val" style="font-size: 18px;">🌅 ${sunriseTime}</div>
+            <div class="weather-metric-desc">Sunset at ${sunsetTime} today.</div>
+          </div>
+
+          <div class="weather-metric-card">
+            <div class="weather-metric-title">🌡️ FEELS LIKE</div>
+            <div class="weather-metric-val">${convertTemp(cur.apparent_temperature || cur.temperature_2m)}</div>
+            <div class="weather-metric-desc">Humidity makes it feel slightly warmer.</div>
+          </div>
+
+          <div class="weather-metric-card">
+            <div class="weather-metric-title">👁️ PRESSURE</div>
+            <div class="weather-metric-val" style="font-size: 20px;">${Math.round(cur.surface_pressure || 1012)} hPa</div>
+            <div class="weather-metric-desc">Stable barometric atmospheric pressure.</div>
+          </div>
         </div>
       </div>
     `;
-    createWindow({ id: "weather", title: "Weather", contentHTML: content });
+
+    const existingWin = document.getElementById("win-weather");
+    if (existingWin) {
+      const body = existingWin.querySelector(".window-body");
+      if (body) {
+        body.className = `window-body weather-app-window-body ${curInfo.theme}`;
+        body.innerHTML = content;
+      }
+      focusWindow(existingWin);
+      return existingWin;
+    }
+
+    const win = createWindow({
+      id: "weather",
+      title: "Weather — " + city.name,
+      width: "560px",
+      top: "12%",
+      left: "28%",
+      contentHTML: content
+    });
+
+    const body = win.querySelector(".window-body");
+    if (body) {
+      body.className = `window-body weather-app-window-body ${curInfo.theme}`;
+    }
+
+    return win;
+  };
+
+  window.toggleWeatherUnit = function(cityName) {
+    weatherIsCelsius = !weatherIsCelsius;
+    updateLiveWeatherWidgets();
+    window.openWeatherApp(cityName || currentWeatherCity);
   };
 
   // --- Calendar App ---
@@ -2572,9 +2857,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const caseyBubble = document.createElement("div");
       caseyBubble.style.cssText = "align-self: flex-start; max-width: 80%; background: rgba(255,255,255,0.12); padding: 10px 14px; border-radius: 18px 18px 18px 4px; font-size: 13px; color: #fff; line-height: 1.4;";
       
-      let reply = "Sounds awesome! Let's connect directly via email (khushalchhabra08@gmail.com) or Instagram (@caseyxlive) to lock in the timeline and deliverables.";
+      let reply = "Sounds awesome! Let's connect directly via email (khushalworkmail08@gmail.com) or Instagram (@caseyxlive) to lock in the timeline and deliverables.";
       if (userText.toLowerCase().includes("rate") || userText.toLowerCase().includes("cost")) {
-        reply = "My project packages start with custom quotes based on scope. You can check my Wallet app for rate cards or drop a brief to khushalchhabra08@gmail.com!";
+        reply = "My project packages start with custom quotes based on scope. You can check my Wallet app for rate cards or drop a brief to khushalworkmail08@gmail.com!";
       } else if (userText.toLowerCase().includes("stage") || userText.toLowerCase().includes("tour")) {
         reply = "Stage motion loops and LED visuals are my specialty! I render in 4K/60fps with seamless looping for Resolume/AV software.";
       }
@@ -4261,5 +4546,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   });
+
+  // Initialize Live Weather Engine & Auto-Refresh
+  updateLiveWeatherWidgets();
+  setInterval(updateLiveWeatherWidgets, 10 * 60 * 1000);
 });
 
