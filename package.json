@@ -8,7 +8,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "predeploy": "npm run build",
-    "deploy": "npx firebase-tools deploy --only hosting"
+    "deploy": "powershell -ExecutionPolicy Bypass -File ./deploy-cloudflare.ps1",
+    "deploy:gh": "npm run build && gh-pages -d dist",
+    "deploy:firebase": "npx firebase-tools deploy --only hosting"
   },
   "dependencies": {
     "clsx": "^2.1.1",
