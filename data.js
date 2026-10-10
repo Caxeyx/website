@@ -10,6 +10,8 @@ const PORTFOLIO_DATA = {
     instagram: "https://www.instagram.com/caseyxlive/",
     behance: "https://www.behance.net/Casey08",
     youtube: "https://www.youtube.com/@Caseyxlive",
+    discord: "https://discord.com/invite/CHJZDjTVtC",
+    discordServerName: "Casey's Cuties",
     linkedin: "https://linkedin.com/in/khushal-chhabra",
     bento: "https://bento.me/caseyx",
     location: "Jaipur, India / Remote",

@@ -1538,6 +1538,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 <span class="ios-app-label">Instagram</span>
               </div>
 
+              <!-- Discord / Casey's Cuties -->
+              <div class="ios-app-item" onclick="window.openDiscordWindow ? window.openDiscordWindow() : window.open('https://discord.com/invite/CHJZDjTVtC', '_blank')">
+                <div class="ios-app-icon-box">
+                  <img class="ios-app-icon-img" src="assets/images/discord_icon.svg" alt="Casey's Cuties">
+                </div>
+                <span class="ios-app-label">Discord</span>
+              </div>
+
               <!-- Bin of Ideas -->
               <div class="ios-app-item" onclick="window.openBinWindow()">
                 <div class="ios-app-icon-box" style="background: #27272a;">
@@ -4462,6 +4470,55 @@ document.addEventListener("DOMContentLoaded", () => {
       width: "480px",
       top: "20%",
       left: "30%",
+      contentHTML: content
+    });
+  };
+
+  // --- Discord Window ---
+  window.openDiscordWindow = function() {
+    const data = window.PORTFOLIO_DATA || (typeof PORTFOLIO_DATA !== "undefined" ? PORTFOLIO_DATA : {});
+    const discordUrl = (data.personal && data.personal.discord) ? data.personal.discord : "https://discord.com/invite/CHJZDjTVtC";
+
+    const content = `
+      <div style="text-align: center; padding: 22px 16px;">
+        <div style="width: 60px; height: 60px; margin: 0 auto 14px auto; background: linear-gradient(135deg, #5865F2, #4752C4); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 28px rgba(88, 101, 242, 0.45);">
+          <svg viewBox="0 0 127.14 96.36" width="34" height="34" fill="#ffffff">
+            <path d="M107.7 8.07A105.15 105.15 0 0 0 81.47 0a72.06 72.06 0 0 0-3.36 6.83 97.68 97.68 0 0 0-29.11 0A72.37 72.37 0 0 0 45.64 0a105.89 105.89 0 0 0-26.25 8.09C2.79 32.65-1.71 56.6.54 80.21a105.73 105.73 0 0 0 32.17 16.15 77.7 77.7 0 0 0 6.89-11.11 68.42 68.42 0 0 1-10.85-5.18c.91-.66 1.8-1.34 2.66-2a75.57 75.57 0 0 0 64.32 0c.87.71 1.76 1.39 2.66 2a68.68 68.68 0 0 1-10.87 5.19 77 77 0 0 0 6.89 11.1 105.25 105.25 0 0 0 32.19-16.14c2.64-27.38-4.51-51.11-18.9-72.15ZM42.45 65.69C36.18 65.69 31 60 31 53s5-12.74 11.43-12.74S54 46 53.89 53s-5.05 12.69-11.44 12.69Zm42.24 0C78.41 65.69 73.25 60 73.25 53s5-12.74 11.44-12.74S96.23 46 96.12 53s-5.04 12.69-11.43 12.69Z"/>
+          </svg>
+        </div>
+
+        <h2 style="font-size: 20px; font-weight: 900; margin-bottom: 4px; color: #ffffff;">Casey's Cuties</h2>
+        <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; background: rgba(88, 101, 242, 0.18); border: 1px solid rgba(88, 101, 242, 0.35); border-radius: 12px; margin-bottom: 12px;">
+          <span style="width: 7px; height: 7px; border-radius: 50%; background: #23a55a; display: inline-block;"></span>
+          <span style="font-size: 11px; font-weight: 700; color: #8ea1e1; text-transform: uppercase; letter-spacing: 0.5px;">Official Discord Server</span>
+        </div>
+        <p style="font-size: 12px; color: rgba(255, 255, 255, 0.7); margin-bottom: 20px; line-height: 1.5; max-width: 340px; margin-left: auto; margin-right: auto;">
+          Stream Watch Parties · Design Feedback · DHH Hangout & Chats
+        </p>
+
+        <div style="width: 100%; max-width: 340px; margin: 12px auto 6px auto;">
+          <a 
+            href="${discordUrl}" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            style="display: flex; align-items: center; justify-content: center; gap: 10px; padding: 13px 22px; background: #5865F2; color: #ffffff; text-decoration: none; font-weight: 700; font-size: 13px; border-radius: 20px; box-shadow: 0 6px 20px rgba(88, 101, 242, 0.45); transition: transform 0.15s ease;"
+            onmouseover="this.style.transform='scale(1.02)'"
+            onmouseout="this.style.transform='scale(1)'">
+            <svg viewBox="0 0 127.14 96.36" width="18" height="18" fill="currentColor">
+              <path d="M107.7 8.07A105.15 105.15 0 0 0 81.47 0a72.06 72.06 0 0 0-3.36 6.83 97.68 97.68 0 0 0-29.11 0A72.37 72.37 0 0 0 45.64 0a105.89 105.89 0 0 0-26.25 8.09C2.79 32.65-1.71 56.6.54 80.21a105.73 105.73 0 0 0 32.17 16.15 77.7 77.7 0 0 0 6.89-11.11 68.42 68.42 0 0 1-10.85-5.18c.91-.66 1.8-1.34 2.66-2a75.57 75.57 0 0 0 64.32 0c.87.71 1.76 1.39 2.66 2a68.68 68.68 0 0 1-10.87 5.19 77 77 0 0 0 6.89 11.1 105.25 105.25 0 0 0 32.19-16.14c2.64-27.38-4.51-51.11-18.9-72.15ZM42.45 65.69C36.18 65.69 31 60 31 53s5-12.74 11.43-12.74S54 46 53.89 53s-5.05 12.69-11.44 12.69Zm42.24 0C78.41 65.69 73.25 60 73.25 53s5-12.74 11.44-12.74S96.23 46 96.12 53s-5.04 12.69-11.43 12.69Z"/>
+            </svg>
+            Join Casey's Cuties
+          </a>
+        </div>
+      </div>
+    `;
+
+    createWindow({
+      id: "discord",
+      title: "Casey's Cuties — Discord",
+      width: "480px",
+      top: "22%",
+      left: "32%",
       contentHTML: content
     });
   };

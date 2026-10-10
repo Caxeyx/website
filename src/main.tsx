@@ -5,6 +5,7 @@ import LiveUserCursors from '@/components/ui/live-user-cursors';
 import spotifyIcon from '../assets/images/spotify_icon.svg';
 import behanceIcon from '../assets/images/behance-square-color-icon.svg';
 import youtubeIcon from '../assets/images/youtube_icon.svg';
+import discordIcon from '../assets/images/discord_icon.svg';
 
 const allPortfolioApps: DockApp[] = [
   { 
@@ -56,6 +57,11 @@ const allPortfolioApps: DockApp[] = [
     id: 'instagram', 
     name: 'Instagram (@caseyxlive)', 
     icon: 'https://framerusercontent.com/images/fZcO2HO3MMDvuS9IcWLgq5MyMc.png' 
+  },
+  { 
+    id: 'discord', 
+    name: "Discord (Casey's Cuties)", 
+    icon: discordIcon 
   },
   { 
     id: 'contact', 
@@ -128,6 +134,12 @@ const InteractiveDockWrapper: React.FC = () => {
       window.open('https://www.youtube.com/@Caseyxlive', '_blank');
     } else if (appId === 'instagram') {
       window.open('https://www.instagram.com/caseyxlive/', '_blank');
+    } else if (appId === 'discord') {
+      if (win.openDiscordWindow) {
+        win.openDiscordWindow();
+      } else {
+        window.open('https://discord.com/invite/CHJZDjTVtC', '_blank');
+      }
     } else if (appId === 'contact') {
       win.openContactWindow?.();
     } else if (appId === 'trash') {

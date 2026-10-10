@@ -47,6 +47,11 @@ const sampleApps = [
     name: 'Calendar', 
     icon: 'https://cdn.jim-nielsen.com/macos/1024/calendar-2021-04-29.png?rf=1024' 
   },
+  { 
+    id: 'discord', 
+    name: "Discord (Casey's Cuties)", 
+    icon: 'assets/images/discord_icon.svg' 
+  },
 ];
 
 export const DockDemo: React.FC = () => {
